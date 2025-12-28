@@ -210,8 +210,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-
-/**
- * Re-export types for consumers
- */
-export type { InputProps };
