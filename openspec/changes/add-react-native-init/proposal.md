@@ -33,8 +33,8 @@ The Learning Platform requires a mobile-first implementation as specified in the
 
 ## Risks
 
-| Risk | Mitigation |
-|------|------------|
-| Expo SDK version conflicts | Pin to Expo SDK 52 (latest stable) |
-| Supabase client version issues | Use @supabase/supabase-js v2 |
-| Windows path issues with Expo | Document WSL workaround if needed |
+| Risk                           | Mitigation                         |
+| ------------------------------ | ---------------------------------- |
+| Expo SDK version conflicts     | Pin to Expo SDK 52 (latest stable) |
+| Supabase client version issues | Use @supabase/supabase-js v2       |
+| Windows path issues with Expo  | Document WSL workaround if needed  |

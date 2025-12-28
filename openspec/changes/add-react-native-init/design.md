@@ -3,12 +3,14 @@
 ## Context
 
 This is a greenfield React Native project for an AI-powered learning platform. The spec mandates:
+
 - React Native for iOS & Android
 - Supabase for backend (PostgreSQL + Auth + Storage + Realtime)
 - Mobile-first design with 44px touch targets
 - WCAG 2.1 AA accessibility compliance
 
 Key constraints:
+
 - Windows development environment (user's machine)
 - Must support both iOS and Android from day one
 - Offline capability required for core review functionality
@@ -16,6 +18,7 @@ Key constraints:
 ## Goals / Non-Goals
 
 **Goals:**
+
 - Establish production-ready project structure
 - Enable rapid feature development with hot reload
 - Set up type-safe Supabase integration
@@ -23,6 +26,7 @@ Key constraints:
 - Configure CI-ready testing and linting
 
 **Non-Goals:**
+
 - Implement any Phase 1 features (authentication, projects, uploads)
 - Set up CI/CD pipelines (separate change)
 - Configure app store deployment (separate change)
@@ -35,12 +39,14 @@ Key constraints:
 **Choice:** Expo SDK 52 with managed workflow
 
 **Rationale:**
+
 - Faster development iteration (OTA updates)
 - Simplified native module management
 - Built-in support for iOS/Android builds via EAS
 - Expo Router provides file-based navigation (React Navigation under the hood)
 
 **Alternatives Considered:**
+
 - React Native CLI: More control, but requires Xcode/Android Studio for all builds
 - Expo bare workflow: Overkill for initial phase
 
@@ -75,6 +81,7 @@ src/
 ```
 
 **Rationale:**
+
 - Expo Router requires `app/` directory for routes
 - Feature modules encapsulate related code
 - Clear separation between pages and components
@@ -85,8 +92,8 @@ src/
 
 ```typescript
 // src/lib/supabase.ts
-import { createClient } from '@supabase/supabase-js'
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import { createClient } from '@supabase/supabase-js';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const supabase = createClient(
   process.env.EXPO_PUBLIC_SUPABASE_URL!,
@@ -99,12 +106,13 @@ export const supabase = createClient(
       detectSessionInUrl: false,
     },
   }
-)
+);
 ```
 
 **Rationale:**
+
 - AsyncStorage for session persistence across app restarts
-- Environment variables via Expo's EXPO_PUBLIC_ prefix
+- Environment variables via Expo's EXPO*PUBLIC* prefix
 - Single client instance prevents connection duplication
 
 ### Decision 4: Testing Framework
@@ -112,6 +120,7 @@ export const supabase = createClient(
 **Choice:** Jest + React Native Testing Library
 
 **Rationale:**
+
 - Jest is standard for React Native
 - RNTL encourages accessibility-first testing
 - Matches Phase requirement for WCAG compliance testing
@@ -121,11 +130,13 @@ export const supabase = createClient(
 **Choice:** Custom components built on React Native primitives
 
 **Rationale:**
+
 - Spec requires specific accessibility features (44px targets, 4.5:1 contrast)
 - Custom components allow full control over design system
 - No external UI library dependency to manage
 
 **Base Components (Placeholder structure):**
+
 - `Button` - Touch-friendly with loading states
 - `Input` - Text input with validation styling
 - `Card` - Content container
@@ -133,11 +144,11 @@ export const supabase = createClient(
 
 ## Risks / Trade-offs
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| Expo SDK update breaks app | Medium | Pin SDK version, test upgrades in branch |
-| Supabase JS v2 breaking changes | Low | Lock version, follow changelog |
-| Windows Expo issues | Medium | Document WSL setup as fallback |
+| Risk                            | Impact | Mitigation                               |
+| ------------------------------- | ------ | ---------------------------------------- |
+| Expo SDK update breaks app      | Medium | Pin SDK version, test upgrades in branch |
+| Supabase JS v2 breaking changes | Low    | Lock version, follow changelog           |
+| Windows Expo issues             | Medium | Document WSL setup as fallback           |
 
 ## Migration Plan
 

@@ -2,13 +2,13 @@
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
+| Field          | Value                                                            |
+| -------------- | ---------------------------------------------------------------- |
 | Document Title | AI-Powered Active Learning Platform - UI/UX Design Specification |
-| Version | 1.0 |
-| Status | Draft |
-| Last Updated | December 2024 |
-| Companion Doc | learning_app_spec.md |
+| Version        | 1.0                                                              |
+| Status         | Draft                                                            |
+| Last Updated   | December 2024                                                    |
+| Companion Doc  | learning_app_spec.md                                             |
 
 ---
 
@@ -73,68 +73,69 @@
 
 **Color Palette:**
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--primary` | #6366F1 (Indigo) | Primary actions, active states |
-| `--primary-dark` | #4F46E5 | Pressed states |
-| `--secondary` | #10B981 (Emerald) | Success, mastery, completion |
-| `--accent` | #F59E0B (Amber) | Streaks, achievements, warnings |
-| `--danger` | #EF4444 (Red) | Errors, destructive actions |
-| `--neutral-900` | #111827 | Primary text |
-| `--neutral-600` | #4B5563 | Secondary text |
-| `--neutral-400` | #9CA3AF | Placeholder text |
-| `--neutral-200` | #E5E7EB | Borders, dividers |
-| `--neutral-100` | #F3F4F6 | Backgrounds |
-| `--neutral-50` | #F9FAFB | Card backgrounds |
-| `--white` | #FFFFFF | Surface |
+| Token            | Value             | Usage                           |
+| ---------------- | ----------------- | ------------------------------- |
+| `--primary`      | #6366F1 (Indigo)  | Primary actions, active states  |
+| `--primary-dark` | #4F46E5           | Pressed states                  |
+| `--secondary`    | #10B981 (Emerald) | Success, mastery, completion    |
+| `--accent`       | #F59E0B (Amber)   | Streaks, achievements, warnings |
+| `--danger`       | #EF4444 (Red)     | Errors, destructive actions     |
+| `--neutral-900`  | #111827           | Primary text                    |
+| `--neutral-600`  | #4B5563           | Secondary text                  |
+| `--neutral-400`  | #9CA3AF           | Placeholder text                |
+| `--neutral-200`  | #E5E7EB           | Borders, dividers               |
+| `--neutral-100`  | #F3F4F6           | Backgrounds                     |
+| `--neutral-50`   | #F9FAFB           | Card backgrounds                |
+| `--white`        | #FFFFFF           | Surface                         |
 
 **Mastery State Colors:**
 
-| State | Color | Hex |
-|-------|-------|-----|
-| Unexposed | Gray | #9CA3AF |
-| Exposed | Blue | #3B82F6 |
-| Fragile | Orange | #F97316 |
-| Developing | Yellow | #EAB308 |
-| Solid | Lime | #84CC16 |
-| Mastered | Emerald | #10B981 |
+| State      | Color   | Hex     |
+| ---------- | ------- | ------- |
+| Unexposed  | Gray    | #9CA3AF |
+| Exposed    | Blue    | #3B82F6 |
+| Fragile    | Orange  | #F97316 |
+| Developing | Yellow  | #EAB308 |
+| Solid      | Lime    | #84CC16 |
+| Mastered   | Emerald | #10B981 |
 
 **Typography:**
 
-| Token | Font | Size | Weight | Usage |
-|-------|------|------|--------|-------|
-| `--heading-1` | Inter | 28px | 700 | Screen titles |
-| `--heading-2` | Inter | 22px | 600 | Section headers |
-| `--heading-3` | Inter | 18px | 600 | Card titles |
-| `--body` | Inter | 16px | 400 | Body text |
-| `--body-small` | Inter | 14px | 400 | Secondary text |
-| `--caption` | Inter | 12px | 500 | Labels, captions |
-| `--mono` | JetBrains Mono | 14px | 400 | Code, data |
+| Token          | Font           | Size | Weight | Usage            |
+| -------------- | -------------- | ---- | ------ | ---------------- |
+| `--heading-1`  | Inter          | 28px | 700    | Screen titles    |
+| `--heading-2`  | Inter          | 22px | 600    | Section headers  |
+| `--heading-3`  | Inter          | 18px | 600    | Card titles      |
+| `--body`       | Inter          | 16px | 400    | Body text        |
+| `--body-small` | Inter          | 14px | 400    | Secondary text   |
+| `--caption`    | Inter          | 12px | 500    | Labels, captions |
+| `--mono`       | JetBrains Mono | 14px | 400    | Code, data       |
 
 **Spacing Scale:**
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-1` | 4px | Tight spacing |
-| `--space-2` | 8px | Related elements |
-| `--space-3` | 12px | Default gap |
-| `--space-4` | 16px | Section spacing |
-| `--space-5` | 24px | Card padding |
-| `--space-6` | 32px | Screen margins |
-| `--space-7` | 48px | Major sections |
+| Token       | Value | Usage            |
+| ----------- | ----- | ---------------- |
+| `--space-1` | 4px   | Tight spacing    |
+| `--space-2` | 8px   | Related elements |
+| `--space-3` | 12px  | Default gap      |
+| `--space-4` | 16px  | Section spacing  |
+| `--space-5` | 24px  | Card padding     |
+| `--space-6` | 32px  | Screen margins   |
+| `--space-7` | 48px  | Major sections   |
 
 **Border Radius:**
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--radius-sm` | 6px | Buttons, inputs |
-| `--radius-md` | 12px | Cards |
-| `--radius-lg` | 16px | Modals, sheets |
-| `--radius-full` | 9999px | Pills, avatars |
+| Token           | Value  | Usage           |
+| --------------- | ------ | --------------- |
+| `--radius-sm`   | 6px    | Buttons, inputs |
+| `--radius-md`   | 12px   | Cards           |
+| `--radius-lg`   | 16px   | Modals, sheets  |
+| `--radius-full` | 9999px | Pills, avatars  |
 
 ### 1.3 Design Mood
 
 **Visual Language:**
+
 - Clean, minimal, focused
 - Generous whitespace
 - Subtle depth (light shadows, not flat)
@@ -142,6 +143,7 @@
 - Progress visualizations are satisfying and motivating
 
 **Emotional Goals:**
+
 - "I can do this" (confidence)
 - "I'm making real progress" (satisfaction)
 - "This is worth my time" (value)
@@ -1086,13 +1088,13 @@ STREAK LOST (Compassionate message)
 
 **Categories:**
 
-| Category | Examples | Purpose |
-|----------|----------|---------|
-| **Mastery** | "First 10 concepts mastered", "Level complete" | Celebrate learning milestones |
-| **Consistency** | "7-day streak", "30 days total" | Encourage habit formation |
-| **Depth** | "Perfect recall", "No hints needed" | Reward deep understanding |
-| **Exploration** | "First simulation complete", "Tried all question types" | Encourage feature discovery |
-| **Recovery** | "Came back after a break", "Completed catch-up session" | Reinforce return behavior |
+| Category        | Examples                                                | Purpose                       |
+| --------------- | ------------------------------------------------------- | ----------------------------- |
+| **Mastery**     | "First 10 concepts mastered", "Level complete"          | Celebrate learning milestones |
+| **Consistency** | "7-day streak", "30 days total"                         | Encourage habit formation     |
+| **Depth**       | "Perfect recall", "No hints needed"                     | Reward deep understanding     |
+| **Exploration** | "First simulation complete", "Tried all question types" | Encourage feature discovery   |
+| **Recovery**    | "Came back after a break", "Completed catch-up session" | Reinforce return behavior     |
 
 **Achievement Display:**
 
@@ -1642,12 +1644,12 @@ STREAK LOST (Compassionate message)
 
 **Minimum Touch Targets:**
 
-| Element | Minimum Size | Recommended |
-|---------|--------------|-------------|
-| Buttons | 44 x 44 px | 48 x 48 px |
-| List items | 48 px height | 56 px height |
-| Icons (tappable) | 44 x 44 px | 48 x 48 px |
-| Close buttons | 44 x 44 px | 44 x 44 px |
+| Element          | Minimum Size | Recommended  |
+| ---------------- | ------------ | ------------ |
+| Buttons          | 44 x 44 px   | 48 x 48 px   |
+| List items       | 48 px height | 56 px height |
+| Icons (tappable) | 44 x 44 px   | 48 x 48 px   |
+| Close buttons    | 44 x 44 px   | 44 x 44 px   |
 
 **Thumb Zone Optimization:**
 
@@ -1687,24 +1689,24 @@ STREAK LOST (Compassionate message)
 
 ### 8.2 Responsive Breakpoints
 
-| Breakpoint | Width | Layout Adjustments |
-|------------|-------|-------------------|
-| Mobile S | 320px | Compact spacing, stacked elements |
-| Mobile M | 375px | Default mobile layout |
-| Mobile L | 425px | Slightly more breathing room |
-| Tablet | 768px | 2-column where appropriate |
-| Desktop | 1024px+ | Sidebar navigation, wider content |
+| Breakpoint | Width   | Layout Adjustments                |
+| ---------- | ------- | --------------------------------- |
+| Mobile S   | 320px   | Compact spacing, stacked elements |
+| Mobile M   | 375px   | Default mobile layout             |
+| Mobile L   | 425px   | Slightly more breathing room      |
+| Tablet     | 768px   | 2-column where appropriate        |
+| Desktop    | 1024px+ | Sidebar navigation, wider content |
 
 ### 8.3 Gesture Support
 
-| Gesture | Action |
-|---------|--------|
-| Swipe right | Go back (navigation) |
+| Gesture            | Action                           |
+| ------------------ | -------------------------------- |
+| Swipe right        | Go back (navigation)             |
 | Swipe left on card | Reveal actions (delete, archive) |
-| Pull down | Refresh content |
-| Long press | Context menu |
-| Pinch | Zoom (on diagrams, roadmap) |
-| Double tap | Zoom to fit |
+| Pull down          | Refresh content                  |
+| Long press         | Context menu                     |
+| Pinch              | Zoom (on diagrams, roadmap)      |
+| Double tap         | Zoom to fit                      |
 
 ### 8.4 Keyboard Considerations
 
@@ -1801,12 +1803,12 @@ PROGRESS (Long operations)
 
 ### 9.2 Color & Contrast
 
-| Element | Minimum Contrast |
-|---------|------------------|
-| Body text | 4.5:1 |
-| Large text (18px+) | 3:1 |
-| UI components | 3:1 |
-| Focus indicators | 3:1 |
+| Element            | Minimum Contrast |
+| ------------------ | ---------------- |
+| Body text          | 4.5:1            |
+| Large text (18px+) | 3:1              |
+| UI components      | 3:1              |
+| Focus indicators   | 3:1              |
 
 **Color Blind Considerations:**
 
@@ -1834,11 +1836,11 @@ MASTERY STATES:
     <h1>Question 3 of 18</h1>
     <progress value="3" max="18" aria-label="Progress: 3 of 18 questions"></progress>
   </header>
-  
+
   <section aria-label="Question">
     <p id="question">What gives a call option its value...</p>
   </section>
-  
+
   <section aria-label="Answer options" role="radiogroup" aria-describedby="question">
     <button role="radio" aria-checked="false">A. Intrinsic value</button>
     <button role="radio" aria-checked="true">B. Time value</button>
@@ -1849,13 +1851,13 @@ MASTERY STATES:
 
 **Announcements:**
 
-| Event | Screen Reader Announcement |
-|-------|---------------------------|
-| Question loaded | "Question 3 of 18: [question text]" |
-| Answer selected | "Selected: [answer text]" |
-| Correct answer | "Correct! [explanation]" |
+| Event            | Screen Reader Announcement                                 |
+| ---------------- | ---------------------------------------------------------- |
+| Question loaded  | "Question 3 of 18: [question text]"                        |
+| Answer selected  | "Selected: [answer text]"                                  |
+| Correct answer   | "Correct! [explanation]"                                   |
 | Incorrect answer | "Incorrect. The correct answer is [answer]. [explanation]" |
-| Session complete | "Session complete. You answered 15 of 18 correctly." |
+| Session complete | "Session complete. You answered 15 of 18 correctly."       |
 
 ### 9.4 Motor Accessibility
 
@@ -1866,13 +1868,13 @@ MASTERY STATES:
 
 **Keyboard Navigation:**
 
-| Key | Action |
-|-----|--------|
-| Tab | Move to next interactive element |
-| Shift+Tab | Move to previous element |
-| Enter/Space | Activate button, select option |
-| Arrow keys | Navigate within groups (radio buttons, lists) |
-| Escape | Close modal, cancel action |
+| Key         | Action                                        |
+| ----------- | --------------------------------------------- |
+| Tab         | Move to next interactive element              |
+| Shift+Tab   | Move to previous element                      |
+| Enter/Space | Activate button, select option                |
+| Arrow keys  | Navigate within groups (radio buttons, lists) |
+| Escape      | Close modal, cancel action                    |
 
 ### 9.5 Cognitive Accessibility
 
@@ -1923,6 +1925,7 @@ MASTERY STATES:
 ### 10.2 Standard Animations
 
 **Button Press:**
+
 ```
 Duration: 100ms
 Effect: Scale to 0.97, slight darken
@@ -1930,6 +1933,7 @@ Easing: ease-out
 ```
 
 **Page Transition:**
+
 ```
 Duration: 250ms
 Effect: Slide from right (forward), slide from left (back)
@@ -1937,6 +1941,7 @@ Easing: ease-in-out
 ```
 
 **Card Appear:**
+
 ```
 Duration: 200ms
 Effect: Fade in + slight slide up (8px)
@@ -1945,6 +1950,7 @@ Stagger: 50ms between cards
 ```
 
 **Progress Bar Fill:**
+
 ```
 Duration: 400ms
 Effect: Width transition
@@ -1952,6 +1958,7 @@ Easing: ease-out
 ```
 
 **Success Celebration:**
+
 ```
 Duration: 600ms
 Effect: Checkmark draw + subtle confetti
@@ -1959,6 +1966,7 @@ Easing: spring (bounce)
 ```
 
 **Error Shake:**
+
 ```
 Duration: 400ms
 Effect: Horizontal shake (3 cycles, 4px amplitude)
@@ -1968,6 +1976,7 @@ Easing: ease-in-out
 ### 10.3 Celebration Animations
 
 **Concept Mastered:**
+
 ```
 ┌─────────────────────────────────────────────┐
 │                                             │
@@ -1990,6 +1999,7 @@ Duration: 1.5s total
 ```
 
 **Level Complete:**
+
 ```
 ┌─────────────────────────────────────────────┐
 │                                             │
@@ -2013,13 +2023,13 @@ Duration: 2s total
 
 When user has "reduce motion" enabled:
 
-| Full Animation | Reduced Alternative |
-|----------------|---------------------|
-| Slide transitions | Instant cut or fade |
-| Bouncing celebrations | Static display with highlight |
-| Progress bar animation | Instant fill |
-| Confetti/particles | Simple glow or highlight |
-| Shake on error | Red outline flash |
+| Full Animation         | Reduced Alternative           |
+| ---------------------- | ----------------------------- |
+| Slide transitions      | Instant cut or fade           |
+| Bouncing celebrations  | Static display with highlight |
+| Progress bar animation | Instant fill                  |
+| Confetti/particles     | Simple glow or highlight      |
+| Shake on error         | Red outline flash             |
 
 ```css
 @media (prefers-reduced-motion: reduce) {
@@ -2034,50 +2044,50 @@ When user has "reduce motion" enabled:
 
 ## Appendix A: Screen Inventory
 
-| Screen | Priority | Complexity |
-|--------|----------|------------|
-| Landing Page | P0 | Low |
-| Sign Up | P0 | Low |
-| Sign In | P0 | Low |
-| Onboarding (3 screens) | P0 | Medium |
-| Home Dashboard | P0 | Medium |
-| Projects List | P0 | Low |
-| Project Detail | P0 | High |
-| Roadmap View | P0 | High |
-| Session Start | P0 | Low |
-| Question - Multiple Choice | P0 | Medium |
-| Question - Free Recall | P0 | Medium |
-| Question - Application | P0 | Medium |
-| Feedback - Correct | P0 | Low |
-| Feedback - Incorrect | P0 | Medium |
-| Session Summary | P0 | Medium |
-| Interactive - Simulation | P1 | High |
-| Interactive - Game | P1 | High |
-| Practice Assignment | P1 | Medium |
-| Progress Dashboard | P1 | High |
-| Achievements | P2 | Medium |
-| Settings | P1 | Medium |
-| API Configuration | P1 | High |
-| Subscription/Billing | P1 | Medium |
+| Screen                     | Priority | Complexity |
+| -------------------------- | -------- | ---------- |
+| Landing Page               | P0       | Low        |
+| Sign Up                    | P0       | Low        |
+| Sign In                    | P0       | Low        |
+| Onboarding (3 screens)     | P0       | Medium     |
+| Home Dashboard             | P0       | Medium     |
+| Projects List              | P0       | Low        |
+| Project Detail             | P0       | High       |
+| Roadmap View               | P0       | High       |
+| Session Start              | P0       | Low        |
+| Question - Multiple Choice | P0       | Medium     |
+| Question - Free Recall     | P0       | Medium     |
+| Question - Application     | P0       | Medium     |
+| Feedback - Correct         | P0       | Low        |
+| Feedback - Incorrect       | P0       | Medium     |
+| Session Summary            | P0       | Medium     |
+| Interactive - Simulation   | P1       | High       |
+| Interactive - Game         | P1       | High       |
+| Practice Assignment        | P1       | Medium     |
+| Progress Dashboard         | P1       | High       |
+| Achievements               | P2       | Medium     |
+| Settings                   | P1       | Medium     |
+| API Configuration          | P1       | High       |
+| Subscription/Billing       | P1       | Medium     |
 
 ---
 
 ## Appendix B: Component Checklist
 
-| Component | States | Variants |
-|-----------|--------|----------|
-| Button | Default, Hover, Pressed, Disabled, Loading | Primary, Secondary, Tertiary, Icon |
-| Input | Default, Focused, Filled, Error, Disabled | Text, Password, Textarea |
-| Card | Default, Selected, Disabled | Project, Concept, Stat, Achievement |
-| Progress | Determinate, Indeterminate | Bar, Circle, Dots |
-| Toast | Success, Error, Warning, Info | - |
-| Modal | - | Alert, Confirm, Form |
-| Bottom Sheet | - | Actions, Form, Info |
-| Tab Bar | - | 5-item with center accent |
-| List Item | Default, Selected, Disabled | Simple, With icon, With action |
-| Badge | - | Mastery states (6), Achievement |
-| Avatar | - | User, Placeholder |
-| Skeleton | - | Text, Card, List |
+| Component    | States                                     | Variants                            |
+| ------------ | ------------------------------------------ | ----------------------------------- |
+| Button       | Default, Hover, Pressed, Disabled, Loading | Primary, Secondary, Tertiary, Icon  |
+| Input        | Default, Focused, Filled, Error, Disabled  | Text, Password, Textarea            |
+| Card         | Default, Selected, Disabled                | Project, Concept, Stat, Achievement |
+| Progress     | Determinate, Indeterminate                 | Bar, Circle, Dots                   |
+| Toast        | Success, Error, Warning, Info              | -                                   |
+| Modal        | -                                          | Alert, Confirm, Form                |
+| Bottom Sheet | -                                          | Actions, Form, Info                 |
+| Tab Bar      | -                                          | 5-item with center accent           |
+| List Item    | Default, Selected, Disabled                | Simple, With icon, With action      |
+| Badge        | -                                          | Mastery states (6), Achievement     |
+| Avatar       | -                                          | User, Placeholder                   |
+| Skeleton     | -                                          | Text, Card, List                    |
 
 ---
 
@@ -2116,7 +2126,7 @@ When user has "reduce motion" enabled:
 
 ---
 
-*End of Design Document*
+_End of Design Document_
 
 ---
 
@@ -2251,7 +2261,7 @@ interface ConfidenceRatingProps {
 
 // Levels:
 // 1: 😕 "Guessing"
-// 2: 🤔 "Unsure"  
+// 2: 🤔 "Unsure"
 // 3: 😊 "Pretty Sure"
 // 4: 😎 "Certain"
 
@@ -2319,7 +2329,7 @@ interface RoadmapNodeProps {
 }
 
 // Visual Logic:
-// LOCKED: 
+// LOCKED:
 //   - opacity: 0.5
 //   - filter: grayscale(100%)
 //   - icon: Lock
@@ -2473,16 +2483,16 @@ type DayStatus = 'completed' | 'missed' | 'frozen' | 'future' | 'today';
 interface InteractiveSandboxProps {
   // The AI-generated component code (React/JSX string or compiled)
   code: string;
-  
+
   // Fallback UI for error boundary
   fallback: ReactNode;
-  
+
   // Callback for logging all user interactions
   onInteraction: (event: InteractionEvent) => void;
-  
+
   // Assessment criteria from content analysis
   assessmentCriteria: AssessmentCriteria;
-  
+
   // Sandbox configuration
   config: {
     allowedDOMAPIs: string[];
@@ -2750,7 +2760,7 @@ const layoutUtilities = {
   // Containers
   container: 'mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl',
   cardContainer: 'p-4 sm:p-5 rounded-xl bg-white shadow-sm border border-gray-200',
-  
+
   // Stacks
   stackVertical: 'flex flex-col',
   stackHorizontal: 'flex flex-row',
@@ -2759,20 +2769,20 @@ const layoutUtilities = {
   stackGap3: 'gap-3', // 12px
   stackGap4: 'gap-4', // 16px
   stackGap6: 'gap-6', // 24px
-  
+
   // Grids
   gridCols1: 'grid grid-cols-1',
   gridCols2: 'grid grid-cols-2',
   gridCols3: 'grid grid-cols-3',
   gridResponsive: 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-  
+
   // Safe areas
   safeBottom: 'pb-[env(safe-area-inset-bottom)]',
   safeTop: 'pt-[env(safe-area-inset-top)]',
 };
 
-// AI Instruction: 
-// "Use CSS Grid grid-template-areas to re-flow content. 
+// AI Instruction:
+// "Use CSS Grid grid-template-areas to re-flow content.
 // Do not use JavaScript for layout changes unless animating.
 // Prefer Tailwind utilities over custom CSS."
 ```
@@ -2794,28 +2804,28 @@ export const motionTokens = {
     damping: 30,
     mass: 1,
   },
-  
+
   // Celebrations, success modals, achievements
   springBouncy: {
     stiffness: 200,
     damping: 15,
     mass: 1,
   },
-  
+
   // Page transitions, large drawers, modals
   springSlowSmooth: {
     stiffness: 100,
     damping: 20,
     mass: 1,
   },
-  
+
   // Progress bar fills, mastery animations
   springProgress: {
     stiffness: 50,
     damping: 20,
     mass: 1,
   },
-  
+
   // Quick snaps, selection changes
   springSnap: {
     stiffness: 500,
@@ -2850,9 +2860,9 @@ export const easingTokens = {
 // Button press feedback
 export const buttonPressVariants = {
   idle: { scale: 1 },
-  pressed: { 
+  pressed: {
     scale: 0.97,
-    transition: motionTokens.springTight 
+    transition: motionTokens.springTight,
   },
 };
 
@@ -2937,28 +2947,24 @@ export const pulseVariants = {
 // Always check user preference
 export const useReducedMotion = () => {
   const [prefersReduced, setPrefersReduced] = useState(false);
-  
+
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReduced(mediaQuery.matches);
-    
+
     const handler = (e: MediaQueryListEvent) => setPrefersReduced(e.matches);
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
-  
+
   return prefersReduced;
 };
 
 // Reduced motion variants (instant transitions)
 export const getMotionVariants = (prefersReduced: boolean) => ({
-  spring: prefersReduced 
-    ? { duration: 0.01 } 
-    : motionTokens.springSlowSmooth,
-  
-  appear: prefersReduced
-    ? { opacity: 1 }
-    : cardAppearVariants.visible,
+  spring: prefersReduced ? { duration: 0.01 } : motionTokens.springSlowSmooth,
+
+  appear: prefersReduced ? { opacity: 1 } : cardAppearVariants.visible,
 });
 ```
 
@@ -3023,7 +3029,7 @@ const RoadmapNode = ({ level, status }) => {
         return `Level ${level.name}, Mastered.`;
     }
   };
-  
+
   return (
     <button
       aria-label={getAriaLabel()}
@@ -3088,7 +3094,7 @@ const FormField = ({ error, ...props }) => (
 const Modal = ({ isOpen, onClose, children }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
-  
+
   useEffect(() => {
     if (isOpen) {
       // Save current focus
@@ -3102,23 +3108,23 @@ const Modal = ({ isOpen, onClose, children }) => {
       previousFocus.current?.focus();
     }
   }, [isOpen]);
-  
+
   // Trap focus within modal
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       onClose();
       return;
     }
-    
+
     if (e.key === 'Tab') {
       const focusable = modalRef.current?.querySelectorAll<HTMLElement>(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
       if (!focusable?.length) return;
-      
+
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-      
+
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -3128,7 +3134,7 @@ const Modal = ({ isOpen, onClose, children }) => {
       }
     }
   };
-  
+
   return (
     <div
       ref={modalRef}
@@ -3145,7 +3151,7 @@ const Modal = ({ isOpen, onClose, children }) => {
 const RadioGroup = ({ options, value, onChange }) => {
   const handleKeyDown = (e: KeyboardEvent, index: number) => {
     let newIndex = index;
-    
+
     switch (e.key) {
       case 'ArrowDown':
       case 'ArrowRight':
@@ -3158,12 +3164,12 @@ const RadioGroup = ({ options, value, onChange }) => {
         newIndex = (index - 1 + options.length) % options.length;
         break;
     }
-    
+
     if (newIndex !== index) {
       onChange(options[newIndex].value);
     }
   };
-  
+
   return (
     <div role="radiogroup">
       {options.map((option, i) => (
@@ -3193,18 +3199,18 @@ const contrastRequirements = {
     minimum: 'text-gray-600', // #4B5563 - 4.54:1 ✓
     preferred: 'text-gray-700', // #374151 - 7.49:1 ✓
   },
-  
+
   // Large text (≥ 18px or ≥ 14px bold): 3:1
   headingOnWhite: {
     minimum: 'text-gray-500', // #6B7280 - 3.03:1 ✓
     preferred: 'text-gray-900', // #111827 - 15.8:1 ✓
   },
-  
+
   // Text on colored backgrounds
   textOnPrimary: 'text-white', // On bg-indigo-500: 4.62:1 ✓
   textOnSuccess: 'text-white', // On bg-emerald-500: 3.41:1 (use bold for < 18px)
   textOnError: 'text-white', // On bg-red-500: 4.23:1 ✓
-  
+
   // UI components: 3:1 minimum
   borderFocused: 'ring-indigo-500', // Clear focus indicator
   iconOnWhite: 'text-gray-500', // Icons need 3:1
@@ -3218,7 +3224,7 @@ const ColorWithIconPattern = () => (
       <CheckIcon aria-hidden="true" />
       Correct
     </span>
-    
+
     {/* ✗ Wrong: Color alone */}
     <span className="text-emerald-600">Correct</span>
   </>
@@ -3386,11 +3392,13 @@ Use this as a `.cursorrules` file or system prompt when developing with AI codin
 # Learning App Development Rules
 
 ## Role
+
 You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind CSS, and Framer Motion. You are building an AI-powered learning application.
 
 ## Design System Rules
 
 ### Colors
+
 - Use strict tokens from the design system. Never hardcode hex values.
 - Primary: `bg-indigo-500`, `text-indigo-600`, `border-indigo-500`
 - Success/Mastery: `bg-emerald-500`, `text-emerald-600`
@@ -3399,16 +3407,19 @@ You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind 
 - Neutrals: `gray-50` through `gray-900`
 
 ### Typography
+
 - UI text: `font-sans` (Inter)
 - Code/data: `font-mono` (JetBrains Mono)
 - Never use arbitrary font sizes. Use: `text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `text-2xl`
 
 ### Spacing
+
 - Use 4px grid system: `p-1` = 4px, `p-2` = 8px, `p-3` = 12px, `p-4` = 16px
 - Component padding: `p-4` (cards), `p-5` (larger cards)
 - Section gaps: `gap-4` (tight), `gap-6` (standard), `gap-8` (loose)
 
 ### Components
+
 - All components must be functional React components
 - Use TypeScript interfaces for all props
 - Follow Component Contracts defined in the spec
@@ -3416,11 +3427,13 @@ You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind 
 - Include `aria-label` for all icon-only buttons
 
 ### State Management
+
 - Use Zustand for global state
 - Use React state for component-local state
 - Use finite state machines (XState or useReducer) for complex UI flows (e.g., question answering)
 
 ### Motion
+
 - Use Framer Motion for all animations
 - Import spring configs from `@/constants/motion`
 - Always use `layout` prop for layout animations
@@ -3430,6 +3443,7 @@ You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind 
 - Check `prefers-reduced-motion` and provide static alternatives
 
 ### Accessibility
+
 - Always include `aria-label` for icon-only buttons
 - Use `role="button"` and `tabIndex={0}` for clickable divs
 - Use `aria-live="polite"` for feedback messages
@@ -3437,12 +3451,14 @@ You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind 
 - Never rely on color alone to convey information
 
 ### Layout
+
 - Mobile-first approach: design for 375px width first
 - Use CSS Grid with `grid-template-areas` for complex layouts
 - Do not use JavaScript for layout changes unless animating
 - Primary actions go in thumb-friendly zones (bottom of screen on mobile)
 
 ### File Organization
+
 - UI primitives go in `/components/ui`
 - Domain components go in `/components/[domain]`
 - Hooks go in `/hooks`
@@ -3450,6 +3466,7 @@ You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind 
 - Always export from barrel files (index.ts)
 
 ### Code Style
+
 - Use `cn()` utility for conditional class names
 - Prefer composition over prop drilling
 - Keep components under 200 lines; extract if larger
@@ -3462,51 +3479,51 @@ You are a Senior Frontend Architect specializing in React, TypeScript, Tailwind 
 
 ### 17.1 Color Quick Reference
 
-| Token | Tailwind Class | Hex | Usage |
-|-------|---------------|-----|-------|
-| Primary | `indigo-500` | #6366F1 | CTAs, active states |
-| Primary Dark | `indigo-600` | #4F46E5 | Hover/pressed |
-| Success | `emerald-500` | #10B981 | Correct, mastered |
-| Warning | `amber-500` | #F59E0B | Streaks, caution |
-| Error | `red-500` | #EF4444 | Incorrect, errors |
-| Text Primary | `gray-900` | #111827 | Headings |
-| Text Secondary | `gray-600` | #4B5563 | Body text |
-| Text Tertiary | `gray-400` | #9CA3AF | Placeholders |
-| Border | `gray-200` | #E5E7EB | Dividers |
-| Background | `gray-50` | #F9FAFB | Page bg |
+| Token          | Tailwind Class | Hex     | Usage               |
+| -------------- | -------------- | ------- | ------------------- |
+| Primary        | `indigo-500`   | #6366F1 | CTAs, active states |
+| Primary Dark   | `indigo-600`   | #4F46E5 | Hover/pressed       |
+| Success        | `emerald-500`  | #10B981 | Correct, mastered   |
+| Warning        | `amber-500`    | #F59E0B | Streaks, caution    |
+| Error          | `red-500`      | #EF4444 | Incorrect, errors   |
+| Text Primary   | `gray-900`     | #111827 | Headings            |
+| Text Secondary | `gray-600`     | #4B5563 | Body text           |
+| Text Tertiary  | `gray-400`     | #9CA3AF | Placeholders        |
+| Border         | `gray-200`     | #E5E7EB | Dividers            |
+| Background     | `gray-50`      | #F9FAFB | Page bg             |
 
 ### 17.2 Mastery State Quick Reference
 
-| State | Color | Tailwind | Icon |
-|-------|-------|----------|------|
-| Unexposed | Gray | `gray-400` | Empty circle |
-| Exposed | Blue | `blue-500` | Circle outline |
-| Fragile | Orange | `orange-500` | Partial fill |
-| Developing | Yellow | `yellow-500` | Half fill |
-| Solid | Lime | `lime-500` | Most fill |
-| Mastered | Emerald | `emerald-500` | Checkmark |
+| State      | Color   | Tailwind      | Icon           |
+| ---------- | ------- | ------------- | -------------- |
+| Unexposed  | Gray    | `gray-400`    | Empty circle   |
+| Exposed    | Blue    | `blue-500`    | Circle outline |
+| Fragile    | Orange  | `orange-500`  | Partial fill   |
+| Developing | Yellow  | `yellow-500`  | Half fill      |
+| Solid      | Lime    | `lime-500`    | Most fill      |
+| Mastered   | Emerald | `emerald-500` | Checkmark      |
 
 ### 17.3 Motion Quick Reference
 
-| Animation | Spring Config | Duration | Use Case |
-|-----------|--------------|----------|----------|
-| Button tap | `springTight` | ~100ms | Feedback |
-| Card appear | `springSlowSmooth` | ~300ms | Lists |
-| Page transition | `springSlowSmooth` | ~300ms | Navigation |
-| Progress fill | `springProgress` | ~500ms | Bars |
-| Celebration | `springBouncy` | ~600ms | Success |
-| Error shake | Duration-based | 400ms | Validation |
+| Animation       | Spring Config      | Duration | Use Case   |
+| --------------- | ------------------ | -------- | ---------- |
+| Button tap      | `springTight`      | ~100ms   | Feedback   |
+| Card appear     | `springSlowSmooth` | ~300ms   | Lists      |
+| Page transition | `springSlowSmooth` | ~300ms   | Navigation |
+| Progress fill   | `springProgress`   | ~500ms   | Bars       |
+| Celebration     | `springBouncy`     | ~600ms   | Success    |
+| Error shake     | Duration-based     | 400ms    | Validation |
 
 ### 17.4 Touch Target Quick Reference
 
-| Element | Minimum | Recommended |
-|---------|---------|-------------|
-| Buttons | 44×44px | 48×48px |
-| List items | 48px height | 56px height |
-| Icons (tappable) | 44×44px | 48×48px |
-| Close buttons | 44×44px | 44×44px |
-| Form inputs | 44px height | 48px height |
+| Element          | Minimum     | Recommended |
+| ---------------- | ----------- | ----------- |
+| Buttons          | 44×44px     | 48×48px     |
+| List items       | 48px height | 56px height |
+| Icons (tappable) | 44×44px     | 48×48px     |
+| Close buttons    | 44×44px     | 44×44px     |
+| Form inputs      | 44px height | 48px height |
 
 ---
 
-*End of AI Implementation Specifications*
+_End of AI Implementation Specifications_

@@ -2,13 +2,13 @@
 
 ## Document Information
 
-| Field | Value |
-|-------|-------|
-| Document Title | AI-Powered Active Learning Platform - Product Specification |
-| Version | 1.0 |
-| Status | Draft for Validation |
-| Last Updated | December 2024 |
-| Purpose | Feature validation, development guidance, research alignment verification |
+| Field          | Value                                                                     |
+| -------------- | ------------------------------------------------------------------------- |
+| Document Title | AI-Powered Active Learning Platform - Product Specification               |
+| Version        | 1.0                                                                       |
+| Status         | Draft for Validation                                                      |
+| Last Updated   | December 2024                                                             |
+| Purpose        | Feature validation, development guidance, research alignment verification |
 
 ---
 
@@ -35,7 +35,7 @@ Transform passive learning content (videos, PDFs, articles, textbooks) into pers
 
 ### 1.2 Core Problem Statement
 
-Knowledge exists predominantly in passive formats (lectures, videos, text), but the brain encodes durably only through active retrieval. Traditional learning asks humans to perform this translation themselves—and they consistently fail, defaulting to ineffective methods (re-reading, highlighting) because they *feel* effective despite producing minimal retention.
+Knowledge exists predominantly in passive formats (lectures, videos, text), but the brain encodes durably only through active retrieval. Traditional learning asks humans to perform this translation themselves—and they consistently fail, defaulting to ineffective methods (re-reading, highlighting) because they _feel_ effective despite producing minimal retention.
 
 ### 1.3 Solution Overview
 
@@ -54,13 +54,13 @@ Adult professionals seeking to learn new domains efficiently, with limited time 
 
 ### 1.5 Key Differentiators
 
-| Traditional Learning Apps | This Platform |
-|---------------------------|---------------|
-| Deliver content | Transform content into active practice |
-| Encourage more consumption | Enforce cognitive limits |
-| One-size-fits-all | Personalized method optimization |
-| Session-based progress | Mastery-based progression |
-| Completion metrics | Retention metrics |
+| Traditional Learning Apps  | This Platform                          |
+| -------------------------- | -------------------------------------- |
+| Deliver content            | Transform content into active practice |
+| Encourage more consumption | Enforce cognitive limits               |
+| One-size-fits-all          | Personalized method optimization       |
+| Session-based progress     | Mastery-based progression              |
+| Completion metrics         | Retention metrics                      |
 
 ---
 
@@ -72,127 +72,127 @@ This section maps the scientific research to product decisions. Each finding inc
 
 #### 2.1.1 The Testing Effect
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
+| Research Finding                                                                  | Product Implementation                                                                                        |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | **Finding:** Retrieval practice produces 50-100% better retention than restudying | Primary interaction pattern is generation (user produces answers) not recognition (user selects from options) |
-| **Effect Size:** g = 0.50-0.81; free recall g = 0.81 | Free recall prompts ("Explain in your own words...") prioritized over multiple choice |
-| **Source:** Roediger & Karpicke (2006); Rowland (2014) meta-analysis | Every concept requires retrieval practice before advancing |
-| **Amplification:** Feedback increases effect from d = 0.39 to d = 0.73 | All retrieval attempts receive immediate, explanatory feedback |
+| **Effect Size:** g = 0.50-0.81; free recall g = 0.81                              | Free recall prompts ("Explain in your own words...") prioritized over multiple choice                         |
+| **Source:** Roediger & Karpicke (2006); Rowland (2014) meta-analysis              | Every concept requires retrieval practice before advancing                                                    |
+| **Amplification:** Feedback increases effect from d = 0.39 to d = 0.73            | All retrieval attempts receive immediate, explanatory feedback                                                |
 
 #### 2.1.2 Spacing Effect
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Distributed practice dramatically outperforms massed practice | Content broken into multiple sessions across days, never crammed |
-| **Effect Size:** d = 0.54-0.85 ("most replicable finding in experimental psychology") | FSRS algorithm schedules optimal review intervals per concept |
-| **Source:** Ebbinghaus (1885); Donoghue & Hattie (2021) meta-analysis | Sessions limited by cognitive capacity, not user desire to continue |
-| **Key Insight:** Longer gaps = deeper, more durable learning | Intervals expand as mastery increases |
+| Research Finding                                                                      | Product Implementation                                              |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| **Finding:** Distributed practice dramatically outperforms massed practice            | Content broken into multiple sessions across days, never crammed    |
+| **Effect Size:** d = 0.54-0.85 ("most replicable finding in experimental psychology") | FSRS algorithm schedules optimal review intervals per concept       |
+| **Source:** Ebbinghaus (1885); Donoghue & Hattie (2021) meta-analysis                 | Sessions limited by cognitive capacity, not user desire to continue |
+| **Key Insight:** Longer gaps = deeper, more durable learning                          | Intervals expand as mastery increases                               |
 
 #### 2.1.3 Successive Relearning
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Combining retrieval + spacing + criterion mastery produces extraordinary gains | Default learning protocol requires 3+ successful sessions per concept |
-| **Effect Size:** d = 1.52-4.19 (highest in entire research base) | Concepts tracked through state machine (Exposed → Fragile → Developing → Solid → Mastered) |
-| **Source:** Rawson & Dunlosky research program | Time per concept tracked and expected to decrease across sessions (40-50s → 10-15s) |
-| **Concrete Results:** 68% retention at 1 month vs ~11% baseline | Criterion mastery required before advancing to dependent concepts |
+| Research Finding                                                                            | Product Implementation                                                                     |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Finding:** Combining retrieval + spacing + criterion mastery produces extraordinary gains | Default learning protocol requires 3+ successful sessions per concept                      |
+| **Effect Size:** d = 1.52-4.19 (highest in entire research base)                            | Concepts tracked through state machine (Exposed → Fragile → Developing → Solid → Mastered) |
+| **Source:** Rawson & Dunlosky research program                                              | Time per concept tracked and expected to decrease across sessions (40-50s → 10-15s)        |
+| **Concrete Results:** 68% retention at 1 month vs ~11% baseline                             | Criterion mastery required before advancing to dependent concepts                          |
 
 #### 2.1.4 Pretesting Effect
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Testing before learning improves subsequent encoding, even when 95% wrong | Every session begins with pretest on upcoming material |
-| **Effect Size:** d = 1.1; 12-13 percentage point advantages | Questions generated from content user hasn't seen yet |
-| **Source:** Pan & Yan (2021); Richland et al. (2009) | User explicitly told wrong answers are expected and beneficial |
-| **Mechanism:** Activates prior knowledge, creates "knowledge gaps," directs attention | Pretest responses analyzed to identify misconceptions for explicit addressing |
+| Research Finding                                                                       | Product Implementation                                                        |
+| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| **Finding:** Testing before learning improves subsequent encoding, even when 95% wrong | Every session begins with pretest on upcoming material                        |
+| **Effect Size:** d = 1.1; 12-13 percentage point advantages                            | Questions generated from content user hasn't seen yet                         |
+| **Source:** Pan & Yan (2021); Richland et al. (2009)                                   | User explicitly told wrong answers are expected and beneficial                |
+| **Mechanism:** Activates prior knowledge, creates "knowledge gaps," directs attention  | Pretest responses analyzed to identify misconceptions for explicit addressing |
 
 #### 2.1.5 Interleaving
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Mixing topics during practice improves long-term retention and transfer | Review sessions interleave concepts from different topics/sessions |
-| **Effect Size:** g = 0.42 overall; d = 0.83 for mathematics | When learning multiple courses, practice mixed across courses |
-| **Source:** Brunmair & Richter (2019); Rohrer et al. (2020) | Blocked practice available for true novices, then transitions to interleaved |
-| **Mechanism:** Forces discrimination learning, provides natural spacing | Interleaving degree adapts based on user tolerance and performance |
+| Research Finding                                                                     | Product Implementation                                                       |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| **Finding:** Mixing topics during practice improves long-term retention and transfer | Review sessions interleave concepts from different topics/sessions           |
+| **Effect Size:** g = 0.42 overall; d = 0.83 for mathematics                          | When learning multiple courses, practice mixed across courses                |
+| **Source:** Brunmair & Richter (2019); Rohrer et al. (2020)                          | Blocked practice available for true novices, then transitions to interleaved |
+| **Mechanism:** Forces discrimination learning, provides natural spacing              | Interleaving degree adapts based on user tolerance and performance           |
 
 #### 2.1.6 Sleep-Based Consolidation
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Memory consolidation occurs during sleep; critical 24-hour window | No new material introduced within 2 hours of typical bedtime |
-| **Effect Size:** Sleep deprivation reduces encoding by up to 40%; post-learning sleep improves retention by 20.6% | Morning sessions test previous day's material to measure consolidation |
-| **Source:** Matthew Walker, UC Berkeley; Potkin & Bunney (2012) | Optional pre-sleep review session (light review, not new material) |
-| **Mechanism:** Sharp-wave ripples + sleep spindles transfer memories from hippocampus to neocortex | Sleep duration optionally tracked and factors into capacity calculation |
+| Research Finding                                                                                                  | Product Implementation                                                  |
+| ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Finding:** Memory consolidation occurs during sleep; critical 24-hour window                                    | No new material introduced within 2 hours of typical bedtime            |
+| **Effect Size:** Sleep deprivation reduces encoding by up to 40%; post-learning sleep improves retention by 20.6% | Morning sessions test previous day's material to measure consolidation  |
+| **Source:** Matthew Walker, UC Berkeley; Potkin & Bunney (2012)                                                   | Optional pre-sleep review session (light review, not new material)      |
+| **Mechanism:** Sharp-wave ripples + sleep spindles transfer memories from hippocampus to neocortex                | Sleep duration optionally tracked and factors into capacity calculation |
 
 #### 2.1.7 Cognitive Load Theory
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Working memory limited to 3-4 chunks; exceeding capacity blocks learning | Maximum 3-4 new concepts per session (hard limit) |
-| **Effect Size:** Foundational constraint on all learning | Cognitive capacity budget calculated and enforced |
-| **Source:** Cowan (2010); Sweller (1988) | Complex concepts chunked into sub-concepts automatically |
-| **Mechanism:** Architectural constraint of human cognition | Session terminates or shifts to review when capacity depleted |
+| Research Finding                                                                      | Product Implementation                                        |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| **Finding:** Working memory limited to 3-4 chunks; exceeding capacity blocks learning | Maximum 3-4 new concepts per session (hard limit)             |
+| **Effect Size:** Foundational constraint on all learning                              | Cognitive capacity budget calculated and enforced             |
+| **Source:** Cowan (2010); Sweller (1988)                                              | Complex concepts chunked into sub-concepts automatically      |
+| **Mechanism:** Architectural constraint of human cognition                            | Session terminates or shifts to review when capacity depleted |
 
 #### 2.1.8 Desirable Difficulties
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
+| Research Finding                                                                          | Product Implementation                                                        |
+| ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | **Finding:** Learning that feels harder during practice produces better long-term results | App deliberately makes practice effortful (spacing, interleaving, generation) |
-| **Effect Size:** Meta-principle encompassing spacing, interleaving, retrieval | User education about why difficulty is beneficial |
-| **Source:** Robert Bjork research program | "Illusion of fluency" from easy methods explicitly counteracted |
-| **Key Insight:** Subjective ease during learning negatively predicts retention | Progress metrics focus on retention, not completion speed |
+| **Effect Size:** Meta-principle encompassing spacing, interleaving, retrieval             | User education about why difficulty is beneficial                             |
+| **Source:** Robert Bjork research program                                                 | "Illusion of fluency" from easy methods explicitly counteracted               |
+| **Key Insight:** Subjective ease during learning negatively predicts retention            | Progress metrics focus on retention, not completion speed                     |
 
 #### 2.1.9 Feedback Timing and Quality
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Feedback amplifies testing effect by approximately 2x | Every retrieval attempt receives feedback |
-| **Effect Size:** d = 0.73 with feedback vs d = 0.39 without | AI generates explanatory feedback (why right/wrong), not just correct/incorrect |
-| **Source:** Rowland (2014) meta-analysis | Feedback addresses specific misconceptions revealed in response |
-| **Quality Matters:** Elaborative feedback > simple correct/incorrect | Source material referenced in feedback when helpful |
+| Research Finding                                                     | Product Implementation                                                          |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **Finding:** Feedback amplifies testing effect by approximately 2x   | Every retrieval attempt receives feedback                                       |
+| **Effect Size:** d = 0.73 with feedback vs d = 0.39 without          | AI generates explanatory feedback (why right/wrong), not just correct/incorrect |
+| **Source:** Rowland (2014) meta-analysis                             | Feedback addresses specific misconceptions revealed in response                 |
+| **Quality Matters:** Elaborative feedback > simple correct/incorrect | Source material referenced in feedback when helpful                             |
 
 #### 2.1.10 Elaborative Interrogation
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** "Why" and "how" questions deepen understanding | Elaborative prompts generated for conceptual material |
-| **Effect Size:** d = 0.59 | Questions connect new concepts to prior knowledge |
-| **Source:** Dunlosky et al. (2013) | Method reserved for intermediate+ learners (requires prior knowledge) |
-| **Limitation:** Requires sufficient prior knowledge to answer | System tracks prerequisites and applies appropriately |
+| Research Finding                                              | Product Implementation                                                |
+| ------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Finding:** "Why" and "how" questions deepen understanding   | Elaborative prompts generated for conceptual material                 |
+| **Effect Size:** d = 0.59                                     | Questions connect new concepts to prior knowledge                     |
+| **Source:** Dunlosky et al. (2013)                            | Method reserved for intermediate+ learners (requires prior knowledge) |
+| **Limitation:** Requires sufficient prior knowledge to answer | System tracks prerequisites and applies appropriately                 |
 
 #### 2.1.11 Protégé Effect
 
-| Research Finding | Product Implementation |
-|------------------|------------------------|
-| **Finding:** Teaching improves learning dramatically | "Teach-back" feature where AI plays naive student role |
-| **Effect Size:** ~50% improvement vs restudying | AI asks clarifying questions, expresses confusion appropriately |
-| **Source:** Koh et al. (2018) | Available for conceptual and declarative material |
-| **Mechanism:** Increases metacognitive processing, identifies knowledge gaps | User explanations analyzed for completeness and misconceptions |
+| Research Finding                                                             | Product Implementation                                          |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| **Finding:** Teaching improves learning dramatically                         | "Teach-back" feature where AI plays naive student role          |
+| **Effect Size:** ~50% improvement vs restudying                              | AI asks clarifying questions, expresses confusion appropriately |
+| **Source:** Koh et al. (2018)                                                | Available for conceptual and declarative material               |
+| **Mechanism:** Increases metacognitive processing, identifies knowledge gaps | User explanations analyzed for completeness and misconceptions  |
 
 ### 2.2 Methods Explicitly NOT Prioritized
 
 Based on research showing limited effectiveness:
 
-| Method | Research Finding | Product Decision |
-|--------|------------------|------------------|
-| **Highlighting** | d = 0.44; may impair relational thinking | Not included as a feature |
-| **Re-reading** | d = 0.53; creates "illusion of fluency" | Actively discouraged; retrieval substituted |
-| **Passive video watching** | 5-10% retention without active elements | Source videos chunked and interspersed with active practice |
-| **Massed practice** | Inferior to distributed practice | Sessions enforce breaks; cannot "binge" |
+| Method                          | Research Finding                                         | Product Decision                                                 |
+| ------------------------------- | -------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Highlighting**                | d = 0.44; may impair relational thinking                 | Not included as a feature                                        |
+| **Re-reading**                  | d = 0.53; creates "illusion of fluency"                  | Actively discouraged; retrieval substituted                      |
+| **Passive video watching**      | 5-10% retention without active elements                  | Source videos chunked and interspersed with active practice      |
+| **Massed practice**             | Inferior to distributed practice                         | Sessions enforce breaks; cannot "binge"                          |
 | **Gamification (for learning)** | g = 0.72 engagement but g = 0.49 learning (inconsistent) | Limited gamification; focus on intrinsic motivation via progress |
 
 ### 2.3 Modality-Specific Research Applications
 
-| Learning Modality | Applicable Methods | Product Implementation |
-|-------------------|-------------------|------------------------|
-| **Declarative/Factual** | SRS, retrieval practice, successive relearning | Flashcard-style retrieval with FSRS scheduling |
-| **Conceptual** | Elaborative interrogation, productive failure, Socratic dialogue | "Why/how" prompts, problems before instruction, AI dialogue |
-| **Procedural (Cognitive)** | Worked examples, step-by-step retrieval | Procedure decomposition, step-cued recall |
-| **Procedural (Motor)** | Spacing, mental rehearsal (limited app applicability) | Coaching mode: preparation + consolidation, not primary practice |
-| **Software Proficiency** | UI simulation, decision scenarios, shortcut drilling | Interactive mockups, "what would you do" scenarios |
-| **Language** | SRS vocabulary, conversation simulation, pronunciation feedback | Full support with speech recognition integration |
-| **Perceptual** | Massive example exposure, discrimination training | Example curation, progressive difficulty, contrastive pairs |
-| **Strategic** | Problem generation, case-based scenarios | Novel problem generation, transfer testing |
+| Learning Modality          | Applicable Methods                                               | Product Implementation                                           |
+| -------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Declarative/Factual**    | SRS, retrieval practice, successive relearning                   | Flashcard-style retrieval with FSRS scheduling                   |
+| **Conceptual**             | Elaborative interrogation, productive failure, Socratic dialogue | "Why/how" prompts, problems before instruction, AI dialogue      |
+| **Procedural (Cognitive)** | Worked examples, step-by-step retrieval                          | Procedure decomposition, step-cued recall                        |
+| **Procedural (Motor)**     | Spacing, mental rehearsal (limited app applicability)            | Coaching mode: preparation + consolidation, not primary practice |
+| **Software Proficiency**   | UI simulation, decision scenarios, shortcut drilling             | Interactive mockups, "what would you do" scenarios               |
+| **Language**               | SRS vocabulary, conversation simulation, pronunciation feedback  | Full support with speech recognition integration                 |
+| **Perceptual**             | Massive example exposure, discrimination training                | Example curation, progressive difficulty, contrastive pairs      |
+| **Strategic**              | Problem generation, case-based scenarios                         | Novel problem generation, transfer testing                       |
 
 ---
 
@@ -281,6 +281,7 @@ Based on research showing limited effectiveness:
 **Purpose:** Transform raw passive content into structured, sequenced learning units.
 
 **Inputs:**
+
 - Video files (MP4, MOV, WebM)
 - PDF documents
 - Text/Markdown files
@@ -289,30 +290,30 @@ Based on research showing limited effectiveness:
 
 **Processing Steps:**
 
-| Step | Description | Output |
-|------|-------------|--------|
-| Extraction | Transcribe video/audio; OCR images; parse text structure | Raw text + visual elements |
-| Concept Identification | Identify discrete learnable units | List of concepts with definitions |
-| Relationship Mapping | Determine prerequisites, relationships, hierarchies | Knowledge graph |
-| Modality Classification | Categorize each concept by learning type | Modality tags per concept |
-| Difficulty Estimation | Score complexity (1-10) | Difficulty scores |
-| Sequencing | Order concepts by dependencies | Leveled curriculum |
+| Step                    | Description                                              | Output                            |
+| ----------------------- | -------------------------------------------------------- | --------------------------------- |
+| Extraction              | Transcribe video/audio; OCR images; parse text structure | Raw text + visual elements        |
+| Concept Identification  | Identify discrete learnable units                        | List of concepts with definitions |
+| Relationship Mapping    | Determine prerequisites, relationships, hierarchies      | Knowledge graph                   |
+| Modality Classification | Categorize each concept by learning type                 | Modality tags per concept         |
+| Difficulty Estimation   | Score complexity (1-10)                                  | Difficulty scores                 |
+| Sequencing              | Order concepts by dependencies                           | Leveled curriculum                |
 
 **Concept Extraction Rules:**
 
-| Content Type | Extraction Pattern |
-|--------------|-------------------|
-| Definitions | Explicit ("X is...") and implicit definitions |
-| Procedures | Step sequences, how-to instructions |
+| Content Type  | Extraction Pattern                                        |
+| ------------- | --------------------------------------------------------- |
+| Definitions   | Explicit ("X is...") and implicit definitions             |
+| Procedures    | Step sequences, how-to instructions                       |
 | Relationships | Causal (X causes Y), taxonomic (X is type of Y), temporal |
-| Examples | Concrete instances illustrating concepts |
-| Analogies | Comparisons used to explain concepts |
-| Prerequisites | Knowledge assumed by the content |
+| Examples      | Concrete instances illustrating concepts                  |
+| Analogies     | Comparisons used to explain concepts                      |
+| Prerequisites | Knowledge assumed by the content                          |
 
 **Difficulty Estimation Formula:**
 
 ```
-Difficulty Score = 
+Difficulty Score =
   (0.25 × Abstractness) +
   (0.25 × Prerequisite Depth) +
   (0.20 × Relational Complexity) +
@@ -356,6 +357,7 @@ Where each factor is scored 1-10.
 ```
 
 **Research Basis:**
+
 - Cognitive Load Theory: Chunking complex material into manageable units
 - Prerequisite mapping: Mastery-based progression (+5-8 months effect)
 - Difficulty sequencing: Worked examples for novices, productive failure for intermediates
@@ -368,27 +370,27 @@ Where each factor is scored 1-10.
 
 **Material Types Generated:**
 
-| Material Type | Description | Research Basis | When Used |
-|---------------|-------------|----------------|-----------|
-| **Pretest Questions** | Questions about content not yet seen | Pretesting effect (d = 1.1) | Before every new concept introduction |
-| **Free Recall Prompts** | Open-ended "explain in your own words" | Testing effect - free recall (g = 0.81) | Primary retrieval method |
-| **Cued Recall** | Fill-in-blank, complete the definition | Testing effect - cued recall (g = 0.50) | Supplementary retrieval |
-| **Recognition Questions** | Multiple choice, true/false | Testing effect - recognition (lower) | Early exposure, confidence building |
-| **Application Scenarios** | Novel situations requiring concept application | Transfer testing | Intermediate to advanced |
-| **Elaboration Prompts** | "Why does..." "How does..." questions | Elaborative interrogation (d = 0.59) | Conceptual material, intermediate+ |
-| **Discrimination Questions** | "What's the difference between X and Y?" | Interleaving mechanism | Related concepts |
-| **Teach-Back Prompts** | "Explain this to someone who doesn't know..." | Protégé effect (~50% improvement) | Conceptual consolidation |
-| **Productive Failure Problems** | Problems presented before instruction | Productive failure (d = 0.36, up to 3x) | STEM conceptual material |
+| Material Type                   | Description                                    | Research Basis                          | When Used                             |
+| ------------------------------- | ---------------------------------------------- | --------------------------------------- | ------------------------------------- |
+| **Pretest Questions**           | Questions about content not yet seen           | Pretesting effect (d = 1.1)             | Before every new concept introduction |
+| **Free Recall Prompts**         | Open-ended "explain in your own words"         | Testing effect - free recall (g = 0.81) | Primary retrieval method              |
+| **Cued Recall**                 | Fill-in-blank, complete the definition         | Testing effect - cued recall (g = 0.50) | Supplementary retrieval               |
+| **Recognition Questions**       | Multiple choice, true/false                    | Testing effect - recognition (lower)    | Early exposure, confidence building   |
+| **Application Scenarios**       | Novel situations requiring concept application | Transfer testing                        | Intermediate to advanced              |
+| **Elaboration Prompts**         | "Why does..." "How does..." questions          | Elaborative interrogation (d = 0.59)    | Conceptual material, intermediate+    |
+| **Discrimination Questions**    | "What's the difference between X and Y?"       | Interleaving mechanism                  | Related concepts                      |
+| **Teach-Back Prompts**          | "Explain this to someone who doesn't know..."  | Protégé effect (~50% improvement)       | Conceptual consolidation              |
+| **Productive Failure Problems** | Problems presented before instruction          | Productive failure (d = 0.36, up to 3x) | STEM conceptual material              |
 
 **Generation Quality Requirements:**
 
-| Requirement | Specification |
-|-------------|---------------|
-| Variety | Minimum 5 distinct questions per concept |
+| Requirement         | Specification                                       |
+| ------------------- | --------------------------------------------------- |
+| Variety             | Minimum 5 distinct questions per concept            |
 | Difficulty gradient | Questions span recognition → application → transfer |
-| Distractor quality | MC distractors based on common misconceptions |
-| Answer validation | AI can evaluate free-response accuracy |
-| Feedback depth | Each question has explanatory feedback prepared |
+| Distractor quality  | MC distractors based on common misconceptions       |
+| Answer validation   | AI can evaluate free-response accuracy              |
+| Feedback depth      | Each question has explanatory feedback prepared     |
 
 **Question Generation Prompt Template:**
 
@@ -435,51 +437,52 @@ Where:
 
 **Sleep Modifier Table:**
 
-| Hours Slept | Modifier | Research Basis |
-|-------------|----------|----------------|
-| < 5 hours | 0.60 | Walker: 40% encoding reduction with deprivation |
-| 5-6 hours | 0.80 | Partial deprivation effects |
-| 6-7 hours | 0.90 | Mild reduction |
-| 7-8 hours | 1.00 | Baseline (optimal) |
-| 8+ hours | 1.10 | Slight boost from extra sleep |
+| Hours Slept | Modifier | Research Basis                                  |
+| ----------- | -------- | ----------------------------------------------- |
+| < 5 hours   | 0.60     | Walker: 40% encoding reduction with deprivation |
+| 5-6 hours   | 0.80     | Partial deprivation effects                     |
+| 6-7 hours   | 0.90     | Mild reduction                                  |
+| 7-8 hours   | 1.00     | Baseline (optimal)                              |
+| 8+ hours    | 1.10     | Slight boost from extra sleep                   |
 
 **Circadian Modifier Table:**
 
-| Time Window | Modifier | Rationale |
-|-------------|----------|-----------|
-| 6-9 AM | 1.00 | Morning baseline |
-| 9-11 AM | 1.15 | Peak alertness for most chronotypes |
-| 11 AM - 1 PM | 1.00 | Baseline |
-| 1-3 PM | 0.85 | Post-lunch dip |
-| 3-6 PM | 1.00 | Afternoon recovery |
-| 6-8 PM | 1.00 | Evening baseline |
-| 8-10 PM | 0.95 | Evening decline begins |
-| 10 PM - 12 AM | 0.85 | Late evening reduction |
-| After 12 AM | 0.70 | Consolidation window approaching |
+| Time Window   | Modifier | Rationale                           |
+| ------------- | -------- | ----------------------------------- |
+| 6-9 AM        | 1.00     | Morning baseline                    |
+| 9-11 AM       | 1.15     | Peak alertness for most chronotypes |
+| 11 AM - 1 PM  | 1.00     | Baseline                            |
+| 1-3 PM        | 0.85     | Post-lunch dip                      |
+| 3-6 PM        | 1.00     | Afternoon recovery                  |
+| 6-8 PM        | 1.00     | Evening baseline                    |
+| 8-10 PM       | 0.95     | Evening decline begins              |
+| 10 PM - 12 AM | 0.85     | Late evening reduction              |
+| After 12 AM   | 0.70     | Consolidation window approaching    |
 
 **Fatigue Modifier (Intra-Day):**
 
-| Capacity Used | Modifier on New Material | Behavior |
-|---------------|-------------------------|----------|
-| 0-50% | 1.00 | Full efficiency |
-| 50-75% | 0.90 | Slight reduction, no warning |
-| 75-90% | 0.75 | Warn user, suggest stopping |
-| 90-100% | 0.50 | Strong warning, recommend review only |
-| >100% | 0.00 | Block new material entirely |
+| Capacity Used | Modifier on New Material | Behavior                              |
+| ------------- | ------------------------ | ------------------------------------- |
+| 0-50%         | 1.00                     | Full efficiency                       |
+| 50-75%        | 0.90                     | Slight reduction, no warning          |
+| 75-90%        | 0.75                     | Warn user, suggest stopping           |
+| 90-100%       | 0.50                     | Strong warning, recommend review only |
+| >100%         | 0.00                     | Block new material entirely           |
 
 **Concept Load Costs:**
 
-| Concept Type | Base Cost | Modifiers |
-|--------------|-----------|-----------|
-| Simple declarative fact | 3 units | +1 if abstract, +2 if novel domain |
-| Definition with relationships | 4 units | +1 per unfamiliar related concept |
-| Relational/conceptual | 5 units | +1 per prerequisite learned same session |
-| Procedural (3-5 steps) | 7 units | +2 if software-based |
-| Procedural (6+ steps) | 12 units | Should be auto-chunked |
-| Strategic/decision | 8 units | +3 if multiple conditions |
-| Perceptual pattern | 6 units | -2 if multiple examples shown |
+| Concept Type                  | Base Cost | Modifiers                                |
+| ----------------------------- | --------- | ---------------------------------------- |
+| Simple declarative fact       | 3 units   | +1 if abstract, +2 if novel domain       |
+| Definition with relationships | 4 units   | +1 per unfamiliar related concept        |
+| Relational/conceptual         | 5 units   | +1 per prerequisite learned same session |
+| Procedural (3-5 steps)        | 7 units   | +2 if software-based                     |
+| Procedural (6+ steps)         | 12 units  | Should be auto-chunked                   |
+| Strategic/decision            | 8 units   | +3 if multiple conditions                |
+| Perceptual pattern            | 6 units   | -2 if multiple examples shown            |
 
 **Review Cost:**
+
 - Review items cost 30-50% of original learning cost
 - Cost decreases as strength increases
 
@@ -522,7 +525,7 @@ SESSION TEMPLATE
 3. REVIEW BLOCK (if due items exist, ~3-5 min)
    - Spaced repetition items due today
    - Interleaved with new material
-   
+
 4. NEW MATERIAL BLOCKS (repeated for each concept)
    a. Concept Introduction (~1 min)
    b. Immediate Retrieval (~1 min)
@@ -545,19 +548,19 @@ SESSION TEMPLATE
 def construct_session(user, course, time_available):
     # Step 1: Calculate capacity
     capacity = calculate_effective_capacity(user)
-    
+
     # Step 2: Get due reviews
     due_reviews = fsrs.get_due_items(user, course)
     review_cost = sum(item.review_cost for item in due_reviews)
-    
-    # Step 3: Calculate new material budget  
+
+    # Step 3: Calculate new material budget
     new_budget = capacity - review_cost
-    
+
     # Step 4: Select new concepts
     available_concepts = get_unlocked_concepts(user, course)
     selected_concepts = []
     running_cost = 0
-    
+
     for concept in prioritize_by_dependency(available_concepts):
         cost = calculate_concept_cost(concept, user, selected_concepts)
         if running_cost + cost <= new_budget and len(selected_concepts) < 4:
@@ -565,10 +568,10 @@ def construct_session(user, course, time_available):
             running_cost += cost
         if len(selected_concepts) >= 4:  # Hard limit
             break
-    
+
     # Step 5: Select methods based on user profile
     methods = select_methods(user.method_effectiveness, selected_concepts)
-    
+
     # Step 6: Generate session content
     session = Session(
         pretest=generate_pretest(selected_concepts),
@@ -578,21 +581,21 @@ def construct_session(user, course, time_available):
         consolidation=generate_consolidation_practice(selected_concepts),
         estimated_duration=estimate_duration(selected_concepts, due_reviews)
     )
-    
+
     # Step 7: Time-based adjustments
     if is_near_bedtime(user):
         session = shift_to_review_only(session)
-    
+
     return session
 ```
 
 **Session Length Guidelines:**
 
 | User Preference | Target Duration | New Concepts | Review Items |
-|-----------------|-----------------|--------------|--------------|
-| 5-10 minutes | 8 min | 1-2 | 5-10 |
-| 10-20 minutes | 15 min | 2-3 | 10-15 |
-| 20-30 minutes | 25 min | 3-4 | 15-25 |
+| --------------- | --------------- | ------------ | ------------ |
+| 5-10 minutes    | 8 min           | 1-2          | 5-10         |
+| 10-20 minutes   | 15 min          | 2-3          | 10-15        |
+| 20-30 minutes   | 25 min          | 3-4          | 15-25        |
 
 **Interleaving Strategy:**
 
@@ -608,26 +611,26 @@ def construct_session(user, course, time_available):
 
 **Signal Types:**
 
-| Signal | Measurement | Interpretation |
-|--------|-------------|----------------|
-| **Accuracy** | Correct/Incorrect/Partial | Direct measure of knowledge state |
-| **Latency** | Time from question display to response | Automaticity indicator |
-| **Confidence** | Self-reported (1-5 scale) | Calibration assessment |
-| **Explanation Quality** | AI-evaluated free response | Depth of understanding |
-| **Transfer Success** | Performance on novel applications | True comprehension vs memorization |
+| Signal                  | Measurement                            | Interpretation                     |
+| ----------------------- | -------------------------------------- | ---------------------------------- |
+| **Accuracy**            | Correct/Incorrect/Partial              | Direct measure of knowledge state  |
+| **Latency**             | Time from question display to response | Automaticity indicator             |
+| **Confidence**          | Self-reported (1-5 scale)              | Calibration assessment             |
+| **Explanation Quality** | AI-evaluated free response             | Depth of understanding             |
+| **Transfer Success**    | Performance on novel applications      | True comprehension vs memorization |
 
 **Combined Signal Interpretation Matrix:**
 
-| Accuracy | Latency | Confidence | Interpretation | Action |
-|----------|---------|------------|----------------|--------|
-| Correct | Fast | High | Strong encoding | Advance, space longer |
-| Correct | Fast | Low | Underconfident | Encourage, normal spacing |
-| Correct | Slow | High | Developing automaticity | More practice needed |
-| Correct | Slow | Low | Fragile knowledge | More practice, shorter spacing |
-| Incorrect | Fast | High | **Confident misconception** | **Priority intervention** |
-| Incorrect | Fast | Low | Guessing | Re-teach |
-| Incorrect | Slow | High | Partial knowledge, overconfidence | Clarify, more examples |
-| Incorrect | Slow | Low | Appropriate uncertainty | Re-teach, simpler questions |
+| Accuracy  | Latency | Confidence | Interpretation                    | Action                         |
+| --------- | ------- | ---------- | --------------------------------- | ------------------------------ |
+| Correct   | Fast    | High       | Strong encoding                   | Advance, space longer          |
+| Correct   | Fast    | Low        | Underconfident                    | Encourage, normal spacing      |
+| Correct   | Slow    | High       | Developing automaticity           | More practice needed           |
+| Correct   | Slow    | Low        | Fragile knowledge                 | More practice, shorter spacing |
+| Incorrect | Fast    | High       | **Confident misconception**       | **Priority intervention**      |
+| Incorrect | Fast    | Low        | Guessing                          | Re-teach                       |
+| Incorrect | Slow    | High       | Partial knowledge, overconfidence | Clarify, more examples         |
+| Incorrect | Slow    | Low        | Appropriate uncertainty           | Re-teach, simpler questions    |
 
 **Explanation Quality Evaluation:**
 
@@ -652,14 +655,14 @@ AI evaluates free responses against criteria:
 
 **In-Session Adaptation Rules:**
 
-| Pattern Detected | Adaptation |
-|------------------|------------|
-| Multiple fast+correct | Skip remaining basic questions, advance to application |
-| Fast+incorrect (confident misconception) | Halt progression, address misconception immediately |
-| Declining accuracy over session | Suggest shortening session, shift to review |
-| Slow responses increasing | Fatigue detected, offer break or end session |
-| Consistent overconfidence | Increase difficulty, add more transfer questions |
-| Consistent underconfidence | Add encouragement, start with easier questions |
+| Pattern Detected                         | Adaptation                                             |
+| ---------------------------------------- | ------------------------------------------------------ |
+| Multiple fast+correct                    | Skip remaining basic questions, advance to application |
+| Fast+incorrect (confident misconception) | Halt progression, address misconception immediately    |
+| Declining accuracy over session          | Suggest shortening session, shift to review            |
+| Slow responses increasing                | Fatigue detected, offer break or end session           |
+| Consistent overconfidence                | Increase difficulty, add more transfer questions       |
+| Consistent underconfidence               | Add encouragement, start with easier questions         |
 
 **Misconception Detection Protocol:**
 
@@ -727,17 +730,17 @@ When confident misconception detected:
 
 **State Transition Criteria:**
 
-| Transition | Criteria |
-|------------|----------|
-| UNSEEN → EXPOSED | Concept introduced to user |
-| EXPOSED → FRAGILE | First correct retrieval attempt |
-| EXPOSED → MISCONCEIVED | First incorrect + high confidence |
-| FRAGILE → DEVELOPING | 2+ consecutive correct retrievals |
-| DEVELOPING → SOLID | Fast + correct + successful transfer question |
-| SOLID → MASTERED | Criterion met across 3+ sessions with expanding intervals |
-| MISCONCEIVED → CORRECTED | Corrective feedback + successful re-retrieval |
-| CORRECTED → DEVELOPING | 2+ correct retrievals post-correction |
-| Any → Degraded | Incorrect after period of success (strength decayed) |
+| Transition               | Criteria                                                  |
+| ------------------------ | --------------------------------------------------------- |
+| UNSEEN → EXPOSED         | Concept introduced to user                                |
+| EXPOSED → FRAGILE        | First correct retrieval attempt                           |
+| EXPOSED → MISCONCEIVED   | First incorrect + high confidence                         |
+| FRAGILE → DEVELOPING     | 2+ consecutive correct retrievals                         |
+| DEVELOPING → SOLID       | Fast + correct + successful transfer question             |
+| SOLID → MASTERED         | Criterion met across 3+ sessions with expanding intervals |
+| MISCONCEIVED → CORRECTED | Corrective feedback + successful re-retrieval             |
+| CORRECTED → DEVELOPING   | 2+ correct retrievals post-correction                     |
+| Any → Degraded           | Incorrect after period of success (strength decayed)      |
 
 **Strength Decay Model (FSRS-based):**
 
@@ -748,7 +751,7 @@ R(t) = e^(-t/S)
 Where:
 - t = time since last review
 - S = stability (learned per user per concept)
-  
+
 Stability increases with each successful review:
 S_new = S_old × (1 + a × e^(-b × S_old))
 
@@ -823,9 +826,9 @@ For each learning method, track per user:
   "engagement_score": 0.71,
   "composite_score": 0.78,
   "by_modality": {
-    "declarative": {"uses": 23, "retention": 0.85},
-    "conceptual": {"uses": 18, "retention": 0.79},
-    "procedural": {"uses": 6, "retention": 0.78}
+    "declarative": { "uses": 23, "retention": 0.85 },
+    "conceptual": { "uses": 18, "retention": 0.79 },
+    "procedural": { "uses": 6, "retention": 0.78 }
   },
   "trend": "stable"
 }
@@ -851,44 +854,44 @@ Engagement measured by:
 ```python
 def select_method(user_profile, concept, session_context):
     applicable_methods = get_applicable_methods(concept.modality)
-    
+
     # Calculate selection probability for each method
     probabilities = {}
     for method in applicable_methods:
         effectiveness = user_profile.method_scores.get(method, 0.5)
         uses = user_profile.method_uses.get(method, 0)
-        
+
         # Exploration bonus decays with use
         exploration_bonus = 0.3 / sqrt(uses + 1)
-        
+
         probabilities[method] = effectiveness * (1 + exploration_bonus)
-    
+
     # Normalize probabilities
     total = sum(probabilities.values())
     probabilities = {m: p/total for m, p in probabilities.items()}
-    
+
     # Ensure minimum exploration (10% floor)
     for method in applicable_methods:
         probabilities[method] = max(probabilities[method], 0.10)
-    
+
     # Re-normalize after floor
     total = sum(probabilities.values())
     probabilities = {m: p/total for m, p in probabilities.items()}
-    
+
     # Sample method
     return weighted_random_choice(probabilities)
 ```
 
 **Exploration Triggers:**
 
-| Trigger | Action |
-|---------|--------|
-| New content modality encountered | Force exploration of modality-appropriate methods |
-| Method effectiveness declining | Increase exploration probability |
-| User requests variety | Temporary boost to exploration |
-| Every 10th session | Forced exploration session (try 2+ under-tested methods) |
-| Profile convergence < 50% | Higher exploration ratio |
-| Profile convergence > 80% | Exploitation-heavy ratio |
+| Trigger                          | Action                                                   |
+| -------------------------------- | -------------------------------------------------------- |
+| New content modality encountered | Force exploration of modality-appropriate methods        |
+| Method effectiveness declining   | Increase exploration probability                         |
+| User requests variety            | Temporary boost to exploration                           |
+| Every 10th session               | Forced exploration session (try 2+ under-tested methods) |
+| Profile convergence < 50%        | Higher exploration ratio                                 |
+| Profile convergence > 80%        | Exploitation-heavy ratio                                 |
 
 **Profile Convergence Measurement:**
 
@@ -902,14 +905,14 @@ A method trend is "stable" if:
 
 **Personalization Dimensions:**
 
-| Dimension | Options | How Learned |
-|-----------|---------|-------------|
-| Question format preference | Free recall, cued, MC, explain | Retention comparison across formats |
-| Optimal session length | 5, 10, 15, 20, 25 min | Completion rates, fatigue patterns |
-| Interleaving tolerance | High, medium, low | Performance under different mix ratios |
-| Difficulty preference | Gradual, challenging | Engagement + retention at different levels |
-| Best time of day | Morning, afternoon, evening | Performance variance by time |
-| Feedback preference | Immediate, brief pause, detailed | Engagement signals |
+| Dimension                  | Options                          | How Learned                                |
+| -------------------------- | -------------------------------- | ------------------------------------------ |
+| Question format preference | Free recall, cued, MC, explain   | Retention comparison across formats        |
+| Optimal session length     | 5, 10, 15, 20, 25 min            | Completion rates, fatigue patterns         |
+| Interleaving tolerance     | High, medium, low                | Performance under different mix ratios     |
+| Difficulty preference      | Gradual, challenging             | Engagement + retention at different levels |
+| Best time of day           | Morning, afternoon, evening      | Performance variance by time               |
+| Feedback preference        | Immediate, brief pause, detailed | Engagement signals                         |
 
 ---
 
@@ -991,11 +994,13 @@ All user data, projects, sources, and learning progress are persistently stored 
 ```
 
 **Authentication Methods:**
+
 - Email/password with verification
 - OAuth (Google, Apple)
 - Optional: SSO for enterprise deployments
 
 **Data Privacy:**
+
 - All user data encrypted at rest
 - User can export all data (GDPR compliance)
 - User can delete account and all associated data
@@ -1026,7 +1031,7 @@ All user data, projects, sources, and learning progress are persistently stored 
       "status": "analyzed"
     },
     {
-      "source_id": "src_002", 
+      "source_id": "src_002",
       "added_at": "2024-03-15T14:00:00Z",
       "status": "analyzed"
     },
@@ -1050,15 +1055,15 @@ All user data, projects, sources, and learning progress are persistently stored 
 
 **Project Lifecycle:**
 
-| State | Description |
-|-------|-------------|
-| **draft** | Project created, no sources yet |
-| **analyzing** | Sources being processed |
-| **ready** | Roadmap generated, ready to learn |
-| **active** | User actively learning |
-| **paused** | User paused (vacation mode) |
-| **completed** | All roadmap milestones achieved |
-| **maintenance** | In long-term retention mode |
+| State           | Description                       |
+| --------------- | --------------------------------- |
+| **draft**       | Project created, no sources yet   |
+| **analyzing**   | Sources being processed           |
+| **ready**       | Roadmap generated, ready to learn |
+| **active**      | User actively learning            |
+| **paused**      | User paused (vacation mode)       |
+| **completed**   | All roadmap milestones achieved   |
+| **maintenance** | In long-term retention mode       |
 
 #### 3.3.4 Source Model
 
@@ -1099,7 +1104,7 @@ All user data, projects, sources, and learning progress are persistently stored 
       "procedural": 8,
       "conditional": 4
     },
-    "difficulty_range": {"min": 2, "max": 7, "avg": 4.2},
+    "difficulty_range": { "min": 2, "max": 7, "avg": 4.2 },
     "prerequisite_concepts_assumed": ["basic_math", "stock_market_basics"],
     "key_topics": ["calls", "puts", "strike_price", "expiration", "premium"]
   },
@@ -1116,14 +1121,14 @@ All user data, projects, sources, and learning progress are persistently stored 
 
 **Supported Source Types:**
 
-| Type | Formats | Processing |
-|------|---------|------------|
-| Video | MP4, MOV, WebM, YouTube URL | Transcription + visual extraction |
-| Audio | MP3, M4A, WAV, podcast URL | Transcription |
-| Document | PDF, DOCX | OCR + text extraction |
-| Text | MD, TXT, HTML | Direct parsing |
-| Web | Article URLs | Content extraction |
-| Slides | PPTX, Google Slides | Slide-by-slide extraction |
+| Type     | Formats                     | Processing                        |
+| -------- | --------------------------- | --------------------------------- |
+| Video    | MP4, MOV, WebM, YouTube URL | Transcription + visual extraction |
+| Audio    | MP3, M4A, WAV, podcast URL  | Transcription                     |
+| Document | PDF, DOCX                   | OCR + text extraction             |
+| Text     | MD, TXT, HTML               | Direct parsing                    |
+| Web      | Article URLs                | Content extraction                |
+| Slides   | PPTX, Google Slides         | Slide-by-slide extraction         |
 
 #### 3.3.5 Unified Knowledge Graph
 
@@ -1144,8 +1149,8 @@ All user data, projects, sources, and learning progress are persistently stored 
       "name": "Call Option",
       "description": "Synthesized from multiple sources",
       "source_mappings": [
-        {"source_id": "src_001", "original_concept_id": "cpt_001", "timestamp": "2:00-4:00"},
-        {"source_id": "src_002", "original_concept_id": "cpt_pdf_12", "pages": "15-17"}
+        { "source_id": "src_001", "original_concept_id": "cpt_001", "timestamp": "2:00-4:00" },
+        { "source_id": "src_002", "original_concept_id": "cpt_pdf_12", "pages": "15-17" }
       ],
       "difficulty": 3,
       "cognitive_type": "declarative_conceptual",
@@ -1235,7 +1240,7 @@ WHEN new source added to project:
   "generated_at": "2024-06-01T10:30:00Z",
   "source_versions": {
     "src_001": "v1",
-    "src_002": "v1", 
+    "src_002": "v1",
     "src_003": "v1"
   },
   "total_concepts": 87,
@@ -1339,6 +1344,7 @@ WHEN new source added to project:
 **Example: Adding "Part 2" to Existing Course**
 
 Before:
+
 ```
 Project: "Options Trading"
 Sources: [Options Basics (video)]
@@ -1349,6 +1355,7 @@ Progress: Level 5, 32/45 concepts at Developing+
 User adds: "Advanced Options Strategies (Part 2)" (video)
 
 After:
+
 ```
 Project: "Options Trading"
 Sources: [Options Basics, Advanced Strategies Part 2]
@@ -1361,7 +1368,7 @@ User Message:
 
 📊 What changed:
 • 33 new concepts added
-• 5 existing concepts now have additional material  
+• 5 existing concepts now have additional material
 • Roadmap extended: Levels 8-12 added
 • Your current progress is preserved
 
@@ -1407,9 +1414,9 @@ You'll start seeing it after Level 7."
         "review_count": 8
       },
       "history": [
-        {"date": "2024-03-05", "action": "exposed", "score": null},
-        {"date": "2024-03-06", "action": "tested", "score": 0.6},
-        {"date": "2024-03-08", "action": "tested", "score": 0.85}
+        { "date": "2024-03-05", "action": "exposed", "score": null },
+        { "date": "2024-03-06", "action": "tested", "score": 0.6 },
+        { "date": "2024-03-08", "action": "tested", "score": 0.85 }
       ]
     }
   },
@@ -1510,26 +1517,26 @@ s3://learning-app-data/
 
 **Database Schema (Relational):**
 
-| Table | Purpose | Key Fields |
-|-------|---------|------------|
-| `users` | User accounts | user_id, email, created_at, subscription |
-| `user_profiles` | Preferences, global stats | user_id, preferences_json, learning_stats_json |
-| `projects` | Project metadata | project_id, user_id, title, status, settings_json |
-| `sources` | Source files | source_id, project_id, type, analysis_status |
-| `concepts` | Individual concepts | concept_id, source_id, project_id, name, cognitive_type |
-| `concept_states` | User progress per concept | user_id, concept_id, state, fsrs_json |
-| `sessions` | Learning session records | session_id, user_id, project_id, started_at, duration |
-| `interactions` | Individual interaction records | interaction_id, session_id, concept_id, type, outcome |
-| `feedback` | User feedback on interactions | feedback_id, interaction_id, rating, reason |
+| Table            | Purpose                        | Key Fields                                              |
+| ---------------- | ------------------------------ | ------------------------------------------------------- |
+| `users`          | User accounts                  | user_id, email, created_at, subscription                |
+| `user_profiles`  | Preferences, global stats      | user_id, preferences_json, learning_stats_json          |
+| `projects`       | Project metadata               | project_id, user_id, title, status, settings_json       |
+| `sources`        | Source files                   | source_id, project_id, type, analysis_status            |
+| `concepts`       | Individual concepts            | concept_id, source_id, project_id, name, cognitive_type |
+| `concept_states` | User progress per concept      | user_id, concept_id, state, fsrs_json                   |
+| `sessions`       | Learning session records       | session_id, user_id, project_id, started_at, duration   |
+| `interactions`   | Individual interaction records | interaction_id, session_id, concept_id, type, outcome   |
+| `feedback`       | User feedback on interactions  | feedback_id, interaction_id, rating, reason             |
 
 **Sync & Offline Considerations:**
 
-| Scenario | Behavior |
-|----------|----------|
-| Offline session | Store locally, sync on reconnect |
+| Scenario            | Behavior                                            |
+| ------------------- | --------------------------------------------------- |
+| Offline session     | Store locally, sync on reconnect                    |
 | Conflict resolution | Last-write-wins for progress; merge for preferences |
-| Large source upload | Background upload with progress indicator |
-| Multi-device | Real-time sync of progress state |
+| Large source upload | Background upload with progress indicator           |
+| Multi-device        | Real-time sync of progress state                    |
 
 ---
 
@@ -1571,23 +1578,23 @@ The platform offers flexible deployment options to accommodate different user ne
 
 **Pricing Philosophy:** Learning is an investment. Pricing should be accessible enough that cost isn't a barrier, but sustainable enough to fund continuous improvement.
 
-| Tier | Price | AI Tokens Included | Storage | Features |
-|------|-------|-------------------|---------|----------|
-| **Free** | $0/mo | 50K tokens/mo (~3-5 sessions) | 1 project, 1 source | Basic features, try before you buy |
-| **Learner** | $12/mo | 500K tokens/mo (~30-40 sessions) | 5 projects, 20 sources | Full features, email support |
-| **Pro** | $29/mo | 2M tokens/mo (~120+ sessions) | Unlimited projects/sources | Priority support, advanced analytics |
-| **Team** | $25/user/mo | 3M tokens/user/mo | Shared workspace | Admin controls, team analytics, SSO |
-| **Enterprise** | Custom | Custom | Custom | On-prem option, SLA, dedicated support |
+| Tier           | Price       | AI Tokens Included               | Storage                    | Features                               |
+| -------------- | ----------- | -------------------------------- | -------------------------- | -------------------------------------- |
+| **Free**       | $0/mo       | 50K tokens/mo (~3-5 sessions)    | 1 project, 1 source        | Basic features, try before you buy     |
+| **Learner**    | $12/mo      | 500K tokens/mo (~30-40 sessions) | 5 projects, 20 sources     | Full features, email support           |
+| **Pro**        | $29/mo      | 2M tokens/mo (~120+ sessions)    | Unlimited projects/sources | Priority support, advanced analytics   |
+| **Team**       | $25/user/mo | 3M tokens/user/mo                | Shared workspace           | Admin controls, team analytics, SSO    |
+| **Enterprise** | Custom      | Custom                           | Custom                     | On-prem option, SLA, dedicated support |
 
 **Token Usage Estimates (per learning session):**
 
-| Activity | Estimated Tokens |
-|----------|------------------|
-| Content analysis (1-hour video) | 50K-100K tokens |
-| Daily learning session (15 min) | 10K-20K tokens |
-| Interactive simulation (complex) | 5K-15K tokens |
-| Open-ended assessment | 2K-5K tokens |
-| Roadmap regeneration | 10K-30K tokens |
+| Activity                         | Estimated Tokens |
+| -------------------------------- | ---------------- |
+| Content analysis (1-hour video)  | 50K-100K tokens  |
+| Daily learning session (15 min)  | 10K-20K tokens   |
+| Interactive simulation (complex) | 5K-15K tokens    |
+| Open-ended assessment            | 2K-5K tokens     |
+| Roadmap regeneration             | 10K-30K tokens   |
 
 **Overage Handling:**
 
@@ -1606,31 +1613,31 @@ IF user_exceeds_monthly_tokens:
 
 The platform uses a tiered model strategy to balance quality and cost:
 
-| Task Type | Default Model | Rationale |
-|-----------|---------------|-----------|
-| **Content Analysis** | Claude Sonnet | Complex reasoning needed for concept extraction |
-| **Interactive Simulations** | Claude Sonnet | Code generation requires strong capabilities |
-| **Open-Ended Assessment** | Claude Sonnet | Nuanced evaluation of user responses |
-| **Simple Q&A Generation** | Claude Haiku | High volume, lower complexity |
-| **Retrieval Practice** | Claude Haiku | Efficient for routine interactions |
-| **Troubleshooting Flows** | Claude Sonnet | Requires diagnostic reasoning |
+| Task Type                   | Default Model | Rationale                                       |
+| --------------------------- | ------------- | ----------------------------------------------- |
+| **Content Analysis**        | Claude Sonnet | Complex reasoning needed for concept extraction |
+| **Interactive Simulations** | Claude Sonnet | Code generation requires strong capabilities    |
+| **Open-Ended Assessment**   | Claude Sonnet | Nuanced evaluation of user responses            |
+| **Simple Q&A Generation**   | Claude Haiku  | High volume, lower complexity                   |
+| **Retrieval Practice**      | Claude Haiku  | Efficient for routine interactions              |
+| **Troubleshooting Flows**   | Claude Sonnet | Requires diagnostic reasoning                   |
 
 **Model Pricing Reference (as of late 2025):**
 
-| Model | Input (per 1M tokens) | Output (per 1M tokens) | Best For |
-|-------|----------------------|------------------------|----------|
-| Claude Opus 4.5 | $15 | $75 | Mission-critical, highest quality |
-| Claude Sonnet 4.5 | $3 | $15 | Balanced quality/cost (default) |
-| Claude Haiku 4.5 | $1 | $5 | High volume, cost-sensitive |
+| Model             | Input (per 1M tokens) | Output (per 1M tokens) | Best For                          |
+| ----------------- | --------------------- | ---------------------- | --------------------------------- |
+| Claude Opus 4.5   | $15                   | $75                    | Mission-critical, highest quality |
+| Claude Sonnet 4.5 | $3                    | $15                    | Balanced quality/cost (default)   |
+| Claude Haiku 4.5  | $1                    | $5                     | High volume, cost-sensitive       |
 
 **Cost Optimization Strategies:**
 
-| Strategy | Implementation | Savings |
-|----------|----------------|---------|
-| Prompt caching | Cache repeated context (source summaries, user profile) | Up to 90% on cached reads |
-| Batch processing | Non-urgent tasks (overnight analysis) use batch API | 50% discount |
-| Model routing | Use Haiku for simple tasks, Sonnet for complex | 50-70% overall |
-| Response caching | Cache common interaction patterns | Variable |
+| Strategy         | Implementation                                          | Savings                   |
+| ---------------- | ------------------------------------------------------- | ------------------------- |
+| Prompt caching   | Cache repeated context (source summaries, user profile) | Up to 90% on cached reads |
+| Batch processing | Non-urgent tasks (overnight analysis) use batch API     | 50% discount              |
+| Model routing    | Use Haiku for simple tasks, Sonnet for complex          | 50-70% overall            |
+| Response caching | Cache common interaction patterns                       | Variable                  |
 
 #### 3.4.4 Bring Your Own Key (BYOK) Mode
 
@@ -1638,20 +1645,21 @@ The platform uses a tiered model strategy to balance quality and cost:
 
 **Supported Providers:**
 
-| Provider | Models Supported | Integration Method |
-|----------|------------------|-------------------|
-| **Anthropic** | Claude Opus, Sonnet, Haiku | Direct API |
-| **OpenAI** | GPT-4o, GPT-4 Turbo, GPT-3.5 | Direct API |
-| **Google** | Gemini Pro, Gemini Flash | Direct API |
-| **OpenRouter** | 100+ models via unified API | Aggregator API |
-| **Amazon Bedrock** | Claude, Titan, others | AWS SDK |
-| **Azure OpenAI** | GPT-4, GPT-3.5 | Azure SDK |
+| Provider           | Models Supported             | Integration Method |
+| ------------------ | ---------------------------- | ------------------ |
+| **Anthropic**      | Claude Opus, Sonnet, Haiku   | Direct API         |
+| **OpenAI**         | GPT-4o, GPT-4 Turbo, GPT-3.5 | Direct API         |
+| **Google**         | Gemini Pro, Gemini Flash     | Direct API         |
+| **OpenRouter**     | 100+ models via unified API  | Aggregator API     |
+| **Amazon Bedrock** | Claude, Titan, others        | AWS SDK            |
+| **Azure OpenAI**   | GPT-4, GPT-3.5               | Azure SDK          |
 
 **OpenRouter Integration (Recommended for Flexibility):**
 
 OpenRouter is a unified interface for Large Language Models, providing access to various models and prices through a single endpoint. It allows users to access major models through a single, unified interface, compatible with the OpenAI SDK.
 
 Benefits of OpenRouter for BYOK users:
+
 - Single API key for 100+ models
 - Automatic fallbacks if a provider is down
 - Price optimization across providers
@@ -1664,7 +1672,7 @@ Benefits of OpenRouter for BYOK users:
   "api_configuration": {
     "mode": "byok",
     "provider": "openrouter",
-    "api_key": "sk-or-v1-xxxx",  // Encrypted at rest
+    "api_key": "sk-or-v1-xxxx", // Encrypted at rest
     "model_preferences": {
       "content_analysis": "anthropic/claude-sonnet-4",
       "simulations": "anthropic/claude-sonnet-4",
@@ -1672,8 +1680,8 @@ Benefits of OpenRouter for BYOK users:
       "fallback": "openai/gpt-4o"
     },
     "budget_limits": {
-      "daily_max_usd": 5.00,
-      "monthly_max_usd": 50.00,
+      "daily_max_usd": 5.0,
+      "monthly_max_usd": 50.0,
       "alert_threshold_percent": 80
     }
   }
@@ -1682,10 +1690,10 @@ Benefits of OpenRouter for BYOK users:
 
 **BYOK Subscription Pricing:**
 
-| Tier | Price | What's Included |
-|------|-------|-----------------|
-| **BYOK Basic** | $5/mo | Platform access, 5 projects, no AI tokens |
-| **BYOK Pro** | $15/mo | Unlimited projects, advanced features, no AI tokens |
+| Tier           | Price  | What's Included                                     |
+| -------------- | ------ | --------------------------------------------------- |
+| **BYOK Basic** | $5/mo  | Platform access, 5 projects, no AI tokens           |
+| **BYOK Pro**   | $15/mo | Unlimited projects, advanced features, no AI tokens |
 
 **BYOK User Experience:**
 
@@ -1733,13 +1741,13 @@ Benefits of OpenRouter for BYOK users:
 
 **Supported Local Runners:**
 
-| Platform | Setup Complexity | Performance | Models Available |
-|----------|------------------|-------------|------------------|
-| **Ollama** | Easy | Good (GPU required) | Llama 3, Mistral, Phi, Gemma |
-| **LM Studio** | Easy | Good (GPU required) | Wide variety via GGUF |
-| **llama.cpp** | Moderate | Excellent | Any GGUF model |
-| **vLLM** | Advanced | Production-grade | Most open models |
-| **LocalAI** | Moderate | Good | OpenAI-compatible API |
+| Platform      | Setup Complexity | Performance         | Models Available             |
+| ------------- | ---------------- | ------------------- | ---------------------------- |
+| **Ollama**    | Easy             | Good (GPU required) | Llama 3, Mistral, Phi, Gemma |
+| **LM Studio** | Easy             | Good (GPU required) | Wide variety via GGUF        |
+| **llama.cpp** | Moderate         | Excellent           | Any GGUF model               |
+| **vLLM**      | Advanced         | Production-grade    | Most open models             |
+| **LocalAI**   | Moderate         | Good                | OpenAI-compatible API        |
 
 **Local Mode Configuration:**
 
@@ -1765,13 +1773,13 @@ Benefits of OpenRouter for BYOK users:
 
 **Local Mode Considerations:**
 
-| Aspect | Consideration |
-|--------|---------------|
-| **Hardware** | Minimum 16GB RAM; 24GB+ VRAM recommended for 70B models |
-| **Quality** | Open models approach but don't match Claude Sonnet on complex tasks |
-| **Speed** | Depends on hardware; may be slower than cloud |
-| **Privacy** | All data stays on device—no external API calls |
-| **Offline** | Full functionality without internet (after initial setup) |
+| Aspect       | Consideration                                                       |
+| ------------ | ------------------------------------------------------------------- |
+| **Hardware** | Minimum 16GB RAM; 24GB+ VRAM recommended for 70B models             |
+| **Quality**  | Open models approach but don't match Claude Sonnet on complex tasks |
+| **Speed**    | Depends on hardware; may be slower than cloud                       |
+| **Privacy**  | All data stays on device—no external API calls                      |
+| **Offline**  | Full functionality without internet (after initial setup)           |
 
 **Hybrid Mode:**
 
@@ -1806,12 +1814,12 @@ For enterprise deployments requiring governance, security, and scale:
 
 **Recommended Enterprise Gateways:**
 
-| Gateway | Best For | Key Features |
-|---------|----------|--------------|
-| **Kong AI Gateway** | Teams with existing Kong infrastructure | Open-source, policy enforcement, metrics |
-| **Portkey** | Cost optimization focus | Smart routing, caching, rate limiting, observability |
-| **LiteLLM** | Self-hosted, open-source preference | OpenAI-compatible, budget controls, logging |
-| **TrueFoundry** | Regulated industries | VPC deployment, AI guardrails, PII redaction |
+| Gateway             | Best For                                | Key Features                                         |
+| ------------------- | --------------------------------------- | ---------------------------------------------------- |
+| **Kong AI Gateway** | Teams with existing Kong infrastructure | Open-source, policy enforcement, metrics             |
+| **Portkey**         | Cost optimization focus                 | Smart routing, caching, rate limiting, observability |
+| **LiteLLM**         | Self-hosted, open-source preference     | OpenAI-compatible, budget controls, logging          |
+| **TrueFoundry**     | Regulated industries                    | VPC deployment, AI guardrails, PII redaction         |
 
 For enterprises where compliance, security, and deep debugging are non-negotiable, architectural limitations of public aggregators often necessitate a move toward more robust, dedicated AI Gateways.
 
@@ -1999,18 +2007,18 @@ For enterprises where compliance, security, and deep debugging are non-negotiabl
 
 #### 3.4.8 API Configuration Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-API-1 | Users can switch between Managed/BYOK/Local modes | Feature test |
-| AC-API-2 | BYOK API keys encrypted at rest (AES-256) | Security audit |
-| AC-API-3 | API key validation before saving | API test |
-| AC-API-4 | Budget limits enforced for BYOK users | Usage simulation |
-| AC-API-5 | Local LLM connection tested before enabling | Connection test |
-| AC-API-6 | Graceful degradation when API unavailable | Failure mode test |
-| AC-API-7 | Token usage tracked and displayed accurately | Billing verification |
-| AC-API-8 | Users can export all data within 24 hours | Export test |
-| AC-API-9 | Account deletion removes all user data within 30 days | Deletion verification |
-| AC-API-10 | Subscription changes take effect immediately | Billing test |
+| ID        | Criterion                                             | Validation Method     |
+| --------- | ----------------------------------------------------- | --------------------- |
+| AC-API-1  | Users can switch between Managed/BYOK/Local modes     | Feature test          |
+| AC-API-2  | BYOK API keys encrypted at rest (AES-256)             | Security audit        |
+| AC-API-3  | API key validation before saving                      | API test              |
+| AC-API-4  | Budget limits enforced for BYOK users                 | Usage simulation      |
+| AC-API-5  | Local LLM connection tested before enabling           | Connection test       |
+| AC-API-6  | Graceful degradation when API unavailable             | Failure mode test     |
+| AC-API-7  | Token usage tracked and displayed accurately          | Billing verification  |
+| AC-API-8  | Users can export all data within 24 hours             | Export test           |
+| AC-API-9  | Account deletion removes all user data within 30 days | Deletion verification |
+| AC-API-10 | Subscription changes take effect immediately          | Billing test          |
 
 ---
 
@@ -2028,27 +2036,27 @@ As a learner, I want to upload a video, PDF, or article so that the app can tran
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-001-1 | System accepts video files (MP4, MOV, WebM up to 2GB) | Upload test with various formats |
-| AC-001-2 | System accepts PDF files (up to 100 pages) | Upload test with various PDFs |
-| AC-001-3 | System accepts URLs (YouTube, article links) | URL parsing test |
-| AC-001-4 | System transcribes video/audio with >95% accuracy | Transcription quality audit |
-| AC-001-5 | System extracts 80%+ of key concepts from source | Expert comparison audit |
-| AC-001-6 | Concept prerequisite ordering is logically valid | Expert review |
-| AC-001-7 | Processing completes within 5 minutes for typical content | Performance test |
-| AC-001-8 | User sees progress indicator during processing | UX verification |
-| AC-001-9 | System provides estimated session count after analysis | Output verification |
+| ID       | Criterion                                                 | Validation Method                |
+| -------- | --------------------------------------------------------- | -------------------------------- |
+| AC-001-1 | System accepts video files (MP4, MOV, WebM up to 2GB)     | Upload test with various formats |
+| AC-001-2 | System accepts PDF files (up to 100 pages)                | Upload test with various PDFs    |
+| AC-001-3 | System accepts URLs (YouTube, article links)              | URL parsing test                 |
+| AC-001-4 | System transcribes video/audio with >95% accuracy         | Transcription quality audit      |
+| AC-001-5 | System extracts 80%+ of key concepts from source          | Expert comparison audit          |
+| AC-001-6 | Concept prerequisite ordering is logically valid          | Expert review                    |
+| AC-001-7 | Processing completes within 5 minutes for typical content | Performance test                 |
+| AC-001-8 | User sees progress indicator during processing            | UX verification                  |
+| AC-001-9 | System provides estimated session count after analysis    | Output verification              |
 
 #### Edge Cases
 
-| Edge Case | Expected Behavior |
-|-----------|-------------------|
-| Corrupted file uploaded | Clear error message, prompt re-upload |
-| Very long video (>2 hours) | Warning about processing time, suggest chunking |
-| Poorly structured content | AI attempts best-effort extraction, flags low confidence |
-| Non-English content | Currently unsupported, clear message |
-| Password-protected PDF | Error message requesting unprotected version |
+| Edge Case                  | Expected Behavior                                        |
+| -------------------------- | -------------------------------------------------------- |
+| Corrupted file uploaded    | Clear error message, prompt re-upload                    |
+| Very long video (>2 hours) | Warning about processing time, suggest chunking          |
+| Poorly structured content  | AI attempts best-effort extraction, flags low confidence |
+| Non-English content        | Currently unsupported, clear message                     |
+| Password-protected PDF     | Error message requesting unprotected version             |
 
 ---
 
@@ -2061,6 +2069,7 @@ As a learner, I want to upload a video, PDF, or article so that the app can tran
 #### The Core Problem
 
 Learning a complex topic often requires multiple sources—a video course, a textbook chapter, supplementary articles, a "Part 2" sequel. Without project-based organization:
+
 - Sources are siloed and don't inform each other
 - Adding new material doesn't integrate with existing progress
 - Users can't build comprehensive learning paths from multiple inputs
@@ -2072,15 +2081,19 @@ A **Project** represents a learning goal. Multiple **Sources** contribute knowle
 #### User Stories
 
 **Project Creation:**
+
 > As a learner, I want to create a learning project (e.g., "Master Options Trading") so that I can organize all related materials in one place.
 
 **Source Addition:**
+
 > As a learner, I want to add multiple sources to my project (videos, PDFs, articles) so that the AI can build a comprehensive roadmap from all of them.
 
 **Roadmap Evolution:**
+
 > As a learner, when I add "Part 2" or supplementary material to my project, I want my existing progress preserved and the new material integrated appropriately.
 
 **Multi-Source Synthesis:**
+
 > As a learner, I want the AI to recognize when different sources cover the same topic and combine them intelligently rather than treating them as separate concepts.
 
 #### Feature Components
@@ -2245,13 +2258,13 @@ User uploads "Advanced Options Strategies (Part 2).mp4"
 
 **How AI Integrates Multiple Sources:**
 
-| Scenario | AI Behavior |
-|----------|-------------|
-| **Same concept, different explanations** | Link both sources to unified concept; use richer explanation as primary; offer alternative during review |
-| **Sequential content (Part 1, Part 2)** | Append Part 2 levels after Part 1; maintain prerequisite chain |
-| **Overlapping with gaps** | Insert new concepts where they fit in prerequisite graph |
-| **Contradictory information** | Flag for user review; ask which source to prioritize |
-| **Different modalities (video + PDF on same topic)** | Combine—use video for initial exposure, PDF for reference during practice |
+| Scenario                                             | AI Behavior                                                                                              |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| **Same concept, different explanations**             | Link both sources to unified concept; use richer explanation as primary; offer alternative during review |
+| **Sequential content (Part 1, Part 2)**              | Append Part 2 levels after Part 1; maintain prerequisite chain                                           |
+| **Overlapping with gaps**                            | Insert new concepts where they fit in prerequisite graph                                                 |
+| **Contradictory information**                        | Flag for user review; ask which source to prioritize                                                     |
+| **Different modalities (video + PDF on same topic)** | Combine—use video for initial exposure, PDF for reference during practice                                |
 
 **Visual: Unified Roadmap View**
 
@@ -2351,31 +2364,31 @@ When reviewing a concept that has multiple source references:
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-025-1 | Users can create projects with title and optional description | Feature test |
-| AC-025-2 | Users can add multiple sources (video, PDF, URL) to a project | Feature test |
-| AC-025-3 | AI correctly identifies overlapping concepts across sources (>80% precision) | Analysis audit |
-| AC-025-4 | Roadmap regenerates correctly when new source added | Roadmap comparison test |
-| AC-025-5 | User progress on existing concepts preserved when source added | Progress state verification |
-| AC-025-6 | New concepts from added source correctly sequenced in roadmap | Expert review |
-| AC-025-7 | User notified of what changed when source integrated | UX verification |
-| AC-025-8 | Concepts show all source references when multiple sources cover same topic | Data verification |
-| AC-025-9 | Users can view, archive, and delete projects | Feature test |
-| AC-025-10 | Interaction preferences stored per-project, not globally | Data model verification |
-| AC-025-11 | Project data persists across sessions and devices | Sync test |
-| AC-025-12 | Offline changes sync correctly when connection restored | Sync conflict test |
+| ID        | Criterion                                                                    | Validation Method           |
+| --------- | ---------------------------------------------------------------------------- | --------------------------- |
+| AC-025-1  | Users can create projects with title and optional description                | Feature test                |
+| AC-025-2  | Users can add multiple sources (video, PDF, URL) to a project                | Feature test                |
+| AC-025-3  | AI correctly identifies overlapping concepts across sources (>80% precision) | Analysis audit              |
+| AC-025-4  | Roadmap regenerates correctly when new source added                          | Roadmap comparison test     |
+| AC-025-5  | User progress on existing concepts preserved when source added               | Progress state verification |
+| AC-025-6  | New concepts from added source correctly sequenced in roadmap                | Expert review               |
+| AC-025-7  | User notified of what changed when source integrated                         | UX verification             |
+| AC-025-8  | Concepts show all source references when multiple sources cover same topic   | Data verification           |
+| AC-025-9  | Users can view, archive, and delete projects                                 | Feature test                |
+| AC-025-10 | Interaction preferences stored per-project, not globally                     | Data model verification     |
+| AC-025-11 | Project data persists across sessions and devices                            | Sync test                   |
+| AC-025-12 | Offline changes sync correctly when connection restored                      | Sync conflict test          |
 
 #### Edge Cases
 
-| Edge Case | Expected Behavior |
-|-----------|-------------------|
-| Sources with contradictory information | Flag contradiction, ask user which source to prioritize |
-| Source that's entirely redundant | Notify user: "This covers material already in your project. Add anyway?" |
-| Very large project (10+ sources, 500+ concepts) | Performance optimization; consider suggesting project split |
-| Source in different language than project | Warning; option to proceed with translation |
-| User deletes source mid-project | Confirm impact; option to keep derived concepts or remove |
-| Adding source that should be prerequisite to existing content | Offer to "prepend" and adjust roadmap; note user may need review |
+| Edge Case                                                     | Expected Behavior                                                        |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Sources with contradictory information                        | Flag contradiction, ask user which source to prioritize                  |
+| Source that's entirely redundant                              | Notify user: "This covers material already in your project. Add anyway?" |
+| Very large project (10+ sources, 500+ concepts)               | Performance optimization; consider suggesting project split              |
+| Source in different language than project                     | Warning; option to proceed with translation                              |
+| User deletes source mid-project                               | Confirm impact; option to keep derived concepts or remove                |
+| Adding source that should be prerequisite to existing content | Offer to "prepend" and adjust roadmap; note user may need review         |
 
 ---
 
@@ -2391,21 +2404,21 @@ As a learner, before I'm taught new concepts, I want to be tested on them so tha
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-002-1 | Every session with new material begins with pretest | Session flow audit |
-| AC-002-2 | Pretest questions cover all concepts to be introduced | Content matching test |
-| AC-002-3 | User is informed that wrong answers are expected | UX copy verification |
-| AC-002-4 | Pretest responses are stored for later comparison | Data verification |
-| AC-002-5 | Misconceptions detected in pretest are flagged for explicit addressing | Logic verification |
-| AC-002-6 | Pretest takes <3 minutes for typical session | Timing test |
+| ID       | Criterion                                                              | Validation Method     |
+| -------- | ---------------------------------------------------------------------- | --------------------- |
+| AC-002-1 | Every session with new material begins with pretest                    | Session flow audit    |
+| AC-002-2 | Pretest questions cover all concepts to be introduced                  | Content matching test |
+| AC-002-3 | User is informed that wrong answers are expected                       | UX copy verification  |
+| AC-002-4 | Pretest responses are stored for later comparison                      | Data verification     |
+| AC-002-5 | Misconceptions detected in pretest are flagged for explicit addressing | Logic verification    |
+| AC-002-6 | Pretest takes <3 minutes for typical session                           | Timing test           |
 
 #### Research Validation
 
-| Metric | Target | Measurement |
-|--------|--------|-------------|
-| Post-learning improvement vs no pretest | >10 percentage points | A/B test cohort comparison |
-| Misconception identification accuracy | >80% | Expert review of flagged misconceptions |
+| Metric                                  | Target                | Measurement                             |
+| --------------------------------------- | --------------------- | --------------------------------------- |
+| Post-learning improvement vs no pretest | >10 percentage points | A/B test cohort comparison              |
+| Misconception identification accuracy   | >80%                  | Expert review of flagged misconceptions |
 
 ---
 
@@ -2421,24 +2434,24 @@ As a learner, I want to be asked questions that require me to generate answers f
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-003-1 | Every concept has minimum 5 retrieval questions | Content audit |
-| AC-003-2 | Question types include: free recall, cued recall, application, discrimination | Question type audit |
-| AC-003-3 | Free recall questions comprise >40% of retrieval practice | Distribution analysis |
-| AC-003-4 | AI can evaluate free-response accuracy with >90% agreement with human raters | Evaluation quality audit |
-| AC-003-5 | Questions span difficulty from recognition to transfer | Difficulty distribution audit |
-| AC-003-6 | No two consecutive questions are identical format | Session flow audit |
+| ID       | Criterion                                                                     | Validation Method             |
+| -------- | ----------------------------------------------------------------------------- | ----------------------------- |
+| AC-003-1 | Every concept has minimum 5 retrieval questions                               | Content audit                 |
+| AC-003-2 | Question types include: free recall, cued recall, application, discrimination | Question type audit           |
+| AC-003-3 | Free recall questions comprise >40% of retrieval practice                     | Distribution analysis         |
+| AC-003-4 | AI can evaluate free-response accuracy with >90% agreement with human raters  | Evaluation quality audit      |
+| AC-003-5 | Questions span difficulty from recognition to transfer                        | Difficulty distribution audit |
+| AC-003-6 | No two consecutive questions are identical format                             | Session flow audit            |
 
 #### Question Type Distribution Target
 
-| Question Type | Target % | Rationale |
-|---------------|----------|-----------|
-| Free recall | 40-50% | Highest effect size |
-| Application scenario | 20-25% | Tests transfer |
-| Cued recall | 15-20% | Supports encoding |
-| Elaboration | 10-15% | Deepens conceptual understanding |
-| Recognition (MC) | 5-10% | Only for early exposure |
+| Question Type        | Target % | Rationale                        |
+| -------------------- | -------- | -------------------------------- |
+| Free recall          | 40-50%   | Highest effect size              |
+| Application scenario | 20-25%   | Tests transfer                   |
+| Cued recall          | 15-20%   | Supports encoding                |
+| Elaboration          | 10-15%   | Deepens conceptual understanding |
+| Recognition (MC)     | 5-10%    | Only for early exposure          |
 
 ---
 
@@ -2454,24 +2467,24 @@ As a learner, I want the app to automatically schedule reviews at optimal interv
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-004-1 | FSRS algorithm implemented per specification | Algorithm verification |
-| AC-004-2 | Each concept has individual stability parameter | Data structure verification |
-| AC-004-3 | Review intervals expand with successful retrievals | Interval progression audit |
-| AC-004-4 | Intervals contract after failed retrievals | Failure handling audit |
-| AC-004-5 | User can see next review date per concept | UX verification |
-| AC-004-6 | Due items surfaced in session construction | Session content audit |
-| AC-004-7 | System prevents review item backlog >50 items | Backlog management verification |
+| ID       | Criterion                                          | Validation Method               |
+| -------- | -------------------------------------------------- | ------------------------------- |
+| AC-004-1 | FSRS algorithm implemented per specification       | Algorithm verification          |
+| AC-004-2 | Each concept has individual stability parameter    | Data structure verification     |
+| AC-004-3 | Review intervals expand with successful retrievals | Interval progression audit      |
+| AC-004-4 | Intervals contract after failed retrievals         | Failure handling audit          |
+| AC-004-5 | User can see next review date per concept          | UX verification                 |
+| AC-004-6 | Due items surfaced in session construction         | Session content audit           |
+| AC-004-7 | System prevents review item backlog >50 items      | Backlog management verification |
 
 #### FSRS Parameters
 
-| Parameter | Default Value | Personalization |
-|-----------|---------------|-----------------|
-| Initial stability | 1.0 day | Adjusted based on first retention measurement |
-| Stability growth factor | 2.5 | Adjusted based on individual decay rate |
-| Desired retention | 0.90 | User-configurable (0.80-0.95) |
-| Review urgency threshold | R < 0.85 | Fixed |
+| Parameter                | Default Value | Personalization                               |
+| ------------------------ | ------------- | --------------------------------------------- |
+| Initial stability        | 1.0 day       | Adjusted based on first retention measurement |
+| Stability growth factor  | 2.5           | Adjusted based on individual decay rate       |
+| Desired retention        | 0.90          | User-configurable (0.80-0.95)                 |
+| Review urgency threshold | R < 0.85      | Fixed                                         |
 
 ---
 
@@ -2487,22 +2500,22 @@ As a learner, I want the app to ensure I master concepts through multiple spaced
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-005-1 | Concepts require minimum 3 successful sessions before MASTERED state | State machine verification |
-| AC-005-2 | Sessions must be on different calendar days | Timing verification |
-| AC-005-3 | Each session requires reaching criterion (correct retrieval) | Criterion logic verification |
-| AC-005-4 | Time per concept tracked and shown to decrease across sessions | Metric tracking verification |
-| AC-005-5 | User cannot manually mark concepts as "mastered" | Permission verification |
+| ID       | Criterion                                                            | Validation Method            |
+| -------- | -------------------------------------------------------------------- | ---------------------------- |
+| AC-005-1 | Concepts require minimum 3 successful sessions before MASTERED state | State machine verification   |
+| AC-005-2 | Sessions must be on different calendar days                          | Timing verification          |
+| AC-005-3 | Each session requires reaching criterion (correct retrieval)         | Criterion logic verification |
+| AC-005-4 | Time per concept tracked and shown to decrease across sessions       | Metric tracking verification |
+| AC-005-5 | User cannot manually mark concepts as "mastered"                     | Permission verification      |
 
 #### Expected Progression
 
-| Session | Expected Time/Concept | Criterion |
-|---------|----------------------|-----------|
-| 1 | 40-50 seconds | Correct retrieval |
-| 2 | 25-35 seconds | Correct retrieval |
-| 3 | 15-25 seconds | Correct retrieval |
-| 4+ | 10-15 seconds | Correct retrieval |
+| Session | Expected Time/Concept | Criterion         |
+| ------- | --------------------- | ----------------- |
+| 1       | 40-50 seconds         | Correct retrieval |
+| 2       | 25-35 seconds         | Correct retrieval |
+| 3       | 15-25 seconds         | Correct retrieval |
+| 4+      | 10-15 seconds         | Correct retrieval |
 
 ---
 
@@ -2518,22 +2531,22 @@ As a learner, I want the app to prevent me from overloading my brain so that I r
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-006-1 | Maximum 4 new concepts per session (hard limit) | Session construction audit |
-| AC-006-2 | Capacity calculated using sleep + time + fatigue modifiers | Algorithm verification |
-| AC-006-3 | User sees capacity visualization | UX verification |
-| AC-006-4 | Warning displayed when capacity >75% depleted | Warning trigger test |
-| AC-006-5 | New material blocked when capacity >90% depleted | Blocking logic test |
-| AC-006-6 | User can choose to continue with warning, but default is stop | UX flow verification |
+| ID       | Criterion                                                     | Validation Method          |
+| -------- | ------------------------------------------------------------- | -------------------------- |
+| AC-006-1 | Maximum 4 new concepts per session (hard limit)               | Session construction audit |
+| AC-006-2 | Capacity calculated using sleep + time + fatigue modifiers    | Algorithm verification     |
+| AC-006-3 | User sees capacity visualization                              | UX verification            |
+| AC-006-4 | Warning displayed when capacity >75% depleted                 | Warning trigger test       |
+| AC-006-5 | New material blocked when capacity >90% depleted              | Blocking logic test        |
+| AC-006-6 | User can choose to continue with warning, but default is stop | UX flow verification       |
 
 #### User-Facing Copy
 
 ```
 75% Capacity Warning:
-"You've covered a lot today. Research shows adding more new material 
-now may interfere with retaining what you've already learned. 
-We recommend stopping here and continuing tomorrow. Your brain 
+"You've covered a lot today. Research shows adding more new material
+now may interfere with retaining what you've already learned.
+We recommend stopping here and continuing tomorrow. Your brain
 needs rest to consolidate."
 
 [Stop Here - Recommended] [Continue Anyway]
@@ -2553,22 +2566,22 @@ As a learner, I want the app to respect my sleep patterns so that my brain can c
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-007-1 | User provides typical bedtime during onboarding | Onboarding flow verification |
-| AC-007-2 | No new material introduced within 2 hours of bedtime | Timing logic verification |
-| AC-007-3 | Morning session prompts review of previous night's material | Session type verification |
-| AC-007-4 | Optional pre-sleep light review session suggested | Notification logic verification |
-| AC-007-5 | Sleep duration optionally tracked (manual or integration) | Data input verification |
-| AC-007-6 | Consolidation success measured by morning retrieval | Metric tracking verification |
+| ID       | Criterion                                                   | Validation Method               |
+| -------- | ----------------------------------------------------------- | ------------------------------- |
+| AC-007-1 | User provides typical bedtime during onboarding             | Onboarding flow verification    |
+| AC-007-2 | No new material introduced within 2 hours of bedtime        | Timing logic verification       |
+| AC-007-3 | Morning session prompts review of previous night's material | Session type verification       |
+| AC-007-4 | Optional pre-sleep light review session suggested           | Notification logic verification |
+| AC-007-5 | Sleep duration optionally tracked (manual or integration)   | Data input verification         |
+| AC-007-6 | Consolidation success measured by morning retrieval         | Metric tracking verification    |
 
 #### Notification Schedule
 
-| Time | Notification Type | Content |
-|------|-------------------|---------|
-| Morning (user-configured) | Morning check | "Quick 3-min check: how much stuck from last night?" |
-| 2 hours before bedtime | Learning cutoff | "Last chance for new material today" |
-| 1 hour before bedtime | Pre-sleep review | "Optional: 5-min light review before bed" |
+| Time                      | Notification Type | Content                                              |
+| ------------------------- | ----------------- | ---------------------------------------------------- |
+| Morning (user-configured) | Morning check     | "Quick 3-min check: how much stuck from last night?" |
+| 2 hours before bedtime    | Learning cutoff   | "Last chance for new material today"                 |
+| 1 hour before bedtime     | Pre-sleep review  | "Optional: 5-min light review before bed"            |
 
 ---
 
@@ -2584,26 +2597,26 @@ As a learner, I want the app to detect when I'm struggling or confused so that i
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-008-1 | Response latency tracked for every question | Data capture verification |
-| AC-008-2 | Confidence self-report available (optional, non-intrusive) | UX verification |
-| AC-008-3 | Free-response quality evaluated by AI in real-time | Evaluation timing test |
-| AC-008-4 | Confident misconceptions trigger immediate intervention | Intervention logic test |
-| AC-008-5 | Fatigue pattern (increasing latency) detected | Pattern detection verification |
-| AC-008-6 | Session adapts based on signals (difficulty, length, method) | Adaptation verification |
+| ID       | Criterion                                                    | Validation Method              |
+| -------- | ------------------------------------------------------------ | ------------------------------ |
+| AC-008-1 | Response latency tracked for every question                  | Data capture verification      |
+| AC-008-2 | Confidence self-report available (optional, non-intrusive)   | UX verification                |
+| AC-008-3 | Free-response quality evaluated by AI in real-time           | Evaluation timing test         |
+| AC-008-4 | Confident misconceptions trigger immediate intervention      | Intervention logic test        |
+| AC-008-5 | Fatigue pattern (increasing latency) detected                | Pattern detection verification |
+| AC-008-6 | Session adapts based on signals (difficulty, length, method) | Adaptation verification        |
 
 #### Latency Benchmarks
 
-| Latency | Question Type | Interpretation |
-|---------|---------------|----------------|
-| <3s | Multiple choice | Fast (expected) |
-| 3-8s | Multiple choice | Normal |
-| >8s | Multiple choice | Slow (possible confusion) |
-| <10s | Free recall | Fast (strong encoding) |
-| 10-30s | Free recall | Normal (effortful retrieval) |
-| >30s | Free recall | Slow (possible difficulty) |
-| >60s | Any | May indicate distraction or struggle |
+| Latency | Question Type   | Interpretation                       |
+| ------- | --------------- | ------------------------------------ |
+| <3s     | Multiple choice | Fast (expected)                      |
+| 3-8s    | Multiple choice | Normal                               |
+| >8s     | Multiple choice | Slow (possible confusion)            |
+| <10s    | Free recall     | Fast (strong encoding)               |
+| 10-30s  | Free recall     | Normal (effortful retrieval)         |
+| >30s    | Free recall     | Slow (possible difficulty)           |
+| >60s    | Any             | May indicate distraction or struggle |
 
 ---
 
@@ -2619,15 +2632,15 @@ As a learner, I want the app to identify and fix my misconceptions before they b
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-009-1 | Common misconceptions catalogued per concept during content analysis | Content audit |
-| AC-009-2 | Misconception detected when answer matches misconception pattern + high confidence | Detection logic verification |
-| AC-009-3 | Immediate corrective feedback provided with contrast | UX verification |
-| AC-009-4 | Corrective retrieval scheduled within same session | Session flow verification |
-| AC-009-5 | Discriminative questions added to future reviews | Review content verification |
-| AC-009-6 | Misconception recurrence tracked | Data tracking verification |
-| AC-009-7 | Resolved misconceptions eventually removed from active monitoring | State management verification |
+| ID       | Criterion                                                                          | Validation Method             |
+| -------- | ---------------------------------------------------------------------------------- | ----------------------------- |
+| AC-009-1 | Common misconceptions catalogued per concept during content analysis               | Content audit                 |
+| AC-009-2 | Misconception detected when answer matches misconception pattern + high confidence | Detection logic verification  |
+| AC-009-3 | Immediate corrective feedback provided with contrast                               | UX verification               |
+| AC-009-4 | Corrective retrieval scheduled within same session                                 | Session flow verification     |
+| AC-009-5 | Discriminative questions added to future reviews                                   | Review content verification   |
+| AC-009-6 | Misconception recurrence tracked                                                   | Data tracking verification    |
+| AC-009-7 | Resolved misconceptions eventually removed from active monitoring                  | State management verification |
 
 #### Misconception Repair Flow
 
@@ -2654,23 +2667,23 @@ As a learner, I want to prove I've mastered foundational concepts before advanci
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-010-1 | Course levels have defined mastery thresholds (default 80%) | Configuration verification |
-| AC-010-2 | Mastery check includes application and transfer questions | Question type audit |
+| ID       | Criterion                                                       | Validation Method             |
+| -------- | --------------------------------------------------------------- | ----------------------------- |
+| AC-010-1 | Course levels have defined mastery thresholds (default 80%)     | Configuration verification    |
+| AC-010-2 | Mastery check includes application and transfer questions       | Question type audit           |
 | AC-010-3 | User cannot access Level N+1 until Level N mastery check passed | Gate enforcement verification |
-| AC-010-4 | Failed mastery check provides specific feedback on weak areas | Feedback content verification |
-| AC-010-5 | Failed mastery check triggers remediation session | Remediation flow verification |
-| AC-010-6 | User can retake mastery check after remediation | Retry logic verification |
+| AC-010-4 | Failed mastery check provides specific feedback on weak areas   | Feedback content verification |
+| AC-010-5 | Failed mastery check triggers remediation session               | Remediation flow verification |
+| AC-010-6 | User can retake mastery check after remediation                 | Retry logic verification      |
 
 #### Mastery Check Structure
 
-| Component | Weight | Purpose |
-|-----------|--------|---------|
-| Recall questions (each concept) | 40% | Verify basic retention |
-| Application scenarios | 30% | Verify usable knowledge |
-| Transfer questions | 20% | Verify deep understanding |
-| Integration questions | 10% | Verify cross-concept connections |
+| Component                       | Weight | Purpose                          |
+| ------------------------------- | ------ | -------------------------------- |
+| Recall questions (each concept) | 40%    | Verify basic retention           |
+| Application scenarios           | 30%    | Verify usable knowledge          |
+| Transfer questions              | 20%    | Verify deep understanding        |
+| Integration questions           | 10%    | Verify cross-concept connections |
 
 ---
 
@@ -2686,23 +2699,23 @@ As a learner, I want the app to learn what teaching methods work best for me so 
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-011-1 | Method effectiveness tracked per user per method | Data tracking verification |
-| AC-011-2 | Retention score and engagement score calculated per method | Metric calculation verification |
-| AC-011-3 | Method selection uses explore/exploit algorithm | Algorithm verification |
-| AC-011-4 | Under-tested methods receive exploration bonus | Bonus calculation verification |
-| AC-011-5 | No method drops below 10% selection probability | Floor enforcement verification |
-| AC-011-6 | User profile convergence tracked and displayed | Dashboard verification |
-| AC-011-7 | Method distribution varies by concept modality | Modality-method matching verification |
+| ID       | Criterion                                                  | Validation Method                     |
+| -------- | ---------------------------------------------------------- | ------------------------------------- |
+| AC-011-1 | Method effectiveness tracked per user per method           | Data tracking verification            |
+| AC-011-2 | Retention score and engagement score calculated per method | Metric calculation verification       |
+| AC-011-3 | Method selection uses explore/exploit algorithm            | Algorithm verification                |
+| AC-011-4 | Under-tested methods receive exploration bonus             | Bonus calculation verification        |
+| AC-011-5 | No method drops below 10% selection probability            | Floor enforcement verification        |
+| AC-011-6 | User profile convergence tracked and displayed             | Dashboard verification                |
+| AC-011-7 | Method distribution varies by concept modality             | Modality-method matching verification |
 
 #### Minimum Method Uses Before Convergence
 
-| Confidence Level | Minimum Uses |
-|------------------|--------------|
-| Low confidence | 5 uses |
-| Medium confidence | 12 uses |
-| High confidence | 20+ uses |
+| Confidence Level  | Minimum Uses |
+| ----------------- | ------------ |
+| Low confidence    | 5 uses       |
+| Medium confidence | 12 uses      |
+| High confidence   | 20+ uses     |
 
 ---
 
@@ -2718,25 +2731,25 @@ As a learner, I want to see my progress and mastery state so that I understand w
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-012-1 | Overall course progress percentage displayed | UX verification |
-| AC-012-2 | Per-concept mastery state visible | UX verification |
-| AC-012-3 | Learning velocity metrics shown (concepts/week) | Metric display verification |
-| AC-012-4 | Streak tracking displayed | UX verification |
-| AC-012-5 | Predicted retention shown (with/without continued reviews) | Prediction display verification |
-| AC-012-6 | Personalization insights surfaced | UX verification |
-| AC-012-7 | Weak areas highlighted with recommended actions | Recommendation display verification |
+| ID       | Criterion                                                  | Validation Method                   |
+| -------- | ---------------------------------------------------------- | ----------------------------------- |
+| AC-012-1 | Overall course progress percentage displayed               | UX verification                     |
+| AC-012-2 | Per-concept mastery state visible                          | UX verification                     |
+| AC-012-3 | Learning velocity metrics shown (concepts/week)            | Metric display verification         |
+| AC-012-4 | Streak tracking displayed                                  | UX verification                     |
+| AC-012-5 | Predicted retention shown (with/without continued reviews) | Prediction display verification     |
+| AC-012-6 | Personalization insights surfaced                          | UX verification                     |
+| AC-012-7 | Weak areas highlighted with recommended actions            | Recommendation display verification |
 
 #### Dashboard Metrics
 
-| Metric | Calculation | User Value |
-|--------|-------------|------------|
-| Mastery rate | % concepts in MASTERED state | Overall progress |
-| Learning velocity | Concepts reaching SOLID per week | Speed indicator |
-| Consolidation rate | Morning check success rate | Sleep/retention health |
-| Session effectiveness | Average session score | Quality indicator |
-| Predicted retention | Model-based estimate at 30/90/180 days | Future outlook |
+| Metric                | Calculation                            | User Value             |
+| --------------------- | -------------------------------------- | ---------------------- |
+| Mastery rate          | % concepts in MASTERED state           | Overall progress       |
+| Learning velocity     | Concepts reaching SOLID per week       | Speed indicator        |
+| Consolidation rate    | Morning check success rate             | Sleep/retention health |
+| Session effectiveness | Average session score                  | Quality indicator      |
+| Predicted retention   | Model-based estimate at 30/90/180 days | Future outlook         |
 
 ---
 
@@ -2752,23 +2765,23 @@ As a learner who has completed a course, I want to maintain my knowledge long-te
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-013-1 | Course transitions to maintenance mode upon completion | State transition verification |
-| AC-013-2 | Review sessions scheduled based on FSRS intervals | Scheduling verification |
-| AC-013-3 | Maintenance sessions are brief (3-5 minutes) | Session length verification |
-| AC-013-4 | Notification frequency decreases as intervals expand | Notification pattern verification |
-| AC-013-5 | Retention estimate updated based on maintenance participation | Estimate update verification |
-| AC-013-6 | User can adjust maintenance intensity preference | Settings verification |
+| ID       | Criterion                                                     | Validation Method                 |
+| -------- | ------------------------------------------------------------- | --------------------------------- |
+| AC-013-1 | Course transitions to maintenance mode upon completion        | State transition verification     |
+| AC-013-2 | Review sessions scheduled based on FSRS intervals             | Scheduling verification           |
+| AC-013-3 | Maintenance sessions are brief (3-5 minutes)                  | Session length verification       |
+| AC-013-4 | Notification frequency decreases as intervals expand          | Notification pattern verification |
+| AC-013-5 | Retention estimate updated based on maintenance participation | Estimate update verification      |
+| AC-013-6 | User can adjust maintenance intensity preference              | Settings verification             |
 
 #### Maintenance Notification Schedule
 
-| Interval Since Last Review | Notification Urgency |
-|---------------------------|---------------------|
-| Within FSRS scheduled time | Normal |
-| 1-2 days overdue | Gentle reminder |
-| 3-7 days overdue | Stronger reminder + retention decay warning |
-| >7 days overdue | "Your knowledge is fading" warning |
+| Interval Since Last Review | Notification Urgency                        |
+| -------------------------- | ------------------------------------------- |
+| Within FSRS scheduled time | Normal                                      |
+| 1-2 days overdue           | Gentle reminder                             |
+| 3-7 days overdue           | Stronger reminder + retention decay warning |
+| >7 days overdue            | "Your knowledge is fading" warning          |
 
 ---
 
@@ -2784,19 +2797,19 @@ As a learner, I want to explain concepts to an AI "student" so that I deepen my 
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-014-1 | AI assumes role of naive student | UX verification |
-| AC-014-2 | AI asks clarifying questions based on user explanation | Question quality audit |
-| AC-014-3 | AI identifies gaps in user's explanation | Gap detection verification |
-| AC-014-4 | Session provides feedback on explanation completeness | Feedback quality verification |
-| AC-014-5 | Available for conceptual and declarative material | Modality matching verification |
-| AC-014-6 | Tracked as distinct method in effectiveness matrix | Tracking verification |
+| ID       | Criterion                                              | Validation Method              |
+| -------- | ------------------------------------------------------ | ------------------------------ |
+| AC-014-1 | AI assumes role of naive student                       | UX verification                |
+| AC-014-2 | AI asks clarifying questions based on user explanation | Question quality audit         |
+| AC-014-3 | AI identifies gaps in user's explanation               | Gap detection verification     |
+| AC-014-4 | Session provides feedback on explanation completeness  | Feedback quality verification  |
+| AC-014-5 | Available for conceptual and declarative material      | Modality matching verification |
+| AC-014-6 | Tracked as distinct method in effectiveness matrix     | Tracking verification          |
 
 #### Teach-Back Prompt Template
 
 ```
-"I'm new to this topic. Can you explain [concept] to me like 
+"I'm new to this topic. Can you explain [concept] to me like
 I've never heard of it before?
 
 I might ask some follow-up questions to make sure I understand."
@@ -2804,13 +2817,13 @@ I might ask some follow-up questions to make sure I understand."
 
 #### AI Follow-Up Question Types
 
-| Question Type | Example |
-|---------------|---------|
-| Clarification | "What do you mean by [term]?" |
-| Connection | "How does that relate to [other concept]?" |
-| Example request | "Can you give me an example?" |
-| Edge case | "What happens if [unusual condition]?" |
-| Application | "How would I use this in [situation]?" |
+| Question Type   | Example                                    |
+| --------------- | ------------------------------------------ |
+| Clarification   | "What do you mean by [term]?"              |
+| Connection      | "How does that relate to [other concept]?" |
+| Example request | "Can you give me an example?"              |
+| Edge case       | "What happens if [unusual condition]?"     |
+| Application     | "How would I use this in [situation]?"     |
 
 ---
 
@@ -2826,60 +2839,60 @@ I might ask some follow-up questions to make sure I understand."
 
 #### Research Context
 
-| Finding | Implication |
-|---------|-------------|
-| Retrieval of procedures and principles transfers better than retrieval of isolated facts | Generate retrieval prompts that match cognitive demands of application |
-| Transfer requires practicing the target skill, not just recalling information about it | Declarative knowledge needs different prompts than procedural knowledge |
-| Near transfer (similar contexts) is easier than far transfer (novel contexts) | Build transfer scaffolding from near to far |
-| Worked examples help novices; retrieval practice helps intermediates | Adapt approach based on learner stage |
+| Finding                                                                                  | Implication                                                             |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Retrieval of procedures and principles transfers better than retrieval of isolated facts | Generate retrieval prompts that match cognitive demands of application  |
+| Transfer requires practicing the target skill, not just recalling information about it   | Declarative knowledge needs different prompts than procedural knowledge |
+| Near transfer (similar contexts) is easier than far transfer (novel contexts)            | Build transfer scaffolding from near to far                             |
+| Worked examples help novices; retrieval practice helps intermediates                     | Adapt approach based on learner stage                                   |
 
 **Design Principle:** Every retrieval prompt must be calibrated to the cognitive type of the content and the real-world application context. Definition recall is necessary but never sufficient.
 
 #### User Story
 
-As a learner, I want retrieval practice that prepares me to *use* knowledge in real situations, not just recall definitions on demand.
+As a learner, I want retrieval practice that prepares me to _use_ knowledge in real situations, not just recall definitions on demand.
 
 #### Cognitive Type Taxonomy
 
 During content analysis, each concept must be tagged with its cognitive type:
 
-| Cognitive Type | Definition | Example | Retrieval Prompt Type |
-|----------------|------------|---------|----------------------|
-| **Factual** | Discrete information that must be recalled accurately | "Strike price" definition | Definition recall + usage context |
-| **Conceptual** | Ideas that explain why/how things work | "Why options have time value" | Explanation generation, causal reasoning |
-| **Procedural** | Step sequences to accomplish tasks | "How to place an options order" | Step recall, sequencing, simulation |
-| **Conditional** | When/where to apply knowledge | "When to use calls vs puts" | Scenario judgment, decision trees |
-| **Metacognitive** | Self-monitoring and strategy selection | "How to evaluate if a trade fits your risk profile" | Self-explanation, strategy selection |
+| Cognitive Type    | Definition                                            | Example                                             | Retrieval Prompt Type                    |
+| ----------------- | ----------------------------------------------------- | --------------------------------------------------- | ---------------------------------------- |
+| **Factual**       | Discrete information that must be recalled accurately | "Strike price" definition                           | Definition recall + usage context        |
+| **Conceptual**    | Ideas that explain why/how things work                | "Why options have time value"                       | Explanation generation, causal reasoning |
+| **Procedural**    | Step sequences to accomplish tasks                    | "How to place an options order"                     | Step recall, sequencing, simulation      |
+| **Conditional**   | When/where to apply knowledge                         | "When to use calls vs puts"                         | Scenario judgment, decision trees        |
+| **Metacognitive** | Self-monitoring and strategy selection                | "How to evaluate if a trade fits your risk profile" | Self-explanation, strategy selection     |
 
 #### Retrieval Prompt Generation by Cognitive Type
 
-| Cognitive Type | ❌ Insufficient Prompt | ✅ Transfer-Focused Prompt |
-|----------------|------------------------|---------------------------|
-| **Factual** | "What does BATNA stand for?" | "Your client is negotiating a salary. Their BATNA would be ___" |
-| **Conceptual** | "Define time value" | "A call option expires in 2 months vs 2 weeks. Explain why one costs more." |
-| **Procedural** | "List the steps to place an options order" | "You want to buy 5 AAPL calls. Walk through exactly what you'd do in the trading interface." |
-| **Conditional** | "When should you buy a put?" | "The market is volatile and you hold 1000 shares of TSLA. What would you consider and why?" |
-| **Metacognitive** | "What is position sizing?" | "You're considering this trade. How would you decide if it's appropriate for your portfolio?" |
+| Cognitive Type    | ❌ Insufficient Prompt                     | ✅ Transfer-Focused Prompt                                                                    |
+| ----------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| **Factual**       | "What does BATNA stand for?"               | "Your client is negotiating a salary. Their BATNA would be \_\_\_"                            |
+| **Conceptual**    | "Define time value"                        | "A call option expires in 2 months vs 2 weeks. Explain why one costs more."                   |
+| **Procedural**    | "List the steps to place an options order" | "You want to buy 5 AAPL calls. Walk through exactly what you'd do in the trading interface."  |
+| **Conditional**   | "When should you buy a put?"               | "The market is volatile and you hold 1000 shares of TSLA. What would you consider and why?"   |
+| **Metacognitive** | "What is position sizing?"                 | "You're considering this trade. How would you decide if it's appropriate for your portfolio?" |
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-015-1 | Every concept tagged with cognitive type during content analysis | Content audit |
-| AC-015-2 | Retrieval prompts match cognitive type (see table above) | Prompt-type alignment audit |
-| AC-015-3 | >50% of retrieval prompts require application, not just recall | Prompt distribution analysis |
-| AC-015-4 | Scenario-based questions use realistic professional contexts | Context realism review |
-| AC-015-5 | Transfer questions progress from near to far transfer | Difficulty progression audit |
-| AC-015-6 | AI evaluation criteria account for application quality, not just factual accuracy | Evaluation rubric review |
+| ID       | Criterion                                                                         | Validation Method            |
+| -------- | --------------------------------------------------------------------------------- | ---------------------------- |
+| AC-015-1 | Every concept tagged with cognitive type during content analysis                  | Content audit                |
+| AC-015-2 | Retrieval prompts match cognitive type (see table above)                          | Prompt-type alignment audit  |
+| AC-015-3 | >50% of retrieval prompts require application, not just recall                    | Prompt distribution analysis |
+| AC-015-4 | Scenario-based questions use realistic professional contexts                      | Context realism review       |
+| AC-015-5 | Transfer questions progress from near to far transfer                             | Difficulty progression audit |
+| AC-015-6 | AI evaluation criteria account for application quality, not just factual accuracy | Evaluation rubric review     |
 
 #### Transfer Scaffolding Progression
 
-| Stage | Transfer Distance | Example |
-|-------|-------------------|---------|
-| 1. Recognition | Identify concept in described scenario | "Is this an example of X?" |
-| 2. Near Transfer | Apply to very similar scenario | Same domain, slightly different parameters |
-| 3. Mid Transfer | Apply to related but distinct scenario | Same principles, different surface features |
-| 4. Far Transfer | Apply to novel domain | Underlying principle in unexpected context |
+| Stage            | Transfer Distance                      | Example                                     |
+| ---------------- | -------------------------------------- | ------------------------------------------- |
+| 1. Recognition   | Identify concept in described scenario | "Is this an example of X?"                  |
+| 2. Near Transfer | Apply to very similar scenario         | Same domain, slightly different parameters  |
+| 3. Mid Transfer  | Apply to related but distinct scenario | Same principles, different surface features |
+| 4. Far Transfer  | Apply to novel domain                  | Underlying principle in unexpected context  |
 
 **Progression Rule:** User must demonstrate near transfer before far transfer questions appear. Mastery gates include transfer performance, not just recall.
 
@@ -2887,12 +2900,12 @@ During content analysis, each concept must be tagged with its cognitive type:
 
 **Updated Mastery Criteria:**
 
-| Component | Previous | Updated |
-|-----------|----------|---------|
-| Recall accuracy | Required | Required but insufficient |
-| Application scenarios | Included | **Weighted 40% of mastery check** |
-| Transfer questions | Included | **Must pass near + mid transfer** |
-| Real-world judgment | Not specified | **Must demonstrate conditional reasoning** |
+| Component             | Previous      | Updated                                    |
+| --------------------- | ------------- | ------------------------------------------ |
+| Recall accuracy       | Required      | Required but insufficient                  |
+| Application scenarios | Included      | **Weighted 40% of mastery check**          |
+| Transfer questions    | Included      | **Must pass near + mid transfer**          |
+| Real-world judgment   | Not specified | **Must demonstrate conditional reasoning** |
 
 ---
 
@@ -2906,7 +2919,7 @@ During content analysis, each concept must be tagged with its cognitive type:
 
 Life happens. A professional who disappears for two weeks during a work crunch shouldn't return to 500 overdue reviews and feel like a failure. Traditional SRS systems punish inconsistency, creating anxiety and abandonment.
 
-**Current gap:** Section 5.2 addresses re-engagement after missed days, but doesn't address the *review debt* that accumulates or give users agency over how to handle it.
+**Current gap:** Section 5.2 addresses re-engagement after missed days, but doesn't address the _review debt_ that accumulates or give users agency over how to handle it.
 
 #### Design Principle: Forgiveness by Default
 
@@ -2922,12 +2935,12 @@ The system should assume life happens and design for graceful recovery, not puni
 
 ##### 4.16.1 Review Debt Detection
 
-| Debt Level | Definition | System Response |
-|------------|------------|-----------------|
-| **Healthy** | <20 overdue items | Normal operation |
-| **Elevated** | 20-50 overdue items | Gentle notification, offer extended session |
-| **High** | 50-100 overdue items | "Catch-up mode" offered, load spreading |
-| **Critical** | >100 overdue items | Bankruptcy option prominently offered |
+| Debt Level   | Definition           | System Response                             |
+| ------------ | -------------------- | ------------------------------------------- |
+| **Healthy**  | <20 overdue items    | Normal operation                            |
+| **Elevated** | 20-50 overdue items  | Gentle notification, offer extended session |
+| **High**     | 50-100 overdue items | "Catch-up mode" offered, load spreading     |
+| **Critical** | >100 overdue items   | Bankruptcy option prominently offered       |
 
 ##### 4.16.2 Load Spreading Algorithm
 
@@ -2948,14 +2961,14 @@ System behavior:
 ```
 "You have 75 reviews that built up while you were away.
 
-We've spread these across the next 5 days so you can 
+We've spread these across the next 5 days so you can
 catch up without burnout:
 
 Today: 20 reviews (most critical)
 Tomorrow: 18 reviews
 ...
 
-Some items may have decayed more, but we'll strengthen 
+Some items may have decayed more, but we'll strengthen
 them when we get there. Progress > perfection."
 ```
 
@@ -2965,24 +2978,24 @@ them when we get there. Progress > perfection."
 
 **Options:**
 
-| Option | Description | Consequence |
-|--------|-------------|-------------|
-| **Soft Reset** | Reset all items to "due now" with fresh intervals | Restarts spacing, preserves all content |
-| **Selective Bankruptcy** | Choose which courses/topics to reset | Focused recovery |
-| **Priority Triage** | Keep only items user explicitly wants, archive rest | Reduced scope, maintains engagement |
-| **Full Reset** | Reset course to beginning | Nuclear option, rarely needed |
+| Option                   | Description                                         | Consequence                             |
+| ------------------------ | --------------------------------------------------- | --------------------------------------- |
+| **Soft Reset**           | Reset all items to "due now" with fresh intervals   | Restarts spacing, preserves all content |
+| **Selective Bankruptcy** | Choose which courses/topics to reset                | Focused recovery                        |
+| **Priority Triage**      | Keep only items user explicitly wants, archive rest | Reduced scope, maintains engagement     |
+| **Full Reset**           | Reset course to beginning                           | Nuclear option, rarely needed           |
 
 **User Communication:**
 
 ```
-"Life happens. You have 150+ overdue reviews and that's 
+"Life happens. You have 150+ overdue reviews and that's
 genuinely overwhelming.
 
-You can declare bankruptcy—there's no shame in this. 
+You can declare bankruptcy—there's no shame in this.
 Options:
 
 ○ Spread it out (10 weeks to catch up gradually)
-○ Reset spacing (start fresh, keep your progress)  
+○ Reset spacing (start fresh, keep your progress)
 ○ Focus mode (pick your priorities, archive the rest)
 ○ Start over (reset the course entirely)
 
@@ -2991,23 +3004,23 @@ What works best for your situation right now?"
 
 ##### 4.16.4 Proactive Debt Prevention
 
-| Mechanism | Description |
-|-----------|-------------|
-| **Ceiling enforcement** | Never let single day exceed 2x normal load, even if algorithm says otherwise |
-| **Vacation mode** | User can pre-declare absence; system pauses new scheduling |
-| **Auto-spreading** | If user misses a day, automatically spread those reviews forward |
-| **Early warning** | "You're on track to have 50 reviews due Monday—want us to spread some to this weekend?" |
+| Mechanism               | Description                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------- |
+| **Ceiling enforcement** | Never let single day exceed 2x normal load, even if algorithm says otherwise            |
+| **Vacation mode**       | User can pre-declare absence; system pauses new scheduling                              |
+| **Auto-spreading**      | If user misses a day, automatically spread those reviews forward                        |
+| **Early warning**       | "You're on track to have 50 reviews due Monday—want us to spread some to this weekend?" |
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-016-1 | Review debt level calculated and categorized in real-time | System monitoring |
-| AC-016-2 | Load spreading activates automatically at "Elevated" threshold | Threshold testing |
-| AC-016-3 | Bankruptcy options accessible within 2 taps when debt is "Critical" | UX testing |
-| AC-016-4 | User never sees >2x normal daily load without explicit override | Load cap verification |
-| AC-016-5 | Vacation mode pauses scheduling without negative consequence | Feature testing |
-| AC-016-6 | Zero guilt/shame language in all debt-related messaging | Copy review |
+| ID       | Criterion                                                           | Validation Method     |
+| -------- | ------------------------------------------------------------------- | --------------------- |
+| AC-016-1 | Review debt level calculated and categorized in real-time           | System monitoring     |
+| AC-016-2 | Load spreading activates automatically at "Elevated" threshold      | Threshold testing     |
+| AC-016-3 | Bankruptcy options accessible within 2 taps when debt is "Critical" | UX testing            |
+| AC-016-4 | User never sees >2x normal daily load without explicit override     | Load cap verification |
+| AC-016-5 | Vacation mode pauses scheduling without negative consequence        | Feature testing       |
+| AC-016-6 | Zero guilt/shame language in all debt-related messaging             | Copy review           |
 
 ---
 
@@ -3024,7 +3037,7 @@ Adult professionals will not tolerate being bossed around by an algorithm. Unlik
 #### Design Principles
 
 1. **Recommendations, not commands:** The system suggests; the user decides
-2. **Visible rationale:** Users can always see *why* the system recommends something
+2. **Visible rationale:** Users can always see _why_ the system recommends something
 3. **Frictionless override:** Changing the system's recommendation is easy, not punished
 4. **Just-in-time access:** Users can access any content anytime without penalty
 
@@ -3042,19 +3055,19 @@ Adult professionals will not tolerate being bossed around by an algorithm. Unlik
 
 **Behavior:**
 
-| Scenario | System Response |
-|----------|-----------------|
-| User requests content scheduled for later | Immediately available, no penalty |
-| User requests content from higher level | Warning about prerequisites, but allowed |
-| User requests content from completed course | Available for quick review |
-| User requests content never started | Full introduction, adds to learning path |
+| Scenario                                    | System Response                          |
+| ------------------------------------------- | ---------------------------------------- |
+| User requests content scheduled for later   | Immediately available, no penalty        |
+| User requests content from higher level     | Warning about prerequisites, but allowed |
+| User requests content from completed course | Available for quick review               |
+| User requests content never started         | Full introduction, adds to learning path |
 
 **User Interface:**
 
 ```
 "Showing you 'Options Greeks' early because you requested it.
 
-Note: This normally comes after 'Intrinsic Value'—some 
+Note: This normally comes after 'Intrinsic Value'—some
 concepts may reference things you haven't covered yet.
 
 [Continue anyway] [Learn prerequisites first]"
@@ -3064,13 +3077,13 @@ concepts may reference things you haven't covered yet.
 
 **Types of Override:**
 
-| Override Type | Description | System Response |
-|---------------|-------------|-----------------|
-| **Defer** | "Not today" | Reschedule to tomorrow, no penalty |
-| **Skip** | "Skip this item" | Remove from today, FSRS adjusts accordingly |
-| **Prioritize** | "I need this first" | Move to front of session |
-| **Deep Dive** | "More on this topic" | Generate additional practice on demand |
-| **Rush** | "I have 5 min only" | Abbreviated session, highest priority only |
+| Override Type  | Description          | System Response                             |
+| -------------- | -------------------- | ------------------------------------------- |
+| **Defer**      | "Not today"          | Reschedule to tomorrow, no penalty          |
+| **Skip**       | "Skip this item"     | Remove from today, FSRS adjusts accordingly |
+| **Prioritize** | "I need this first"  | Move to front of session                    |
+| **Deep Dive**  | "More on this topic" | Generate additional practice on demand      |
+| **Rush**       | "I have 5 min only"  | Abbreviated session, highest priority only  |
 
 **User Communication:**
 
@@ -3080,7 +3093,7 @@ concepts may reference things you haven't covered yet.
 You're in control:
 [Start as planned]
 [Just reviews today - skip new material]
-[Quick session - 5 min, essentials only]  
+[Quick session - 5 min, essentials only]
 [I need specific content...]"
 ```
 
@@ -3088,12 +3101,12 @@ You're in control:
 
 Every recommendation should be explainable. Users can tap "Why?" on any element.
 
-| Element | Rationale Shown |
-|---------|-----------------|
-| "Why this concept now?" | "This is the next concept in sequence. You've mastered its prerequisites: [list]" |
-| "Why this review?" | "Last reviewed 5 days ago. Your predicted recall is 78%, below our 85% threshold." |
+| Element                     | Rationale Shown                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| "Why this concept now?"     | "This is the next concept in sequence. You've mastered its prerequisites: [list]"           |
+| "Why this review?"          | "Last reviewed 5 days ago. Your predicted recall is 78%, below our 85% threshold."          |
 | "Why limited new material?" | "You've already covered 65% of today's capacity. Adding more may interfere with retention." |
-| "Why this order?" | "We're interleaving topics to improve long-term retention. Here's the research: [link]" |
+| "Why this order?"           | "We're interleaving topics to improve long-term retention. Here's the research: [link]"     |
 
 **Example "Why?" Response:**
 
@@ -3105,7 +3118,7 @@ Why are you showing me "Time Value Decay"?
 • Predicted recall: 81% (below 85% target)
 • Optimal review window: Today through tomorrow
 
-If you don't review it today, predicted recall drops to 
+If you don't review it today, predicted recall drops to
 74% by end of week.
 
 [Got it - review now] [Defer to tomorrow] [I know this - skip]"
@@ -3115,11 +3128,11 @@ If you don't review it today, predicted recall drops to
 
 Users can set explicit goals that influence prioritization:
 
-| Goal Type | Example | System Adaptation |
-|-----------|---------|-------------------|
-| **Deadline** | "I have a meeting about options on Friday" | Prioritize options content, accelerate schedule |
-| **Topic focus** | "I need to understand Greeks specifically" | Weight Greeks-related content higher |
-| **Breadth vs depth** | "Overview of everything" vs "Deep on fundamentals" | Adjust mastery thresholds and coverage |
+| Goal Type            | Example                                            | System Adaptation                               |
+| -------------------- | -------------------------------------------------- | ----------------------------------------------- |
+| **Deadline**         | "I have a meeting about options on Friday"         | Prioritize options content, accelerate schedule |
+| **Topic focus**      | "I need to understand Greeks specifically"         | Weight Greeks-related content higher            |
+| **Breadth vs depth** | "Overview of everything" vs "Deep on fundamentals" | Adjust mastery thresholds and coverage          |
 
 **User Interface:**
 
@@ -3129,21 +3142,21 @@ Users can set explicit goals that influence prioritization:
 ○ No, just continue my learning path
 ● Yes, I have a deadline:
     [Meeting about options] [Friday]
-    
-We'll prioritize options content and adjust your 
+
+We'll prioritize options content and adjust your
 schedule to maximize readiness by Friday."
 ```
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-017-1 | Any content accessible via search within 2 taps | UX testing |
-| AC-017-2 | "Why?" explanation available for every recommendation | Feature audit |
-| AC-017-3 | All override options (defer, skip, prioritize) accessible | Feature testing |
-| AC-017-4 | Override actions do not trigger negative feedback or punishment | Behavioral audit |
-| AC-017-5 | Goal-based prioritization demonstrably changes content order | Algorithm testing |
-| AC-017-6 | Quick session mode available from session start | UX testing |
+| ID       | Criterion                                                       | Validation Method |
+| -------- | --------------------------------------------------------------- | ----------------- |
+| AC-017-1 | Any content accessible via search within 2 taps                 | UX testing        |
+| AC-017-2 | "Why?" explanation available for every recommendation           | Feature audit     |
+| AC-017-3 | All override options (defer, skip, prioritize) accessible       | Feature testing   |
+| AC-017-4 | Override actions do not trigger negative feedback or punishment | Behavioral audit  |
+| AC-017-5 | Goal-based prioritization demonstrably changes content order    | Algorithm testing |
+| AC-017-6 | Quick session mode available from session start                 | UX testing        |
 
 ---
 
@@ -3180,23 +3193,23 @@ At session start (optional, not required):
 
 **System Adaptation by Energy Level:**
 
-| Level | New Concepts | Question Difficulty | Session Length |
-|-------|--------------|--------------------| ---------------|
-| High | Up to 4 | Include far transfer | Up to 25 min |
-| Normal | 2-3 | Standard mix | 12-18 min |
-| Low | 0-1 | Recognition + near transfer only | 8-12 min |
-| Quick | 0 | Review only, easiest format | 2-5 min |
+| Level  | New Concepts | Question Difficulty              | Session Length |
+| ------ | ------------ | -------------------------------- | -------------- |
+| High   | Up to 4      | Include far transfer             | Up to 25 min   |
+| Normal | 2-3          | Standard mix                     | 12-18 min      |
+| Low    | 0-1          | Recognition + near transfer only | 8-12 min       |
+| Quick  | 0            | Review only, easiest format      | 2-5 min        |
 
 ##### 4.18.2 Automatic Energy Detection
 
 If user doesn't self-report, detect from behavior:
 
-| Signal | Interpretation | Adaptation |
-|--------|----------------|------------|
-| Response times 50%+ slower than baseline | Low energy | Reduce difficulty, shorten session |
-| Error rate 2x normal | Struggling | Offer to pause, simplify |
-| Multiple "I don't know" responses | Overwhelmed | Switch to review, offer encouragement |
-| Fast + accurate | High energy | Can offer additional challenge |
+| Signal                                   | Interpretation | Adaptation                            |
+| ---------------------------------------- | -------------- | ------------------------------------- |
+| Response times 50%+ slower than baseline | Low energy     | Reduce difficulty, shorten session    |
+| Error rate 2x normal                     | Struggling     | Offer to pause, simplify              |
+| Multiple "I don't know" responses        | Overwhelmed    | Switch to review, offer encouragement |
+| Fast + accurate                          | High energy    | Can offer additional challenge        |
 
 ##### 4.18.3 "Easy Day" Explicit Mode
 
@@ -3220,22 +3233,22 @@ Consistency > intensity. Showing up matters most.
 
 User-configurable ceiling for overwhelming days:
 
-| Setting | Description |
-|---------|-------------|
-| **Max new concepts** | "Never more than N new concepts per day" |
-| **Max session time** | "Stop suggesting content after N minutes" |
-| **Max review items** | "Cap reviews at N per day" |
-| **Weekly budget** | "I can do X hours total this week—spread it out" |
+| Setting              | Description                                      |
+| -------------------- | ------------------------------------------------ |
+| **Max new concepts** | "Never more than N new concepts per day"         |
+| **Max session time** | "Stop suggesting content after N minutes"        |
+| **Max review items** | "Cap reviews at N per day"                       |
+| **Weekly budget**    | "I can do X hours total this week—spread it out" |
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-018-1 | Energy level selection available at session start | UX testing |
-| AC-018-2 | Session adapts measurably based on reported energy | Session comparison |
+| ID       | Criterion                                                     | Validation Method        |
+| -------- | ------------------------------------------------------------- | ------------------------ |
+| AC-018-1 | Energy level selection available at session start             | UX testing               |
+| AC-018-2 | Session adapts measurably based on reported energy            | Session comparison       |
 | AC-018-3 | Automatic energy detection triggers within-session adaptation | Behavior trigger testing |
-| AC-018-4 | "Easy Day" mode accessible from home screen | UX testing |
-| AC-018-5 | User-configurable caps honored by session construction | Cap enforcement testing |
+| AC-018-4 | "Easy Day" mode accessible from home screen                   | UX testing               |
+| AC-018-5 | User-configurable caps honored by session construction        | Cap enforcement testing  |
 
 ---
 
@@ -3275,12 +3288,12 @@ How confident are you?
 
 ##### 4.19.2 Calibration Tracking
 
-| Confidence + Outcome | Label | User Insight |
-|---------------------|-------|--------------|
-| Certain + Correct | Well-calibrated | "Your confidence matches your knowledge" |
-| Certain + Incorrect | **Overconfident** | "You thought you knew this but didn't—worth extra attention" |
-| Guessing + Correct | Lucky or Underconfident | "You knew more than you thought!" |
-| Guessing + Incorrect | Appropriate uncertainty | "Good self-awareness—you knew you weren't sure" |
+| Confidence + Outcome | Label                   | User Insight                                                 |
+| -------------------- | ----------------------- | ------------------------------------------------------------ |
+| Certain + Correct    | Well-calibrated         | "Your confidence matches your knowledge"                     |
+| Certain + Incorrect  | **Overconfident**       | "You thought you knew this but didn't—worth extra attention" |
+| Guessing + Correct   | Lucky or Underconfident | "You knew more than you thought!"                            |
+| Guessing + Incorrect | Appropriate uncertainty | "Good self-awareness—you knew you weren't sure"              |
 
 ##### 4.19.3 Calibration Dashboard
 
@@ -3288,34 +3301,34 @@ How confident are you?
 "Your Confidence Calibration
 
 When you say 'Certain':     82% actually correct
-When you say 'Fairly sure': 71% actually correct  
+When you say 'Fairly sure': 71% actually correct
 When you say 'Unsure':      54% actually correct
 When you say 'Guessing':    31% actually correct
 
 📊 You're slightly overconfident on Options Greeks—
    you said 'Certain' but got 3 of 5 wrong.
-   
+
 This is a blind spot worth addressing."
 ```
 
 ##### 4.19.4 System Use of Confidence Data
 
-| Pattern | System Response |
-|---------|-----------------|
+| Pattern                              | System Response                                  |
+| ------------------------------------ | ------------------------------------------------ |
 | Consistent overconfidence on topic X | Add more difficult questions; flag as blind spot |
-| Consistent underconfidence | Provide encouragement; surface past successes |
-| High confidence + incorrect | **Priority intervention** (likely misconception) |
-| Improving calibration over time | Celebrate metacognitive growth |
+| Consistent underconfidence           | Provide encouragement; surface past successes    |
+| High confidence + incorrect          | **Priority intervention** (likely misconception) |
+| Improving calibration over time      | Celebrate metacognitive growth                   |
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-019-1 | Confidence prompt appears after answer, before feedback | UX flow testing |
-| AC-019-2 | Confidence is optional and can be disabled | Settings testing |
-| AC-019-3 | Calibration calculated and displayed in dashboard | Feature testing |
-| AC-019-4 | Overconfidence patterns flagged as blind spots | Detection logic testing |
-| AC-019-5 | High confidence + incorrect triggers priority handling | Intervention testing |
+| ID       | Criterion                                               | Validation Method       |
+| -------- | ------------------------------------------------------- | ----------------------- |
+| AC-019-1 | Confidence prompt appears after answer, before feedback | UX flow testing         |
+| AC-019-2 | Confidence is optional and can be disabled              | Settings testing        |
+| AC-019-3 | Calibration calculated and displayed in dashboard       | Feature testing         |
+| AC-019-4 | Overconfidence patterns flagged as blind spots          | Detection logic testing |
+| AC-019-5 | High confidence + incorrect triggers priority handling  | Intervention testing    |
 
 ---
 
@@ -3337,12 +3350,12 @@ Questions and relevant context must be **visually integrated** on the same scree
 
 ##### 4.20.1 Contextual Question Display
 
-| Question Type | Context Integration |
-|---------------|---------------------|
-| Recall question | No context shown (testing memory) |
-| Application scenario | Scenario fully visible while answering |
+| Question Type            | Context Integration                      |
+| ------------------------ | ---------------------------------------- |
+| Recall question          | No context shown (testing memory)        |
+| Application scenario     | Scenario fully visible while answering   |
 | Reference-based question | Relevant excerpt/diagram shown alongside |
-| Comparison question | Both elements visible simultaneously |
+| Comparison question      | Both elements visible simultaneously     |
 
 **Example: Application Scenario**
 
@@ -3393,22 +3406,22 @@ For longer scenarios, show key information first with option to expand:
 
 When source material contains diagrams:
 
-| Content Type | Display Approach |
-|--------------|------------------|
-| Simple diagram | Show inline with question |
-| Complex diagram | Zoomable, stays on screen while answering |
-| Multiple visuals | Carousel that doesn't dismiss question |
-| Video timestamp | Link to exact timestamp, opens in split view |
+| Content Type     | Display Approach                             |
+| ---------------- | -------------------------------------------- |
+| Simple diagram   | Show inline with question                    |
+| Complex diagram  | Zoomable, stays on screen while answering    |
+| Multiple visuals | Carousel that doesn't dismiss question       |
+| Video timestamp  | Link to exact timestamp, opens in split view |
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-020-1 | Application scenarios display context + question on single screen | UX audit |
-| AC-020-2 | No question requires navigation away to find answer information | Question review |
-| AC-020-3 | Complex scenarios use progressive disclosure | UX testing |
-| AC-020-4 | Diagrams remain visible while answering | Feature testing |
-| AC-020-5 | Mobile layout tested on smallest supported screen (iPhone SE) | Device testing |
+| ID       | Criterion                                                         | Validation Method |
+| -------- | ----------------------------------------------------------------- | ----------------- |
+| AC-020-1 | Application scenarios display context + question on single screen | UX audit          |
+| AC-020-2 | No question requires navigation away to find answer information   | Question review   |
+| AC-020-3 | Complex scenarios use progressive disclosure                      | UX testing        |
+| AC-020-4 | Diagrams remain visible while answering                           | Feature testing   |
+| AC-020-5 | Mobile layout tested on smallest supported screen (iPhone SE)     | Device testing    |
 
 ---
 
@@ -3422,17 +3435,17 @@ When source material contains diagrams:
 
 Multiple choice and fill-in-the-blank questions, while useful for basic recall, are fundamentally **recognition tasks**—the user identifies the correct answer from options rather than **generating** solutions or **executing** skills. The research is clear: learning that involves struggle, generation, and execution produces dramatically better retention and transfer.
 
-Traditional apps are limited to static interaction patterns. **An AI-powered app can dynamically generate custom interactive experiences**—simulations, games, puzzles, mini-applications—that force users to actually *do* the thing they're learning, not just answer questions *about* it.
+Traditional apps are limited to static interaction patterns. **An AI-powered app can dynamically generate custom interactive experiences**—simulations, games, puzzles, mini-applications—that force users to actually _do_ the thing they're learning, not just answer questions _about_ it.
 
 #### Research Foundation
 
-| Finding | Effect Size | Implication |
-|---------|-------------|-------------|
-| Productive failure | d = 0.36 (up to 3x teacher effect) | Struggling before instruction deepens learning |
-| Free recall > recognition | g = 0.81 vs lower | Generation is harder but more effective |
-| Procedural knowledge requires practice | Strong | Can't learn video editing by answering questions about it |
-| Transfer requires practicing target skill | Strong | Must execute, not just recall |
-| Desirable difficulties | Meta-principle | Harder practice = better long-term retention |
+| Finding                                   | Effect Size                        | Implication                                               |
+| ----------------------------------------- | ---------------------------------- | --------------------------------------------------------- |
+| Productive failure                        | d = 0.36 (up to 3x teacher effect) | Struggling before instruction deepens learning            |
+| Free recall > recognition                 | g = 0.81 vs lower                  | Generation is harder but more effective                   |
+| Procedural knowledge requires practice    | Strong                             | Can't learn video editing by answering questions about it |
+| Transfer requires practicing target skill | Strong                             | Must execute, not just recall                             |
+| Desirable difficulties                    | Meta-principle                     | Harder practice = better long-term retention              |
 
 **Key Insight:** AI can generate code on-the-fly to create interactive environments that were previously impossible in learning apps. This transforms the app from a "question-answer" system into a **"practice-execute-feedback"** system.
 
@@ -3490,16 +3503,16 @@ As a learner, I want to practice skills by actually doing them in interactive en
 
 #### Interaction Types by Content Modality
 
-| Content Modality | Traditional Approach | Dynamic Playground Approach |
-|------------------|---------------------|----------------------------|
+| Content Modality                                | Traditional Approach             | Dynamic Playground Approach                                           |
+| ----------------------------------------------- | -------------------------------- | --------------------------------------------------------------------- |
 | **Software Proficiency** (video editing, Excel) | "Where is the ripple edit tool?" | AI generates simplified UI mockup; user performs the actual operation |
-| **Procedural** (following steps) | "List the steps to..." | Interactive walkthrough where user executes each step in sequence |
-| **Strategic/Decision** (options trading) | "What would you do if..." | Trading simulator with real-time feedback on decisions |
-| **Conceptual** (physics, economics) | "Explain why..." | Interactive visualization user can manipulate to test hypotheses |
-| **Language** | "Translate this sentence" | Conversation simulator with branching dialogue |
-| **Perceptual** (medical imaging, design) | "Is this X or Y?" | Pattern recognition game with progressive difficulty |
-| **Mathematical** | "Solve for X" | Step-by-step solver where user executes each transformation |
-| **Creative** (writing, design) | "What would be a good..." | Open canvas with AI feedback on user creation |
+| **Procedural** (following steps)                | "List the steps to..."           | Interactive walkthrough where user executes each step in sequence     |
+| **Strategic/Decision** (options trading)        | "What would you do if..."        | Trading simulator with real-time feedback on decisions                |
+| **Conceptual** (physics, economics)             | "Explain why..."                 | Interactive visualization user can manipulate to test hypotheses      |
+| **Language**                                    | "Translate this sentence"        | Conversation simulator with branching dialogue                        |
+| **Perceptual** (medical imaging, design)        | "Is this X or Y?"                | Pattern recognition game with progressive difficulty                  |
+| **Mathematical**                                | "Solve for X"                    | Step-by-step solver where user executes each transformation           |
+| **Creative** (writing, design)                  | "What would be a good..."        | Open canvas with AI feedback on user creation                         |
 
 #### Feature Components
 
@@ -3558,14 +3571,14 @@ Constraints:
 
 **Example Generated Interactions:**
 
-| Learning Objective | Generated Interaction |
-|-------------------|----------------------|
-| Options profit/loss calculation | Interactive P&L chart where user drags stock price and sees option value change |
-| SQL JOIN operations | Mini database sandbox where user writes and executes queries against sample data |
-| Color theory | Interactive color wheel where user mixes colors to match targets |
-| Negotiation tactics | Branching dialogue simulator where user chooses responses and sees outcomes |
-| Financial statement analysis | Interactive balance sheet where user identifies red flags |
-| Git branching | Visual git tree where user executes merge/rebase operations |
+| Learning Objective              | Generated Interaction                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| Options profit/loss calculation | Interactive P&L chart where user drags stock price and sees option value change  |
+| SQL JOIN operations             | Mini database sandbox where user writes and executes queries against sample data |
+| Color theory                    | Interactive color wheel where user mixes colors to match targets                 |
+| Negotiation tactics             | Branching dialogue simulator where user chooses responses and sees outcomes      |
+| Financial statement analysis    | Interactive balance sheet where user identifies red flags                        |
+| Git branching                   | Visual git tree where user executes merge/rebase operations                      |
 
 ##### 4.21.3 Secure Runtime Environment
 
@@ -3573,23 +3586,23 @@ Constraints:
 
 **Technical Requirements:**
 
-| Requirement | Specification |
-|-------------|---------------|
-| Sandboxing | Isolated execution environment, no access to device APIs |
-| Code review | AI-generated code validated against safety rules before execution |
-| Resource limits | CPU, memory, and execution time caps |
-| State capture | All user interactions logged for assessment |
-| Error handling | Graceful degradation if component fails |
-| Offline capability | Generated components can be cached and run offline |
+| Requirement        | Specification                                                     |
+| ------------------ | ----------------------------------------------------------------- |
+| Sandboxing         | Isolated execution environment, no access to device APIs          |
+| Code review        | AI-generated code validated against safety rules before execution |
+| Resource limits    | CPU, memory, and execution time caps                              |
+| State capture      | All user interactions logged for assessment                       |
+| Error handling     | Graceful degradation if component fails                           |
+| Offline capability | Generated components can be cached and run offline                |
 
 **Technology Options:**
 
-| Approach | Pros | Cons |
-|----------|------|------|
-| React Native WebView | Full web capabilities, flexible | Performance overhead |
-| Custom renderer | Optimized for specific interaction types | Limited flexibility |
-| Server-side rendering | Offloads computation | Requires connectivity |
-| Hybrid | Different approaches for different complexity levels | Implementation complexity |
+| Approach              | Pros                                                 | Cons                      |
+| --------------------- | ---------------------------------------------------- | ------------------------- |
+| React Native WebView  | Full web capabilities, flexible                      | Performance overhead      |
+| Custom renderer       | Optimized for specific interaction types             | Limited flexibility       |
+| Server-side rendering | Offloads computation                                 | Requires connectivity     |
+| Hybrid                | Different approaches for different complexity levels | Implementation complexity |
 
 **State Capture Schema:**
 
@@ -3600,11 +3613,17 @@ Constraints:
   "user_id": "u789",
   "interaction_type": "ui_simulation",
   "events": [
-    {"timestamp": 0, "action": "view_start", "state": {}},
-    {"timestamp": 2340, "action": "tap", "target": "clip_2", "state": {"selected": "clip_2"}},
-    {"timestamp": 4120, "action": "tap", "target": "ripple_tool", "state": {"tool": "ripple"}},
-    {"timestamp": 6890, "action": "drag", "target": "clip_2_edge", "delta": -50, "state": {"clips_shifted": true}},
-    {"timestamp": 8200, "action": "complete", "outcome": "success"}
+    { "timestamp": 0, "action": "view_start", "state": {} },
+    { "timestamp": 2340, "action": "tap", "target": "clip_2", "state": { "selected": "clip_2" } },
+    { "timestamp": 4120, "action": "tap", "target": "ripple_tool", "state": { "tool": "ripple" } },
+    {
+      "timestamp": 6890,
+      "action": "drag",
+      "target": "clip_2_edge",
+      "delta": -50,
+      "state": { "clips_shifted": true }
+    },
+    { "timestamp": 8200, "action": "complete", "outcome": "success" }
   ],
   "total_duration_ms": 8200,
   "errors": [],
@@ -3620,14 +3639,14 @@ Constraints:
 
 **Assessment Dimensions:**
 
-| Dimension | What It Measures | How Assessed |
-|-----------|------------------|--------------|
-| **Outcome correctness** | Did user achieve the goal? | Compare final state to success criteria |
-| **Process quality** | Did user take an efficient/correct path? | Analyze action sequence |
-| **Error patterns** | What mistakes were made? | Detect deviation from optimal path |
-| **Time efficiency** | How quickly did user complete? | Compare to baseline |
-| **Independence** | Did user need hints? | Track hint requests |
-| **Conceptual understanding** | Does user understand *why*? | Follow-up explanation prompt |
+| Dimension                    | What It Measures                         | How Assessed                            |
+| ---------------------------- | ---------------------------------------- | --------------------------------------- |
+| **Outcome correctness**      | Did user achieve the goal?               | Compare final state to success criteria |
+| **Process quality**          | Did user take an efficient/correct path? | Analyze action sequence                 |
+| **Error patterns**           | What mistakes were made?                 | Detect deviation from optimal path      |
+| **Time efficiency**          | How quickly did user complete?           | Compare to baseline                     |
+| **Independence**             | Did user need hints?                     | Track hint requests                     |
+| **Conceptual understanding** | Does user understand _why_?              | Follow-up explanation prompt            |
 
 **Assessment Prompt Template:**
 
@@ -3683,12 +3702,12 @@ AFTER each interactive task:
 IF outcome_score < 0.5:
     → Re-teach concept with simpler example
     → Generate scaffolded version (with hints visible)
-    
+
 ELIF outcome_score >= 0.5 AND process_score < 0.7:
     → User got it but inefficiently
     → Generate same difficulty with focus on identified_gaps
     → Add process guidance ("Try to do it in fewer steps")
-    
+
 ELIF outcome_score >= 0.8 AND process_score >= 0.7:
     → User has basic competency
     → Generate harder variation:
@@ -3696,7 +3715,7 @@ ELIF outcome_score >= 0.8 AND process_score >= 0.7:
         - Time pressure
         - Combined with other skills
         - Novel context (transfer challenge)
-        
+
 IF user_completes(3 variations at high_difficulty):
     → Mark skill as "execution competent"
     → Schedule spaced review with new variations
@@ -3704,13 +3723,13 @@ IF user_completes(3 variations at high_difficulty):
 
 **Difficulty Progression Example (Video Editing - Ripple Edit):**
 
-| Level | Task Variation |
-|-------|----------------|
-| 1. Basic | 4 clips, ripple edit middle clip |
-| 2. Context | 6 clips, ripple edit while maintaining sync with audio track |
-| 3. Combined | Perform ripple edit + add transition + adjust timing |
-| 4. Problem-solving | "This edit created a jump cut—how would you fix it?" |
-| 5. Transfer | Apply same concept in different NLE interface mockup |
+| Level              | Task Variation                                               |
+| ------------------ | ------------------------------------------------------------ |
+| 1. Basic           | 4 clips, ripple edit middle clip                             |
+| 2. Context         | 6 clips, ripple edit while maintaining sync with audio track |
+| 3. Combined        | Perform ripple edit + add transition + adjust timing         |
+| 4. Problem-solving | "This edit created a jump cut—how would you fix it?"         |
+| 5. Transfer        | Apply same concept in different NLE interface mockup         |
 
 ##### 4.21.6 Interaction Library (Pre-Built + Custom)
 
@@ -3718,15 +3737,15 @@ IF user_completes(3 variations at high_difficulty):
 
 For common learning domains, maintain a library of customizable interaction templates:
 
-| Domain | Template Type | Customization Points |
-|--------|---------------|---------------------|
-| Software UI | Generic toolbar + canvas | Icons, tool behaviors, canvas content |
-| Trading/Finance | Chart + order entry | Instrument, price data, order types |
-| Data/Analytics | Table + query interface | Schema, sample data, expected queries |
-| Language | Conversation interface | Characters, scenario, vocabulary |
-| Math/Logic | Step-by-step solver | Problem type, operations allowed |
-| Design | Canvas + tools | Color palette, shapes, constraints |
-| Flowchart/Process | Node editor | Node types, connection rules, goal state |
+| Domain            | Template Type            | Customization Points                     |
+| ----------------- | ------------------------ | ---------------------------------------- |
+| Software UI       | Generic toolbar + canvas | Icons, tool behaviors, canvas content    |
+| Trading/Finance   | Chart + order entry      | Instrument, price data, order types      |
+| Data/Analytics    | Table + query interface  | Schema, sample data, expected queries    |
+| Language          | Conversation interface   | Characters, scenario, vocabulary         |
+| Math/Logic        | Step-by-step solver      | Problem type, operations allowed         |
+| Design            | Canvas + tools           | Color palette, shapes, constraints       |
+| Flowchart/Process | Node editor              | Node types, connection rules, goal state |
 
 **Custom Generation:**
 
@@ -3734,14 +3753,14 @@ When no template fits, AI generates from scratch within component library constr
 
 ##### 4.21.7 Mobile-Optimized Interaction Patterns
 
-| Interaction Need | Mobile Pattern |
-|------------------|----------------|
-| Precise positioning | Snap-to-grid, zoom + fine adjust |
-| Multi-step operations | Guided overlay, step indicator |
-| Text entry | Smart suggestions, voice input option |
-| Complex selection | Tap-and-hold context menus |
-| Visualization manipulation | Pinch-zoom, swipe to adjust |
-| Timing-based tasks | Generous touch targets, visual cue timing |
+| Interaction Need           | Mobile Pattern                            |
+| -------------------------- | ----------------------------------------- |
+| Precise positioning        | Snap-to-grid, zoom + fine adjust          |
+| Multi-step operations      | Guided overlay, step indicator            |
+| Text entry                 | Smart suggestions, voice input option     |
+| Complex selection          | Tap-and-hold context menus                |
+| Visualization manipulation | Pinch-zoom, swipe to adjust               |
+| Timing-based tasks         | Generous touch targets, visual cue timing |
 
 ##### 4.21.8 Mode-Switching Logic: Simulation vs. Orchestration
 
@@ -3785,11 +3804,11 @@ When no template fits, AI generates from scratch within component library constr
 
 **Mode Definitions:**
 
-| Mode | When Used | App Role | Examples |
-|------|-----------|----------|----------|
-| **SIMULATION** | Core skill executable on screen | Practice environment | Language conversation, trading decisions, software UI, coding, math solving |
-| **HYBRID** | Some components simulable, others not | Partial practice + coach | Music theory (simulable) + instrument playing (not); Presentation design (simulable) + delivery (not) |
-| **ORCHESTRATION** | Physical/motor skill, real-world only | Practice coach | Whistling, sports techniques, cooking, handwriting, public speaking |
+| Mode              | When Used                             | App Role                 | Examples                                                                                              |
+| ----------------- | ------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| **SIMULATION**    | Core skill executable on screen       | Practice environment     | Language conversation, trading decisions, software UI, coding, math solving                           |
+| **HYBRID**        | Some components simulable, others not | Partial practice + coach | Music theory (simulable) + instrument playing (not); Presentation design (simulable) + delivery (not) |
+| **ORCHESTRATION** | Physical/motor skill, real-world only | Practice coach           | Whistling, sports techniques, cooking, handwriting, public speaking                                   |
 
 **Simulation Feasibility Assessment Criteria:**
 
@@ -3854,10 +3873,10 @@ When no template fits, AI generates from scratch within component library constr
 
 **Mode-Specific Interaction Generation:**
 
-| Mode | Interaction Types Generated |
-|------|----------------------------|
-| **SIMULATION** | UI simulations, dialogue simulators, construction exercises, trading games, coding sandboxes, interactive visualizations |
-| **HYBRID** | Simulations for knowledge components + practice assignments for physical components + integration exercises |
+| Mode              | Interaction Types Generated                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **SIMULATION**    | UI simulations, dialogue simulators, construction exercises, trading games, coding sandboxes, interactive visualizations    |
+| **HYBRID**        | Simulations for knowledge components + practice assignments for physical components + integration exercises                 |
 | **ORCHESTRATION** | Practice assignments with focus cues, troubleshooting flows, recording analysis, perceptual training, self-report check-ins |
 
 **User Transparency:**
@@ -3889,7 +3908,7 @@ When in ORCHESTRATION mode, the app explicitly communicates:
 
 **Purpose:** Learn what interaction styles actually help each user learn from each specific source, and adapt accordingly.
 
-**Core Principle:** Performance data tells us if the user *got it right*. Feedback data tells us if the interaction style *felt helpful*. Both signals matter for optimization.
+**Core Principle:** Performance data tells us if the user _got it right_. Feedback data tells us if the interaction style _felt helpful_. Both signals matter for optimization.
 
 **Feedback Capture:**
 
@@ -3925,7 +3944,7 @@ After each interaction, offer lightweight feedback option:
     "time_taken_ms": 145000
   },
   "user_feedback": {
-    "helpful_rating": "positive",  // "negative" | "neutral" | "positive"
+    "helpful_rating": "positive", // "negative" | "neutral" | "positive"
     "timestamp": "2024-12-26T14:32:00Z"
   }
 }
@@ -3983,7 +4002,7 @@ Each source material develops its own interaction preference profile:
     },
     "word_bank_construction": {
       "feedback_count": 5,
-      "positive_rate": 0.40,
+      "positive_rate": 0.4,
       "weight": "decreased",
       "notes": "User finds word banks too easy/unhelpful"
     },
@@ -4008,15 +4027,15 @@ Each source material develops its own interaction preference profile:
 
 ```
 IF user has preferences from similar source:
-    
+
     similar_source = find_similar(current_source, user_sources)
-    
+
     IF similar_source.domain == current_source.domain:
         // E.g., both are language courses
         → Use similar_source preferences as STARTING POINT
         → But still collect feedback for current source
         → Allow divergence if feedback differs
-        
+
     ELSE:
         // Different domains—don't assume transfer
         → Start fresh for current source
@@ -4031,7 +4050,7 @@ Session 8 - Generating practice for "Asking for Directions"
 
 USER PROFILE FOR THIS SOURCE:
 - Dialogue simulators: 👍👍👍👍👍👍👍 (87.5% positive) → INCREASE
-- Word bank exercises: 👍👎👎👍👎 (40% positive) → DECREASE  
+- Word bank exercises: 👍👎👎👍👎 (40% positive) → DECREASE
 - Free construction: 👍👍👍👎 (75% positive) → INCREASE
 - Scene discovery: 👍👍👎 (67% positive) → NEUTRAL
 
@@ -4081,13 +4100,13 @@ Users can also explicitly set preferences:
 
 **Feedback Timing & Frequency:**
 
-| Scenario | Feedback Prompt |
-|----------|-----------------|
-| New interaction type (first 3 uses) | Always prompt |
-| Established interaction type | Prompt 1 in 5 times (20%) |
-| After major difficulty change | Always prompt |
-| User skipped/abandoned interaction | Prompt with "What went wrong?" |
-| User explicitly requested type | Don't prompt (implicit positive) |
+| Scenario                            | Feedback Prompt                  |
+| ----------------------------------- | -------------------------------- |
+| New interaction type (first 3 uses) | Always prompt                    |
+| Established interaction type        | Prompt 1 in 5 times (20%)        |
+| After major difficulty change       | Always prompt                    |
+| User skipped/abandoned interaction  | Prompt with "What went wrong?"   |
+| User explicitly requested type      | Don't prompt (implicit positive) |
 
 **Negative Feedback Deep Dive:**
 
@@ -4111,27 +4130,27 @@ When user gives 👎, optionally ask why:
 
 **System Response to Feedback Patterns:**
 
-| Pattern Detected | System Response |
-|------------------|-----------------|
-| Consistent 👍 on dialogue simulators | Generate more, extend duration, add complexity |
-| Consistent 👎 on word banks | Remove scaffolding, go to free construction |
-| 👎 with "too easy" | Increase difficulty, skip scaffolded versions |
-| 👎 with "too hard" | Add scaffolding, break into smaller steps |
-| 👎 with "took too long" | Generate shorter interactions, split into parts |
-| 👎 with "confusing" | Simplify instructions, add examples first |
-| Mixed feedback (no pattern) | Continue balanced generation, keep sampling |
+| Pattern Detected                     | System Response                                 |
+| ------------------------------------ | ----------------------------------------------- |
+| Consistent 👍 on dialogue simulators | Generate more, extend duration, add complexity  |
+| Consistent 👎 on word banks          | Remove scaffolding, go to free construction     |
+| 👎 with "too easy"                   | Increase difficulty, skip scaffolded versions   |
+| 👎 with "too hard"                   | Add scaffolding, break into smaller steps       |
+| 👎 with "took too long"              | Generate shorter interactions, split into parts |
+| 👎 with "confusing"                  | Simplify instructions, add examples first       |
+| Mixed feedback (no pattern)          | Continue balanced generation, keep sampling     |
 
 **Interaction Quality Metrics (Internal):**
 
 Beyond user feedback, track objective quality signals:
 
-| Metric | What It Indicates |
-|--------|-------------------|
-| Completion rate | Did users finish the interaction? |
-| Time-to-completion | Appropriate difficulty? |
-| Retry rate | User wanted to try again (positive) |
-| Skip rate | User avoided this type (negative) |
-| Help/hint usage | Needed more scaffolding? |
+| Metric                     | What It Indicates                                    |
+| -------------------------- | ---------------------------------------------------- |
+| Completion rate            | Did users finish the interaction?                    |
+| Time-to-completion         | Appropriate difficulty?                              |
+| Retry rate                 | User wanted to try again (positive)                  |
+| Skip rate                  | User avoided this type (negative)                    |
+| Help/hint usage            | Needed more scaffolding?                             |
 | Post-interaction retention | Did this interaction style produce durable learning? |
 
 **The Ultimate Validation:**
@@ -4140,49 +4159,50 @@ Beyond user feedback, track objective quality signals:
 BEST SIGNAL = Retention correlation
 
 FOR each interaction_type:
-    
+
     concepts_learned_via_type = get_concepts(interaction_type)
     retention_30_day = measure_retention(concepts, days=30)
-    
+
     IF retention_30_day > baseline:
         → This interaction type WORKS for this user/source
         → Weight it higher even if user feedback is neutral
-        
+
     IF user_feedback == positive AND retention_30_day > baseline:
         → Perfect alignment—maximize this interaction type
-        
+
     IF user_feedback == positive BUT retention_30_day <= baseline:
         → User likes it but it's not working
         → Gently introduce alternatives, explain why
-        → "You enjoy word banks, but your retention is higher 
+        → "You enjoy word banks, but your retention is higher
            with free construction. Want to try more of those?"
 ```
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-021-1 | Content analysis identifies optimal interaction type per concept | Analysis audit |
-| AC-021-2 | AI generates functional interactive components for identified types | Generation testing |
-| AC-021-3 | Generated components execute safely in sandboxed environment | Security audit |
-| AC-021-4 | All user actions captured with sufficient granularity for assessment | Data capture verification |
-| AC-021-5 | AI assessment produces meaningful feedback on open-ended tasks | Assessment quality audit (human comparison) |
-| AC-021-6 | Iteration loop adjusts difficulty appropriately based on performance | Adaptation testing |
-| AC-021-7 | Interactive components work on smallest supported device (iPhone SE) | Device testing |
-| AC-021-8 | Components can run offline after initial generation | Offline testing |
-| AC-021-9 | Assessment latency <5 seconds for typical interactions | Performance testing |
-| AC-021-10 | Mode selection (Simulation/Hybrid/Orchestration) correctly identifies skill type | Mode classification audit |
-| AC-021-11 | Orchestration mode generates appropriate practice assignments and troubleshooting | Content review |
-| AC-021-12 | User transparently informed when skill requires real-world practice | UX audit |
-| AC-021-13 | Feedback prompt appears at appropriate frequency (100% for new types, 20% for established) | Frequency verification |
-| AC-021-14 | Interaction preferences tracked per source × interaction type | Data model verification |
-| AC-021-15 | Generation adapts to user feedback within 3 feedback samples | Adaptation testing |
-| AC-021-16 | User can view and override learned preferences | Feature testing |
-| AC-021-17 | Retention correlation tracked and surfaced when misaligned with user preference | Analytics verification |
+| ID        | Criterion                                                                                  | Validation Method                           |
+| --------- | ------------------------------------------------------------------------------------------ | ------------------------------------------- |
+| AC-021-1  | Content analysis identifies optimal interaction type per concept                           | Analysis audit                              |
+| AC-021-2  | AI generates functional interactive components for identified types                        | Generation testing                          |
+| AC-021-3  | Generated components execute safely in sandboxed environment                               | Security audit                              |
+| AC-021-4  | All user actions captured with sufficient granularity for assessment                       | Data capture verification                   |
+| AC-021-5  | AI assessment produces meaningful feedback on open-ended tasks                             | Assessment quality audit (human comparison) |
+| AC-021-6  | Iteration loop adjusts difficulty appropriately based on performance                       | Adaptation testing                          |
+| AC-021-7  | Interactive components work on smallest supported device (iPhone SE)                       | Device testing                              |
+| AC-021-8  | Components can run offline after initial generation                                        | Offline testing                             |
+| AC-021-9  | Assessment latency <5 seconds for typical interactions                                     | Performance testing                         |
+| AC-021-10 | Mode selection (Simulation/Hybrid/Orchestration) correctly identifies skill type           | Mode classification audit                   |
+| AC-021-11 | Orchestration mode generates appropriate practice assignments and troubleshooting          | Content review                              |
+| AC-021-12 | User transparently informed when skill requires real-world practice                        | UX audit                                    |
+| AC-021-13 | Feedback prompt appears at appropriate frequency (100% for new types, 20% for established) | Frequency verification                      |
+| AC-021-14 | Interaction preferences tracked per source × interaction type                              | Data model verification                     |
+| AC-021-15 | Generation adapts to user feedback within 3 feedback samples                               | Adaptation testing                          |
+| AC-021-16 | User can view and override learned preferences                                             | Feature testing                             |
+| AC-021-17 | Retention correlation tracked and surfaced when misaligned with user preference            | Analytics verification                      |
 
 #### Example: Complete Flow for "Video Editing - Ripple Edit"
 
 **1. Content Analysis Output:**
+
 ```json
 {
   "concept": "Ripple Edit",
@@ -4195,14 +4215,15 @@ FOR each interaction_type:
 ```
 
 **2. AI Generates Interactive Component:**
+
 ```jsx
 // AI-generated simplified NLE timeline
 <TimelineSimulator
   clips={[
-    {id: 1, duration: 5, color: 'blue'},
-    {id: 2, duration: 3, color: 'green'},
-    {id: 3, duration: 4, color: 'red'},
-    {id: 4, duration: 6, color: 'purple'}
+    { id: 1, duration: 5, color: 'blue' },
+    { id: 2, duration: 3, color: 'green' },
+    { id: 3, duration: 4, color: 'red' },
+    { id: 4, duration: 6, color: 'purple' },
   ]}
   tools={['select', 'trim', 'ripple']}
   task="Use the ripple edit tool to shorten clip 2. Watch what happens to clip 3."
@@ -4211,6 +4232,7 @@ FOR each interaction_type:
 ```
 
 **3. User Interacts:**
+
 - Sees simplified timeline with 4 colored clips
 - Taps ripple tool
 - Drags edge of clip 2
@@ -4218,6 +4240,7 @@ FOR each interaction_type:
 - All actions logged
 
 **4. AI Assesses:**
+
 ```json
 {
   "outcome_score": 1.0,
@@ -4228,19 +4251,20 @@ FOR each interaction_type:
 ```
 
 **5. Iteration:**
+
 - User succeeded → Generate harder variation
 - Next task includes audio sync requirement
 - Continue until mastery criteria met
 
 #### Research Validation Metrics
 
-| Metric | Measurement | Target |
-|--------|-------------|--------|
+| Metric                       | Measurement                                                               | Target           |
+| ---------------------------- | ------------------------------------------------------------------------- | ---------------- |
 | Interactive vs Q&A retention | Compare 30-day retention for concepts learned via interaction vs text Q&A | Interactive +25% |
-| Transfer performance | Test application in novel context | Interactive +30% |
-| Time to competency | Sessions required to reach execution proficiency | Interactive -20% |
-| User engagement | Session completion rate, return rate | Interactive +15% |
-| Real-world application | Self-reported use of skill in actual context (survey) | Interactive +40% |
+| Transfer performance         | Test application in novel context                                         | Interactive +30% |
+| Time to competency           | Sessions required to reach execution proficiency                          | Interactive -20% |
+| User engagement              | Session completion rate, return rate                                      | Interactive +15% |
+| Real-world application       | Self-reported use of skill in actual context (survey)                     | Interactive +40% |
 
 ---
 
@@ -4260,14 +4284,14 @@ Move beyond "answer questions about X" to "create X." AI evaluates open-ended pr
 
 #### Task Types
 
-| Task Type | Description | Example |
-|-----------|-------------|---------|
-| **Explanation generation** | User explains concept as if teaching | "Explain options time decay to a colleague" |
-| **Example creation** | User invents examples that demonstrate understanding | "Create a scenario where a put option would be valuable" |
-| **Problem construction** | User creates problems that test a concept | "Write a question that tests understanding of strike price" |
-| **Application proposal** | User proposes how to apply concept in their context | "How would you use this in your work?" |
-| **Critique/Analysis** | User evaluates a provided example | "What's wrong with this trading strategy?" |
-| **Creative synthesis** | User combines multiple concepts | "Design an options strategy for this market outlook" |
+| Task Type                  | Description                                          | Example                                                     |
+| -------------------------- | ---------------------------------------------------- | ----------------------------------------------------------- |
+| **Explanation generation** | User explains concept as if teaching                 | "Explain options time decay to a colleague"                 |
+| **Example creation**       | User invents examples that demonstrate understanding | "Create a scenario where a put option would be valuable"    |
+| **Problem construction**   | User creates problems that test a concept            | "Write a question that tests understanding of strike price" |
+| **Application proposal**   | User proposes how to apply concept in their context  | "How would you use this in your work?"                      |
+| **Critique/Analysis**      | User evaluates a provided example                    | "What's wrong with this trading strategy?"                  |
+| **Creative synthesis**     | User combines multiple concepts                      | "Design an options strategy for this market outlook"        |
 
 #### AI Evaluation Framework
 
@@ -4319,14 +4343,15 @@ SCORING:
 
 **Task:** "Explain why a call option's time value decreases as expiration approaches."
 
-**User Response v1:** 
+**User Response v1:**
 "Because there's less time for the stock to go up."
 
 **AI Feedback v1:**
+
 ```
 Score: 62/100
 
-You've got the basic intuition—time value does relate to potential 
+You've got the basic intuition—time value does relate to potential
 for movement. But this explanation has gaps:
 
 What's missing:
@@ -4346,10 +4371,11 @@ Want to revise your explanation? [Revise] [See example answer]
 "Time value exists because there's uncertainty about where the stock will be. More time means more chances for favorable movement. As expiration approaches, there's less uncertainty—you can see where the stock actually is. At expiration, only the intrinsic value matters because there's no more time for things to change."
 
 **AI Feedback v2:**
+
 ```
 Score: 91/100
 
-Excellent revision! You've captured the key insight: time value 
+Excellent revision! You've captured the key insight: time value
 represents uncertainty/opportunity value.
 
 Strong points:
@@ -4358,7 +4384,7 @@ Strong points:
 ✓ Correctly noted that only intrinsic value remains at expiration
 
 Minor refinement:
-The rate of time decay accelerates near expiration (theta decay 
+The rate of time decay accelerates near expiration (theta decay
 isn't linear). But that's advanced—you've nailed the core concept.
 
 [Mark as understood] [Learn about theta decay]
@@ -4366,13 +4392,13 @@ isn't linear). But that's advanced—you've nailed the core concept.
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-022-1 | Open-ended tasks available for all conceptual content | Content coverage audit |
+| ID       | Criterion                                                                   | Validation Method      |
+| -------- | --------------------------------------------------------------------------- | ---------------------- |
+| AC-022-1 | Open-ended tasks available for all conceptual content                       | Content coverage audit |
 | AC-022-2 | AI evaluation produces scores consistent with human raters (>85% agreement) | Human comparison study |
-| AC-022-3 | Feedback is specific, actionable, and constructive | Feedback quality audit |
-| AC-022-4 | Revision flow allows iterative improvement | UX testing |
-| AC-022-5 | Score improvement from v1 to v2 tracked as positive signal | Metric verification |
+| AC-022-3 | Feedback is specific, actionable, and constructive                          | Feedback quality audit |
+| AC-022-4 | Revision flow allows iterative improvement                                  | UX testing             |
+| AC-022-5 | Score improvement from v1 to v2 tracked as positive signal                  | Metric verification    |
 
 ---
 
@@ -4407,7 +4433,7 @@ When content is analyzed, the system generates a structured learning roadmap:
   "course_id": "options_trading_101",
   "source_title": "Options Trading for Beginners",
   "source_duration": "32:15",
-  
+
   "roadmap": {
     "total_concepts": 18,
     "total_levels": 4,
@@ -4425,7 +4451,7 @@ When content is analyzed, the system generates a structured learning roadmap:
       "typical": "2 weeks",
       "relaxed": "3 weeks"
     },
-    
+
     "levels": [
       {
         "level_id": 1,
@@ -4457,7 +4483,7 @@ Sessions = f(concepts, complexity, user_pace)
 
 Base calculation:
 - Simple concepts: 3-4 per session
-- Medium concepts: 2-3 per session  
+- Medium concepts: 2-3 per session
 - Complex concepts: 1-2 per session
 - Each concept needs 3+ sessions for mastery (successive relearning)
 
@@ -4515,44 +4541,44 @@ Adjustments:
 
 **Design Principles for Gamification:**
 
-| Do | Don't |
-|----|-------|
-| Celebrate mastery milestones | Reward mere activity |
-| Visualize genuine progress | Create arbitrary streaks |
-| Acknowledge difficulty overcome | Trivialize with points |
-| Show capability growth | Create anxiety about maintaining metrics |
+| Do                              | Don't                                    |
+| ------------------------------- | ---------------------------------------- |
+| Celebrate mastery milestones    | Reward mere activity                     |
+| Visualize genuine progress      | Create arbitrary streaks                 |
+| Acknowledge difficulty overcome | Trivialize with points                   |
+| Show capability growth          | Create anxiety about maintaining metrics |
 
 **Gamification Elements:**
 
-| Element | Description | Trigger |
-|---------|-------------|---------|
-| **Level Completion** | Visual unlock animation, summary of what was learned | Passing mastery gate |
-| **Milestone Badges** | Meaningful achievements tied to capability | "First concept mastered", "Level 2 unlocked", "Course complete" |
-| **Progress Path** | Visual journey showing where user started vs now | Always visible on roadmap |
-| **Capability Statements** | "You can now explain X" | After mastery of application-level concepts |
-| **Time Investment** | Show total time invested productively | Session end, course end |
-| **Retention Forecast** | "Based on your progress, you'll retain 85% at 6 months" | Milestone points |
+| Element                   | Description                                             | Trigger                                                         |
+| ------------------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
+| **Level Completion**      | Visual unlock animation, summary of what was learned    | Passing mastery gate                                            |
+| **Milestone Badges**      | Meaningful achievements tied to capability              | "First concept mastered", "Level 2 unlocked", "Course complete" |
+| **Progress Path**         | Visual journey showing where user started vs now        | Always visible on roadmap                                       |
+| **Capability Statements** | "You can now explain X"                                 | After mastery of application-level concepts                     |
+| **Time Investment**       | Show total time invested productively                   | Session end, course end                                         |
+| **Retention Forecast**    | "Based on your progress, you'll retain 85% at 6 months" | Milestone points                                                |
 
 **What We Avoid:**
 
-| Anti-Pattern | Why Avoided |
-|--------------|-------------|
-| Leaderboards | Extrinsic competition doesn't improve learning (g = 0.49) |
-| Daily streaks with penalties | Creates anxiety, punishes life circumstances |
-| Points/XP for completion | Rewards volume over quality |
-| Surprise rewards | Intermittent reinforcement creates addiction, not learning |
+| Anti-Pattern                 | Why Avoided                                                |
+| ---------------------------- | ---------------------------------------------------------- |
+| Leaderboards                 | Extrinsic competition doesn't improve learning (g = 0.49)  |
+| Daily streaks with penalties | Creates anxiety, punishes life circumstances               |
+| Points/XP for completion     | Rewards volume over quality                                |
+| Surprise rewards             | Intermittent reinforcement creates addiction, not learning |
 
 ##### 4.23.4 Dynamic Roadmap Updates
 
 The roadmap updates based on user performance:
 
-| Signal | Roadmap Update |
-|--------|----------------|
-| Faster than expected mastery | "You're ahead of schedule—could finish in 10 sessions" |
-| Slower than expected | "Taking more time on foundations—completion now ~14 sessions" (no judgment) |
-| Failed mastery gate | Add remediation sessions to estimate |
-| Skipped days | Adjust calendar estimate, not session count |
-| Partial completion + stop | Show "You've learned X, Y, Z. Return anytime to continue." |
+| Signal                       | Roadmap Update                                                              |
+| ---------------------------- | --------------------------------------------------------------------------- |
+| Faster than expected mastery | "You're ahead of schedule—could finish in 10 sessions"                      |
+| Slower than expected         | "Taking more time on foundations—completion now ~14 sessions" (no judgment) |
+| Failed mastery gate          | Add remediation sessions to estimate                                        |
+| Skipped days                 | Adjust calendar estimate, not session count                                 |
+| Partial completion + stop    | Show "You've learned X, Y, Z. Return anytime to continue."                  |
 
 ##### 4.23.5 Session Preview
 
@@ -4579,15 +4605,15 @@ Before each session, user sees:
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-025-1 | Every uploaded content generates a structured roadmap | Analysis output verification |
-| AC-025-2 | Session estimates are within ±20% of actual for 80% of users | Tracking vs prediction |
-| AC-025-3 | Roadmap visualization clearly shows current position and path ahead | UX testing |
-| AC-025-4 | Level completion triggers meaningful celebration (not just points) | UX verification |
-| AC-025-5 | Roadmap updates dynamically based on user performance | Update logic verification |
-| AC-025-6 | Session preview shows what user will learn and be able to do | UX verification |
-| AC-025-7 | No anxiety-inducing gamification (streaks with penalties, leaderboards) | Design audit |
+| ID       | Criterion                                                               | Validation Method            |
+| -------- | ----------------------------------------------------------------------- | ---------------------------- |
+| AC-025-1 | Every uploaded content generates a structured roadmap                   | Analysis output verification |
+| AC-025-2 | Session estimates are within ±20% of actual for 80% of users            | Tracking vs prediction       |
+| AC-025-3 | Roadmap visualization clearly shows current position and path ahead     | UX testing                   |
+| AC-025-4 | Level completion triggers meaningful celebration (not just points)      | UX verification              |
+| AC-025-5 | Roadmap updates dynamically based on user performance                   | Update logic verification    |
+| AC-025-6 | Session preview shows what user will learn and be able to do            | UX verification              |
+| AC-025-7 | No anxiety-inducing gamification (streaks with penalties, leaderboards) | Design audit                 |
 
 ---
 
@@ -4626,7 +4652,7 @@ FOR each concept:
     - What is lost by simulating vs doing the real thing?
     - Is the real tool accessible to the user?
     - What is the cost/risk of real-world practice?
-  
+
   ASSIGN practice modality:
     - PROBLEM: Conceptual/analytical (can be fully in-app)
     - PUZZLE: Logic/pattern-based (can be fully in-app)
@@ -4637,16 +4663,16 @@ FOR each concept:
 
 **Practice Modality Decision Matrix:**
 
-| Concept Type | Example | In-App Option | Call-to-Action Better? | Decision |
-|--------------|---------|---------------|----------------------|----------|
-| Conceptual | "What is intrinsic value" | Problem/explanation | No | PROBLEM |
-| Strategic | "When to use a put" | Scenario simulation | No | INTERACTION |
-| Software UI | "How to use ripple edit" | UI mockup works | Maybe | INTERACTION or CTA |
-| Software workflow | "Edit a complete video" | Mockup insufficient | Yes | CALL_TO_ACTION |
-| 3D modeling | "Create a box in Blender" | Can't simulate | Yes | CALL_TO_ACTION |
-| Physical skill | "Knead bread dough" | Can't simulate | Yes | CALL_TO_ACTION |
-| Creative output | "Design a logo" | Limited canvas | Yes | CALL_TO_ACTION |
-| Language conversation | "Order food in Spanish" | Simulation okay | Maybe | INTERACTION or CTA |
+| Concept Type          | Example                   | In-App Option       | Call-to-Action Better? | Decision           |
+| --------------------- | ------------------------- | ------------------- | ---------------------- | ------------------ |
+| Conceptual            | "What is intrinsic value" | Problem/explanation | No                     | PROBLEM            |
+| Strategic             | "When to use a put"       | Scenario simulation | No                     | INTERACTION        |
+| Software UI           | "How to use ripple edit"  | UI mockup works     | Maybe                  | INTERACTION or CTA |
+| Software workflow     | "Edit a complete video"   | Mockup insufficient | Yes                    | CALL_TO_ACTION     |
+| 3D modeling           | "Create a box in Blender" | Can't simulate      | Yes                    | CALL_TO_ACTION     |
+| Physical skill        | "Knead bread dough"       | Can't simulate      | Yes                    | CALL_TO_ACTION     |
+| Creative output       | "Design a logo"           | Limited canvas      | Yes                    | CALL_TO_ACTION     |
+| Language conversation | "Order food in Spanish"   | Simulation okay     | Maybe                  | INTERACTION or CTA |
 
 ##### 4.24.2 Call-to-Action Structure
 
@@ -4765,10 +4791,10 @@ User taps: [I got stuck]
 ```
 "Ah, the 3D navigation in Blender is notoriously confusing at first!
 
-Here's the key insight: Middle mouse button rotates the view, 
+Here's the key insight: Middle mouse button rotates the view,
 Shift + Middle mouse pans, and scroll wheel zooms.
 
-If you don't have a middle mouse button, go to Edit > Preferences > 
+If you don't have a middle mouse button, go to Edit > Preferences >
 Input and enable 'Emulate 3-Button Mouse.'
 
 Want to try again with this in mind?
@@ -4779,12 +4805,12 @@ Want to try again with this in mind?
 
 **When to Assign CTAs:**
 
-| Trigger | CTA Assignment |
-|---------|----------------|
-| End of concept introduction | "Now go practice this in the real tool" |
-| Before mastery gate | "Complete these real-world tasks before testing" |
-| After in-app simulation | "You did it in the simulation—now try the real thing" |
-| Spaced review | "It's been a week—open Blender and recreate your scene" |
+| Trigger                     | CTA Assignment                                          |
+| --------------------------- | ------------------------------------------------------- |
+| End of concept introduction | "Now go practice this in the real tool"                 |
+| Before mastery gate         | "Complete these real-world tasks before testing"        |
+| After in-app simulation     | "You did it in the simulation—now try the real thing"   |
+| Spaced review               | "It's been a week—open Blender and recreate your scene" |
 
 **Integration with Roadmap:**
 
@@ -4807,16 +4833,16 @@ Want to try again with this in mind?
 
 ##### 4.24.5 CTA for Different Domains
 
-| Domain | Example CTA |
-|--------|-------------|
-| **Software (Blender)** | "Create a scene with 3 objects, position them, and render an image" |
-| **Software (Excel)** | "Open a real spreadsheet and create a pivot table from your data" |
+| Domain                       | Example CTA                                                         |
+| ---------------------------- | ------------------------------------------------------------------- |
+| **Software (Blender)**       | "Create a scene with 3 objects, position them, and render an image" |
+| **Software (Excel)**         | "Open a real spreadsheet and create a pivot table from your data"   |
 | **Software (Video editing)** | "Edit 30 seconds of footage using the techniques from this session" |
-| **Language** | "Have a 5-minute conversation with a language partner or tutor" |
-| **Cooking** | "Make this recipe and note what you learned" |
-| **Music** | "Practice this chord progression for 10 minutes on your instrument" |
-| **Writing** | "Write a 500-word draft applying these principles" |
-| **Photography** | "Go outside and take 10 photos using the composition rules" |
+| **Language**                 | "Have a 5-minute conversation with a language partner or tutor"     |
+| **Cooking**                  | "Make this recipe and note what you learned"                        |
+| **Music**                    | "Practice this chord progression for 10 minutes on your instrument" |
+| **Writing**                  | "Write a 500-word draft applying these principles"                  |
+| **Photography**              | "Go outside and take 10 photos using the composition rules"         |
 
 ##### 4.24.6 AI Decision: Practice Modality Selection
 
@@ -4835,7 +4861,7 @@ Given this learning objective:
 Determine the optimal practice modality:
 
 1. PROBLEM - Analytical/conceptual question (in-app)
-2. PUZZLE - Logic/pattern challenge (in-app) 
+2. PUZZLE - Logic/pattern challenge (in-app)
 3. INTERACTION - Interactive simulation (in-app, F-021)
 4. GAME - Gamified skill practice (in-app)
 5. CALL_TO_ACTION - Real-world practice assignment (outside app)
@@ -4857,27 +4883,27 @@ Output:
 
 ##### 4.24.7 CTA Completion Tracking
 
-| Completion State | System Response |
-|------------------|-----------------|
-| Completed | Update concept to DEVELOPING, schedule retrieval follow-up |
-| Stuck + resolved | Provide help, offer retry, don't penalize |
-| Stuck + unresolved | Flag concept for remediation, suggest alternative approach |
-| Skipped | Concept remains EXPOSED, offer again later, note pattern |
-| Not attempted (24h) | Gentle reminder, don't block all progress |
+| Completion State    | System Response                                            |
+| ------------------- | ---------------------------------------------------------- |
+| Completed           | Update concept to DEVELOPING, schedule retrieval follow-up |
+| Stuck + resolved    | Provide help, offer retry, don't penalize                  |
+| Stuck + unresolved  | Flag concept for remediation, suggest alternative approach |
+| Skipped             | Concept remains EXPOSED, offer again later, note pattern   |
+| Not attempted (24h) | Gentle reminder, don't block all progress                  |
 
 **Flexibility Principle:** CTAs should enhance learning, not become blockers. If user consistently skips CTAs, system adapts—perhaps they don't have access to the tool, or they're learning for different reasons.
 
 #### Acceptance Criteria
 
-| ID | Criterion | Validation Method |
-|----|-----------|-------------------|
-| AC-024-1 | AI correctly identifies when CTA is superior to in-app practice | Decision audit (human review) |
-| AC-024-2 | CTA assignments are specific, actionable, and appropriately scoped | Content review |
-| AC-024-3 | Follow-up questions assess real understanding from practice | Question quality audit |
-| AC-024-4 | "Got stuck" flow provides genuinely helpful guidance | UX testing |
-| AC-024-5 | CTA completion integrates properly with mastery tracking | Integration testing |
-| AC-024-6 | CTAs don't completely block progress for users who can't complete them | Flexibility testing |
-| AC-024-7 | Roadmap clearly shows CTA assignments as part of session | UX verification |
+| ID       | Criterion                                                              | Validation Method             |
+| -------- | ---------------------------------------------------------------------- | ----------------------------- |
+| AC-024-1 | AI correctly identifies when CTA is superior to in-app practice        | Decision audit (human review) |
+| AC-024-2 | CTA assignments are specific, actionable, and appropriately scoped     | Content review                |
+| AC-024-3 | Follow-up questions assess real understanding from practice            | Question quality audit        |
+| AC-024-4 | "Got stuck" flow provides genuinely helpful guidance                   | UX testing                    |
+| AC-024-5 | CTA completion integrates properly with mastery tracking               | Integration testing           |
+| AC-024-6 | CTAs don't completely block progress for users who can't complete them | Flexibility testing           |
+| AC-024-7 | Roadmap clearly shows CTA assignments as part of session               | UX verification               |
 
 ---
 
@@ -4887,22 +4913,22 @@ Output:
 
 **Expected Behavior:**
 
-| Step | System Action |
-|------|---------------|
-| 1 | Display specific feedback: "You scored 68%. Needed: 80%. Areas to review: [concepts]" |
-| 2 | Identify specific weak concepts from test performance |
-| 3 | Generate remediation session focused on weak areas |
-| 4 | Schedule remediation session (can be same day if capacity allows) |
-| 5 | After remediation, offer mastery check retry |
-| 6 | Maximum 3 retries before suggesting: "Consider reviewing source material" |
-| 7 | No advancement until threshold met |
+| Step | System Action                                                                         |
+| ---- | ------------------------------------------------------------------------------------- |
+| 1    | Display specific feedback: "You scored 68%. Needed: 80%. Areas to review: [concepts]" |
+| 2    | Identify specific weak concepts from test performance                                 |
+| 3    | Generate remediation session focused on weak areas                                    |
+| 4    | Schedule remediation session (can be same day if capacity allows)                     |
+| 5    | After remediation, offer mastery check retry                                          |
+| 6    | Maximum 3 retries before suggesting: "Consider reviewing source material"             |
+| 7    | No advancement until threshold met                                                    |
 
 **User Communication:**
 
 ```
 "You're close! You scored 68%, and we need 80% to move forward.
 
-This isn't a setback — it's the system working as intended. 
+This isn't a setback — it's the system working as intended.
 Building on a shaky foundation leads to problems later.
 
 Here's what we'll focus on:
@@ -4920,13 +4946,13 @@ Ready for a focused review session? (~8 minutes)"
 
 **Expected Behavior:**
 
-| Days Missed | System Response |
-|-------------|-----------------|
-| 1-2 days | Normal session, due reviews prioritized |
-| 3-4 days | "Welcome back" session, capacity adjusted for decay |
-| 5-7 days | Consolidation assessment before new material |
-| 8-14 days | Suggested review of most decayed concepts |
-| 14+ days | "Recovery mode" — systematic assessment of retained knowledge |
+| Days Missed | System Response                                               |
+| ----------- | ------------------------------------------------------------- |
+| 1-2 days    | Normal session, due reviews prioritized                       |
+| 3-4 days    | "Welcome back" session, capacity adjusted for decay           |
+| 5-7 days    | Consolidation assessment before new material                  |
+| 8-14 days   | Suggested review of most decayed concepts                     |
+| 14+ days    | "Recovery mode" — systematic assessment of retained knowledge |
 
 **Recovery Mode Protocol:**
 
@@ -4941,12 +4967,12 @@ Ready for a focused review session? (~8 minutes)"
 ```
 "Welcome back! It's been 7 days.
 
-Before we continue, let's check what's still solid. 
+Before we continue, let's check what's still solid.
 Some decay is normal — that's why we have review systems.
 
 Quick assessment: ~5 minutes
 
-This will help us rebuild efficiently rather than 
+This will help us rebuild efficiently rather than
 moving forward on a shaky foundation."
 ```
 
@@ -4958,22 +4984,22 @@ moving forward on a shaky foundation."
 
 **Expected Behavior:**
 
-| Challenge | Solution |
-|-----------|----------|
-| Capacity competition | Single daily capacity budget shared across courses |
-| Review prioritization | FSRS urgency + user priority setting |
-| Session construction | Can be single-course or mixed (user preference) |
-| Interleaving | Cross-course interleaving optional (high cognitive load) |
-| Progress tracking | Per-course and aggregate dashboards |
+| Challenge             | Solution                                                 |
+| --------------------- | -------------------------------------------------------- |
+| Capacity competition  | Single daily capacity budget shared across courses       |
+| Review prioritization | FSRS urgency + user priority setting                     |
+| Session construction  | Can be single-course or mixed (user preference)          |
+| Interleaving          | Cross-course interleaving optional (high cognitive load) |
+| Progress tracking     | Per-course and aggregate dashboards                      |
 
 **Capacity Allocation Options:**
 
-| Mode | Description |
-|------|-------------|
-| Balanced | Equal allocation to each active course |
-| Priority | User sets primary course (gets 60-70% of capacity) |
-| Automatic | System allocates based on due reviews and proximity to goals |
-| Single-focus | Only one course per session, alternating days |
+| Mode         | Description                                                  |
+| ------------ | ------------------------------------------------------------ |
+| Balanced     | Equal allocation to each active course                       |
+| Priority     | User sets primary course (gets 60-70% of capacity)           |
+| Automatic    | System allocates based on due reviews and proximity to goals |
+| Single-focus | Only one course per session, alternating days                |
 
 **User Setting:**
 
@@ -4994,13 +5020,13 @@ moving forward on a shaky foundation."
 
 **Expected Behavior:**
 
-| Quality Issue | Detection | Response |
-|---------------|-----------|----------|
-| No clear concepts | Concept extraction yields <3 items | "This content doesn't appear to have enough structured material. Consider a different source." |
-| Tangential content | High ratio of off-topic segments | Filter to relevant portions, flag confidence level |
-| Contradictory information | Conflicting statements detected | Flag contradictions, ask user to resolve |
-| Missing prerequisites | References unexplained concepts | Warn user of assumed knowledge, suggest supplementary sources |
-| Very advanced | High difficulty + many prerequisites | Warn about difficulty, suggest foundational content first |
+| Quality Issue             | Detection                            | Response                                                                                       |
+| ------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| No clear concepts         | Concept extraction yields <3 items   | "This content doesn't appear to have enough structured material. Consider a different source." |
+| Tangential content        | High ratio of off-topic segments     | Filter to relevant portions, flag confidence level                                             |
+| Contradictory information | Conflicting statements detected      | Flag contradictions, ask user to resolve                                                       |
+| Missing prerequisites     | References unexplained concepts      | Warn user of assumed knowledge, suggest supplementary sources                                  |
+| Very advanced             | High difficulty + many prerequisites | Warn about difficulty, suggest foundational content first                                      |
 
 **Confidence Flagging:**
 
@@ -5008,7 +5034,7 @@ moving forward on a shaky foundation."
 "Analysis complete, but with some concerns:
 
 ⚠️ Content structure: Low confidence
-   The video jumps between topics frequently. We've extracted 
+   The video jumps between topics frequently. We've extracted
    what we can, but learning may be choppy.
 
 ⚠️ Prerequisites assumed:
@@ -5042,14 +5068,14 @@ Options:
 ```
 "Your answer: [user's response]
 
-We marked this as incomplete because it didn't mention 
+We marked this as incomplete because it didn't mention
 [missing key element], which is essential to this concept.
 
 Expected answer would include: [criteria list]
 
 Disagree? [I think my answer was correct]
 
-Note: Disputing never hurts your progress. 
+Note: Disputing never hurts your progress.
 We use this feedback to improve."
 ```
 
@@ -5061,29 +5087,29 @@ We use this feedback to improve."
 
 **Fast Learner (>2x average velocity):**
 
-| Observation | Adaptation |
-|-------------|------------|
-| High accuracy + fast responses | Reduce scaffolding, advance faster |
-| Consistently exceeds mastery thresholds | Allow earlier mastery gates |
-| High transfer performance | Emphasize application over recall |
-| Risk: Overconfidence | Maintain challenging transfer questions |
+| Observation                             | Adaptation                              |
+| --------------------------------------- | --------------------------------------- |
+| High accuracy + fast responses          | Reduce scaffolding, advance faster      |
+| Consistently exceeds mastery thresholds | Allow earlier mastery gates             |
+| High transfer performance               | Emphasize application over recall       |
+| Risk: Overconfidence                    | Maintain challenging transfer questions |
 
 **Slow Learner (<0.5x average velocity):**
 
-| Observation | Adaptation |
-|-------------|------------|
-| Lower accuracy, needs more repetition | Extend practice, delay advancement |
-| Longer response times | No penalty; more processing time allowed |
-| Struggles with transfer | More worked examples, scaffolded practice |
-| Risk: Discouragement | Celebrate incremental progress, adjust expectations |
+| Observation                           | Adaptation                                          |
+| ------------------------------------- | --------------------------------------------------- |
+| Lower accuracy, needs more repetition | Extend practice, delay advancement                  |
+| Longer response times                 | No penalty; more processing time allowed            |
+| Struggles with transfer               | More worked examples, scaffolded practice           |
+| Risk: Discouragement                  | Celebrate incremental progress, adjust expectations |
 
 **User Communication (Slow Learner):**
 
 ```
-"Everyone learns at their own pace. Your pace is giving your 
+"Everyone learns at their own pace. Your pace is giving your
 brain more time to deeply encode these concepts.
 
-Research shows: faster isn't better for retention. 
+Research shows: faster isn't better for retention.
 What matters is reaching mastery, not speed.
 
 Your progress: [visualization showing steady improvement]"
@@ -5097,12 +5123,12 @@ Your progress: [visualization showing steady improvement]"
 
 **Expected Behavior:**
 
-| State at Interruption | Recovery Behavior |
-|----------------------|-------------------|
-| During pretest | Restart pretest |
-| During new concept | Option to re-read or skip to retrieval |
-| During retrieval practice | Resume from interruption point |
-| During consolidation | Resume from interruption point |
+| State at Interruption     | Recovery Behavior                      |
+| ------------------------- | -------------------------------------- |
+| During pretest            | Restart pretest                        |
+| During new concept        | Option to re-read or skip to retrieval |
+| During retrieval practice | Resume from interruption point         |
+| During consolidation      | Resume from interruption point         |
 
 **Session State Persistence:**
 
@@ -5131,7 +5157,7 @@ Time spent: 7 minutes
 **Expected Behavior:**
 
 ```
-"You're trying to start new material, but your learning 
+"You're trying to start new material, but your learning
 capacity for today is depleted (92% used).
 
 Adding more now would likely:
@@ -5273,51 +5299,51 @@ Instead, you could:
 
 ### 7.1 North Star Metrics
 
-| Metric | Definition | Target | Measurement |
-|--------|------------|--------|-------------|
-| **30-Day Retention Rate** | % of concepts correctly recalled 30 days after MASTERED state | >75% | Delayed testing cohort |
-| **Course Completion Rate** | % of users who complete courses they start | >60% | Funnel analysis |
-| **Active Usage Retention** | % of users active at D7, D30, D90 | D7: 70%, D30: 50%, D90: 30% | Cohort analysis |
+| Metric                     | Definition                                                    | Target                      | Measurement            |
+| -------------------------- | ------------------------------------------------------------- | --------------------------- | ---------------------- |
+| **30-Day Retention Rate**  | % of concepts correctly recalled 30 days after MASTERED state | >75%                        | Delayed testing cohort |
+| **Course Completion Rate** | % of users who complete courses they start                    | >60%                        | Funnel analysis        |
+| **Active Usage Retention** | % of users active at D7, D30, D90                             | D7: 70%, D30: 50%, D90: 30% | Cohort analysis        |
 
 ### 7.2 Learning Effectiveness Metrics
 
-| Metric | Definition | Target | Research Benchmark |
-|--------|------------|--------|-------------------|
-| Immediate recall accuracy | % correct on same-session retrieval | >80% | Baseline |
-| Next-day consolidation | % correct on morning check | >70% | Expected with sleep |
-| 7-day retention | % correct on 7-day delayed test | >65% | Above massed practice |
-| Transfer performance | % correct on novel application questions | >50% | Indicates deep learning |
-| Mastery achievement rate | % of concepts reaching MASTERED | >90% | With successive relearning |
+| Metric                    | Definition                               | Target | Research Benchmark         |
+| ------------------------- | ---------------------------------------- | ------ | -------------------------- |
+| Immediate recall accuracy | % correct on same-session retrieval      | >80%   | Baseline                   |
+| Next-day consolidation    | % correct on morning check               | >70%   | Expected with sleep        |
+| 7-day retention           | % correct on 7-day delayed test          | >65%   | Above massed practice      |
+| Transfer performance      | % correct on novel application questions | >50%   | Indicates deep learning    |
+| Mastery achievement rate  | % of concepts reaching MASTERED          | >90%   | With successive relearning |
 
 ### 7.3 Engagement Metrics
 
-| Metric | Definition | Target |
-|--------|------------|--------|
-| Sessions per week | Average sessions completed | 4-5 |
-| Session completion rate | % of started sessions completed | >85% |
-| Streak length | Average consecutive days active | 7+ days |
-| Time to first mastery | Days until first concept MASTERED | <7 days |
-| Method satisfaction | User rating of learning experience | >4.2/5 |
+| Metric                  | Definition                         | Target  |
+| ----------------------- | ---------------------------------- | ------- |
+| Sessions per week       | Average sessions completed         | 4-5     |
+| Session completion rate | % of started sessions completed    | >85%    |
+| Streak length           | Average consecutive days active    | 7+ days |
+| Time to first mastery   | Days until first concept MASTERED  | <7 days |
+| Method satisfaction     | User rating of learning experience | >4.2/5  |
 
 ### 7.4 System Health Metrics
 
-| Metric | Definition | Target |
-|--------|------------|--------|
-| Content analysis success rate | % of uploads successfully processed | >95% |
-| AI evaluation accuracy | Agreement with human raters | >90% |
-| Session construction time | Time to build personalized session | <2 seconds |
-| FSRS prediction accuracy | Predicted vs actual recall probability | MAE <0.10 |
-| Profile convergence time | Sessions to reach stable preferences | <20 sessions |
+| Metric                        | Definition                             | Target       |
+| ----------------------------- | -------------------------------------- | ------------ |
+| Content analysis success rate | % of uploads successfully processed    | >95%         |
+| AI evaluation accuracy        | Agreement with human raters            | >90%         |
+| Session construction time     | Time to build personalized session     | <2 seconds   |
+| FSRS prediction accuracy      | Predicted vs actual recall probability | MAE <0.10    |
+| Profile convergence time      | Sessions to reach stable preferences   | <20 sessions |
 
 ### 7.5 Research Validation Metrics
 
-| Research Claim | Validation Metric | Target |
-|----------------|-------------------|--------|
-| Testing effect (g = 0.50) | Retrieval vs re-reading cohort comparison | Retrieval cohort >25% higher retention |
-| Spacing effect (d = 0.54) | Spaced vs massed practice comparison | Spaced cohort >20% higher at 30 days |
-| Pretesting effect (d = 1.1) | Pretest vs no-pretest cohort | Pretest cohort >10% higher |
-| Successive relearning (d = 1.52) | Protocol adherence vs partial | Full protocol >40% higher at 30 days |
-| Sleep consolidation | Well-slept vs sleep-deprived sessions | Well-slept >25% higher next-day |
+| Research Claim                   | Validation Metric                         | Target                                 |
+| -------------------------------- | ----------------------------------------- | -------------------------------------- |
+| Testing effect (g = 0.50)        | Retrieval vs re-reading cohort comparison | Retrieval cohort >25% higher retention |
+| Spacing effect (d = 0.54)        | Spaced vs massed practice comparison      | Spaced cohort >20% higher at 30 days   |
+| Pretesting effect (d = 1.1)      | Pretest vs no-pretest cohort              | Pretest cohort >10% higher             |
+| Successive relearning (d = 1.52) | Protocol adherence vs partial             | Full protocol >40% higher at 30 days   |
+| Sleep consolidation              | Well-slept vs sleep-deprived sessions     | Well-slept >25% higher next-day        |
 
 ---
 
@@ -5373,17 +5399,17 @@ Instead, you could:
 
 #### 8.2.1 Frontend Stack
 
-| Layer | Choice | Rationale | Alternatives Considered |
-|-------|--------|-----------|------------------------|
-| **Framework** | Next.js 14+ (App Router) | SSR/SSG flexibility, React Server Components, excellent DX, Vercel optimization | Remix, SvelteKit |
-| **Language** | TypeScript 5+ | Type safety critical for AI contracts, better DX | - |
-| **Styling** | Tailwind CSS 3.4+ | Utility-first, design system tokens, small bundle | Styled Components, CSS Modules |
-| **UI Components** | shadcn/ui | Radix primitives, fully customizable, accessible by default | Chakra UI, Mantine |
-| **Animation** | Framer Motion 11+ | Spring physics, layout animations, gesture support | React Spring, CSS animations |
-| **State (Global)** | Zustand | Lightweight, TypeScript-first, no boilerplate | Redux Toolkit, Jotai |
-| **State (Server)** | TanStack Query | Cache management, optimistic updates, offline support | SWR |
-| **Forms** | React Hook Form + Zod | Performance, validation, type inference | Formik |
-| **Mobile Wrapper** | Capacitor | Access to native APIs, single codebase | React Native, Expo |
+| Layer              | Choice                   | Rationale                                                                       | Alternatives Considered        |
+| ------------------ | ------------------------ | ------------------------------------------------------------------------------- | ------------------------------ |
+| **Framework**      | Next.js 14+ (App Router) | SSR/SSG flexibility, React Server Components, excellent DX, Vercel optimization | Remix, SvelteKit               |
+| **Language**       | TypeScript 5+            | Type safety critical for AI contracts, better DX                                | -                              |
+| **Styling**        | Tailwind CSS 3.4+        | Utility-first, design system tokens, small bundle                               | Styled Components, CSS Modules |
+| **UI Components**  | shadcn/ui                | Radix primitives, fully customizable, accessible by default                     | Chakra UI, Mantine             |
+| **Animation**      | Framer Motion 11+        | Spring physics, layout animations, gesture support                              | React Spring, CSS animations   |
+| **State (Global)** | Zustand                  | Lightweight, TypeScript-first, no boilerplate                                   | Redux Toolkit, Jotai           |
+| **State (Server)** | TanStack Query           | Cache management, optimistic updates, offline support                           | SWR                            |
+| **Forms**          | React Hook Form + Zod    | Performance, validation, type inference                                         | Formik                         |
+| **Mobile Wrapper** | Capacitor                | Access to native APIs, single codebase                                          | React Native, Expo             |
 
 **Package.json (Frontend Core):**
 
@@ -5394,27 +5420,27 @@ Instead, you could:
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0",
-    
+
     "tailwindcss": "^3.4.0",
     "framer-motion": "^11.0.0",
-    
+
     "@radix-ui/react-dialog": "^1.0.0",
     "@radix-ui/react-dropdown-menu": "^2.0.0",
     "@radix-ui/react-progress": "^1.0.0",
     "@radix-ui/react-tabs": "^1.0.0",
     "@radix-ui/react-toast": "^1.0.0",
-    
+
     "zustand": "^4.5.0",
     "@tanstack/react-query": "^5.28.0",
-    
+
     "react-hook-form": "^7.51.0",
     "zod": "^3.22.0",
     "@hookform/resolvers": "^3.3.0",
-    
+
     "lucide-react": "^0.363.0",
     "clsx": "^2.1.0",
     "tailwind-merge": "^2.2.0",
-    
+
     "@capacitor/core": "^6.0.0",
     "@capacitor/ios": "^6.0.0",
     "@capacitor/android": "^6.0.0"
@@ -5431,16 +5457,16 @@ Instead, you could:
 
 #### 8.2.2 Backend Stack
 
-| Layer | Choice | Rationale | Alternatives Considered |
-|-------|--------|-----------|------------------------|
-| **Runtime** | Node.js 20+ or Bun | Mature ecosystem, edge compatibility | Deno |
-| **API Layer** | tRPC | End-to-end type safety with Next.js | GraphQL, REST |
-| **Auth** | Clerk | Managed auth, great DX, social logins | Auth.js, Supabase Auth |
-| **Database** | PostgreSQL 16 (Supabase) | Relational + pgvector, managed scaling | PlanetScale (MySQL), MongoDB |
-| **ORM** | Drizzle ORM | Type-safe, edge-ready, SQL-like syntax | Prisma |
-| **Cache** | Upstash Redis | Serverless-compatible, low latency | Vercel KV |
-| **Background Jobs** | Inngest | Event-driven, retries, observability | Trigger.dev, BullMQ |
-| **File Storage** | Cloudflare R2 | S3-compatible, no egress fees | AWS S3 |
+| Layer               | Choice                   | Rationale                              | Alternatives Considered      |
+| ------------------- | ------------------------ | -------------------------------------- | ---------------------------- |
+| **Runtime**         | Node.js 20+ or Bun       | Mature ecosystem, edge compatibility   | Deno                         |
+| **API Layer**       | tRPC                     | End-to-end type safety with Next.js    | GraphQL, REST                |
+| **Auth**            | Clerk                    | Managed auth, great DX, social logins  | Auth.js, Supabase Auth       |
+| **Database**        | PostgreSQL 16 (Supabase) | Relational + pgvector, managed scaling | PlanetScale (MySQL), MongoDB |
+| **ORM**             | Drizzle ORM              | Type-safe, edge-ready, SQL-like syntax | Prisma                       |
+| **Cache**           | Upstash Redis            | Serverless-compatible, low latency     | Vercel KV                    |
+| **Background Jobs** | Inngest                  | Event-driven, retries, observability   | Trigger.dev, BullMQ          |
+| **File Storage**    | Cloudflare R2            | S3-compatible, no egress fees          | AWS S3                       |
 
 **Package.json (Backend Core):**
 
@@ -5451,21 +5477,21 @@ Instead, you could:
     "@trpc/client": "^10.45.0",
     "@trpc/react-query": "^10.45.0",
     "@trpc/next": "^10.45.0",
-    
+
     "@clerk/nextjs": "^4.29.0",
-    
+
     "drizzle-orm": "^0.30.0",
     "@neondatabase/serverless": "^0.9.0",
     "postgres": "^3.4.0",
-    
+
     "@upstash/redis": "^1.28.0",
     "@upstash/ratelimit": "^1.0.0",
-    
+
     "inngest": "^3.0.0",
-    
+
     "@aws-sdk/client-s3": "^3.540.0",
     "@aws-sdk/s3-request-presigner": "^3.540.0",
-    
+
     "zod": "^3.22.0"
   },
   "devDependencies": {
@@ -5476,15 +5502,15 @@ Instead, you could:
 
 #### 8.2.3 AI/ML Stack
 
-| Component | Choice | Rationale | Alternatives |
-|-----------|--------|-----------|--------------|
-| **Primary LLM** | Claude Sonnet 4.5 | Best reasoning, code gen, safety | GPT-4o |
-| **Fast LLM** | Claude Haiku 4.5 | Cost-efficient for simple tasks | GPT-4o-mini |
-| **API Routing** | OpenRouter | Multi-provider, fallbacks, BYOK support | Direct APIs |
-| **Embeddings** | text-embedding-3-small | Good quality/cost ratio | Cohere, Voyage |
-| **Vector Store** | pgvector | Same DB as main data, simpler ops | Pinecone |
-| **Speech-to-Text** | Whisper (via Replicate) | Accuracy, language support | AssemblyAI, Deepgram |
-| **Document Processing** | LlamaParse or Unstructured | PDF/DOCX extraction | Custom pipeline |
+| Component               | Choice                     | Rationale                               | Alternatives         |
+| ----------------------- | -------------------------- | --------------------------------------- | -------------------- |
+| **Primary LLM**         | Claude Sonnet 4.5          | Best reasoning, code gen, safety        | GPT-4o               |
+| **Fast LLM**            | Claude Haiku 4.5           | Cost-efficient for simple tasks         | GPT-4o-mini          |
+| **API Routing**         | OpenRouter                 | Multi-provider, fallbacks, BYOK support | Direct APIs          |
+| **Embeddings**          | text-embedding-3-small     | Good quality/cost ratio                 | Cohere, Voyage       |
+| **Vector Store**        | pgvector                   | Same DB as main data, simpler ops       | Pinecone             |
+| **Speech-to-Text**      | Whisper (via Replicate)    | Accuracy, language support              | AssemblyAI, Deepgram |
+| **Document Processing** | LlamaParse or Unstructured | PDF/DOCX extraction                     | Custom pipeline      |
 
 **AI Integration Package.json:**
 
@@ -5493,16 +5519,16 @@ Instead, you could:
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
     "openai": "^4.33.0",
-    
+
     "ai": "^3.0.0",
-    
+
     "@pinecone-database/pinecone": "^2.2.0",
-    
+
     "replicate": "^0.25.0",
-    
+
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.6.0",
-    
+
     "langchain": "^0.1.0"
   }
 }
@@ -5510,61 +5536,61 @@ Instead, you could:
 
 #### 8.2.4 Infrastructure & DevOps
 
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| **Frontend Hosting** | Vercel | Next.js optimization, edge functions, preview deploys |
-| **Backend Hosting** | Railway or Fly.io | Container support, auto-scaling, global regions |
-| **Database Hosting** | Supabase or Neon | Managed Postgres, connection pooling, branching |
-| **CDN** | Cloudflare | Global edge, DDoS protection, R2 integration |
-| **Error Monitoring** | Sentry | Stack traces, performance monitoring, releases |
-| **Analytics** | PostHog | Product analytics, feature flags, session replay |
-| **Logging** | Axiom | Serverless-friendly, fast queries |
-| **CI/CD** | GitHub Actions | Native GitHub integration, marketplace actions |
-| **Secrets Management** | Doppler or Vercel Env | Encrypted, environment syncing |
+| Component              | Choice                | Rationale                                             |
+| ---------------------- | --------------------- | ----------------------------------------------------- |
+| **Frontend Hosting**   | Vercel                | Next.js optimization, edge functions, preview deploys |
+| **Backend Hosting**    | Railway or Fly.io     | Container support, auto-scaling, global regions       |
+| **Database Hosting**   | Supabase or Neon      | Managed Postgres, connection pooling, branching       |
+| **CDN**                | Cloudflare            | Global edge, DDoS protection, R2 integration          |
+| **Error Monitoring**   | Sentry                | Stack traces, performance monitoring, releases        |
+| **Analytics**          | PostHog               | Product analytics, feature flags, session replay      |
+| **Logging**            | Axiom                 | Serverless-friendly, fast queries                     |
+| **CI/CD**              | GitHub Actions        | Native GitHub integration, marketplace actions        |
+| **Secrets Management** | Doppler or Vercel Env | Encrypted, environment syncing                        |
 
 ### 8.3 AI/ML Components
 
-| Component | Technology | Requirements |
-|-----------|------------|--------------|
-| Content extraction | Speech-to-text, OCR, NLP | >95% accuracy, <5 min processing |
-| Concept extraction | LLM-based | >80% key concept coverage |
-| Question generation | LLM-based | Quality: human-competitive |
-| Answer evaluation | LLM-based | >90% agreement with humans |
-| FSRS algorithm | Mathematical model | Per-user parameter fitting |
-| Adaptive optimization | Multi-armed bandit | Convergence within 20 sessions |
+| Component             | Technology               | Requirements                     |
+| --------------------- | ------------------------ | -------------------------------- |
+| Content extraction    | Speech-to-text, OCR, NLP | >95% accuracy, <5 min processing |
+| Concept extraction    | LLM-based                | >80% key concept coverage        |
+| Question generation   | LLM-based                | Quality: human-competitive       |
+| Answer evaluation     | LLM-based                | >90% agreement with humans       |
+| FSRS algorithm        | Mathematical model       | Per-user parameter fitting       |
+| Adaptive optimization | Multi-armed bandit       | Convergence within 20 sessions   |
 
 ### 8.4 Data Requirements
 
-| Data Type | Retention | Privacy Consideration |
-|-----------|-----------|----------------------|
-| User profile | Account lifetime | PII, encrypted |
-| Learning history | Account lifetime | Used for personalization |
-| Session recordings | 90 days | Used for model improvement |
-| Method effectiveness | Account lifetime | Anonymized for research |
-| Content uploads | User-controlled | User owns, can delete |
+| Data Type            | Retention        | Privacy Consideration      |
+| -------------------- | ---------------- | -------------------------- |
+| User profile         | Account lifetime | PII, encrypted             |
+| Learning history     | Account lifetime | Used for personalization   |
+| Session recordings   | 90 days          | Used for model improvement |
+| Method effectiveness | Account lifetime | Anonymized for research    |
+| Content uploads      | User-controlled  | User owns, can delete      |
 
 ### 8.5 Performance Requirements
 
-| Requirement | Target |
-|-------------|--------|
-| Session start latency | <2 seconds |
-| Question load latency | <500ms |
-| AI evaluation latency | <3 seconds |
-| Offline capability | Review sessions playable offline |
-| Sync latency | <5 seconds on reconnection |
-| Time to Interactive (TTI) | <3 seconds on 3G |
-| Lighthouse Performance Score | >90 |
-| Bundle size (initial) | <200KB gzipped |
+| Requirement                  | Target                           |
+| ---------------------------- | -------------------------------- |
+| Session start latency        | <2 seconds                       |
+| Question load latency        | <500ms                           |
+| AI evaluation latency        | <3 seconds                       |
+| Offline capability           | Review sessions playable offline |
+| Sync latency                 | <5 seconds on reconnection       |
+| Time to Interactive (TTI)    | <3 seconds on 3G                 |
+| Lighthouse Performance Score | >90                              |
+| Bundle size (initial)        | <200KB gzipped                   |
 
 ### 8.6 Platform Requirements
 
-| Platform | Support Level | Notes |
-|----------|---------------|-------|
-| iOS | Primary (iPhone) | Capacitor wrapper, native feel |
-| Android | Primary | Capacitor wrapper, Material adaptations |
-| Web | Secondary | Full functionality, dashboard focus |
-| Tablet | Optimized | Responsive layouts, larger touch targets |
-| Desktop | Supported | Web app, optional Electron wrapper |
+| Platform | Support Level    | Notes                                    |
+| -------- | ---------------- | ---------------------------------------- |
+| iOS      | Primary (iPhone) | Capacitor wrapper, native feel           |
+| Android  | Primary          | Capacitor wrapper, Material adaptations  |
+| Web      | Secondary        | Full functionality, dashboard focus      |
+| Tablet   | Optimized        | Responsive layouts, larger touch targets |
+| Desktop  | Supported        | Web app, optional Electron wrapper       |
 
 ### 8.7 Database Schema Summary
 
@@ -5716,12 +5742,12 @@ import { settingsRouter } from './settings';
 
 export const appRouter = router({
   auth: authRouter,
-  project: projectRouter,     // CRUD projects
-  source: sourceRouter,       // Upload, analyze sources
-  learning: learningRouter,   // Get next question, submit answer
-  session: sessionRouter,     // Start, end, track sessions
-  progress: progressRouter,   // Stats, mastery, streaks
-  settings: settingsRouter,   // User preferences, API config
+  project: projectRouter, // CRUD projects
+  source: sourceRouter, // Upload, analyze sources
+  learning: learningRouter, // Get next question, submit answer
+  session: sessionRouter, // Start, end, track sessions
+  progress: progressRouter, // Stats, mastery, streaks
+  settings: settingsRouter, // User preferences, API config
 });
 
 export type AppRouter = typeof appRouter;
@@ -5779,31 +5805,31 @@ ENABLE_BYOK=true
 
 ### 9.1 Product Questions
 
-| Question | Options | Decision Needed By |
-|----------|---------|-------------------|
-| Should users be able to skip pretests? | Allow skip vs Require all | Design phase |
-| How to handle users who want to "binge"? | Hard block vs Soft warning vs Allow with tracking | Design phase |
-| Should streaks include maintenance mode? | Yes vs Only active learning | Design phase |
-| Allow user to manually adjust FSRS intervals? | No adjustment vs Power user setting | Post-MVP |
-| Support user-generated content (custom questions)? | Yes vs No vs Suggest only | Post-MVP |
+| Question                                           | Options                                           | Decision Needed By |
+| -------------------------------------------------- | ------------------------------------------------- | ------------------ |
+| Should users be able to skip pretests?             | Allow skip vs Require all                         | Design phase       |
+| How to handle users who want to "binge"?           | Hard block vs Soft warning vs Allow with tracking | Design phase       |
+| Should streaks include maintenance mode?           | Yes vs Only active learning                       | Design phase       |
+| Allow user to manually adjust FSRS intervals?      | No adjustment vs Power user setting               | Post-MVP           |
+| Support user-generated content (custom questions)? | Yes vs No vs Suggest only                         | Post-MVP           |
 
 ### 9.2 Technical Questions
 
-| Question | Options | Decision Needed By |
-|----------|---------|-------------------|
+| Question                               | Options                                        | Decision Needed By |
+| -------------------------------------- | ---------------------------------------------- | ------------------ |
 | LLM provider for generation/evaluation | OpenAI vs Anthropic vs Multiple vs Self-hosted | Architecture phase |
-| FSRS implementation | Open-source Anki vs Custom | Architecture phase |
-| Offline support scope | Reviews only vs Full sessions | Architecture phase |
-| Sleep tracking integration | Manual only vs Apple Health vs Multiple | Design phase |
+| FSRS implementation                    | Open-source Anki vs Custom                     | Architecture phase |
+| Offline support scope                  | Reviews only vs Full sessions                  | Architecture phase |
+| Sleep tracking integration             | Manual only vs Apple Health vs Multiple        | Design phase       |
 
 ### 9.3 Research Questions
 
-| Question | How to Answer |
-|----------|---------------|
-| Does app-delivered pretesting match lab effect sizes? | A/B test with controlled cohort |
-| What is optimal new concept limit per session? | Vary 2-5 concepts, measure retention |
-| Does teach-back mode improve retention in app context? | A/B test with matched users |
-| What interleaving ratio is optimal? | Vary ratio, measure retention + engagement |
+| Question                                               | How to Answer                              |
+| ------------------------------------------------------ | ------------------------------------------ |
+| Does app-delivered pretesting match lab effect sizes?  | A/B test with controlled cohort            |
+| What is optimal new concept limit per session?         | Vary 2-5 concepts, measure retention       |
+| Does teach-back mode improve retention in app context? | A/B test with matched users                |
+| What interleaving ratio is optimal?                    | Vary ratio, measure retention + engagement |
 
 ---
 
@@ -5811,88 +5837,88 @@ ENABLE_BYOK=true
 
 ### Appendix A: Research Reference Summary
 
-| Finding | Effect Size | Source | Feature Implemented |
-|---------|-------------|--------|---------------------|
-| Testing effect | g = 0.50-0.81 | Rowland (2014) | Retrieval practice |
-| Free recall advantage | g = 0.81 | Rowland (2014) | Prioritize free recall |
-| Spacing effect | d = 0.54-0.85 | Donoghue & Hattie (2021) | FSRS scheduling |
-| Successive relearning | d = 1.52-4.19 | Rawson & Dunlosky | 3+ session protocol |
-| Pretesting | d = 1.1 | Richland et al. (2009) | Pretest feature |
-| Feedback amplification | d = 0.73 vs 0.39 | Rowland (2014) | AI feedback |
-| Interleaving | g = 0.42-0.83 | Brunmair & Richter (2019) | Mixed review |
-| Sleep consolidation | 20-40% effects | Walker (UC Berkeley) | Sleep-aware scheduling |
-| Working memory limit | 3-4 chunks | Cowan (2010) | Max 4 new concepts |
-| Elaborative interrogation | d = 0.59 | Dunlosky (2013) | Why/how prompts |
-| Protégé effect | ~50% improvement | Koh et al. (2018) | Teach-back mode |
-| Mastery-based progression | +5-8 months | EEF | Mastery gates |
-| Metacognition | +7-8 months | EEF | Progress dashboard |
+| Finding                   | Effect Size      | Source                    | Feature Implemented    |
+| ------------------------- | ---------------- | ------------------------- | ---------------------- |
+| Testing effect            | g = 0.50-0.81    | Rowland (2014)            | Retrieval practice     |
+| Free recall advantage     | g = 0.81         | Rowland (2014)            | Prioritize free recall |
+| Spacing effect            | d = 0.54-0.85    | Donoghue & Hattie (2021)  | FSRS scheduling        |
+| Successive relearning     | d = 1.52-4.19    | Rawson & Dunlosky         | 3+ session protocol    |
+| Pretesting                | d = 1.1          | Richland et al. (2009)    | Pretest feature        |
+| Feedback amplification    | d = 0.73 vs 0.39 | Rowland (2014)            | AI feedback            |
+| Interleaving              | g = 0.42-0.83    | Brunmair & Richter (2019) | Mixed review           |
+| Sleep consolidation       | 20-40% effects   | Walker (UC Berkeley)      | Sleep-aware scheduling |
+| Working memory limit      | 3-4 chunks       | Cowan (2010)              | Max 4 new concepts     |
+| Elaborative interrogation | d = 0.59         | Dunlosky (2013)           | Why/how prompts        |
+| Protégé effect            | ~50% improvement | Koh et al. (2018)         | Teach-back mode        |
+| Mastery-based progression | +5-8 months      | EEF                       | Mastery gates          |
+| Metacognition             | +7-8 months      | EEF                       | Progress dashboard     |
 
 ### Appendix B: Concept State Definitions
 
-| State | Definition | Transition To | Transition From |
-|-------|------------|---------------|-----------------|
-| UNSEEN | Concept not yet encountered | EXPOSED | — |
-| EXPOSED | Seen but not yet retrieved | FRAGILE, MISCONCEIVED | UNSEEN |
-| FRAGILE | Correct but weak retrieval | DEVELOPING | EXPOSED |
-| MISCONCEIVED | Incorrect with high confidence | CORRECTED | EXPOSED |
-| CORRECTED | Misconception addressed | DEVELOPING | MISCONCEIVED |
-| DEVELOPING | Consistent but effortful recall | SOLID | FRAGILE, CORRECTED |
-| SOLID | Fast, accurate, transfers | MASTERED | DEVELOPING |
-| MASTERED | Criterion met across 3+ sessions | — | SOLID |
+| State        | Definition                       | Transition To         | Transition From    |
+| ------------ | -------------------------------- | --------------------- | ------------------ |
+| UNSEEN       | Concept not yet encountered      | EXPOSED               | —                  |
+| EXPOSED      | Seen but not yet retrieved       | FRAGILE, MISCONCEIVED | UNSEEN             |
+| FRAGILE      | Correct but weak retrieval       | DEVELOPING            | EXPOSED            |
+| MISCONCEIVED | Incorrect with high confidence   | CORRECTED             | EXPOSED            |
+| CORRECTED    | Misconception addressed          | DEVELOPING            | MISCONCEIVED       |
+| DEVELOPING   | Consistent but effortful recall  | SOLID                 | FRAGILE, CORRECTED |
+| SOLID        | Fast, accurate, transfers        | MASTERED              | DEVELOPING         |
+| MASTERED     | Criterion met across 3+ sessions | —                     | SOLID              |
 
 ### Appendix C: Method Types and Applicability
 
-| Method | Declarative | Conceptual | Procedural | Perceptual | Strategic |
-|--------|-------------|------------|------------|------------|-----------|
-| Free recall | ✓ | ✓ | ○ | ○ | ✓ |
-| Cued recall | ✓ | ○ | ✓ | ○ | ○ |
-| Multiple choice | ✓ | ○ | ○ | ✓ | ○ |
-| Application scenario | ○ | ✓ | ✓ | ✓ | ✓ |
-| Elaboration (why/how) | ○ | ✓ | ○ | ○ | ✓ |
-| Discrimination | ✓ | ✓ | ○ | ✓ | ○ |
-| Teach-back | ✓ | ✓ | ○ | ○ | ✓ |
-| Productive failure | ✗ | ✓ | ○ | ○ | ✓ |
-| Worked example | ○ | ✓ | ✓ | ○ | ✓ |
+| Method                | Declarative | Conceptual | Procedural | Perceptual | Strategic |
+| --------------------- | ----------- | ---------- | ---------- | ---------- | --------- |
+| Free recall           | ✓           | ✓          | ○          | ○          | ✓         |
+| Cued recall           | ✓           | ○          | ✓          | ○          | ○         |
+| Multiple choice       | ✓           | ○          | ○          | ✓          | ○         |
+| Application scenario  | ○           | ✓          | ✓          | ✓          | ✓         |
+| Elaboration (why/how) | ○           | ✓          | ○          | ○          | ✓         |
+| Discrimination        | ✓           | ✓          | ○          | ✓          | ○         |
+| Teach-back            | ✓           | ✓          | ○          | ○          | ✓         |
+| Productive failure    | ✗           | ✓          | ○          | ○          | ✓         |
+| Worked example        | ○           | ✓          | ✓          | ○          | ✓         |
 
 ✓ = Primary fit | ○ = Secondary fit | ✗ = Not applicable
 
 ### Appendix D: Capacity Cost Reference
 
-| Concept Type | Base Cost | Modifier Examples |
-|--------------|-----------|-------------------|
-| Simple fact | 3 | +1 abstract, +2 novel domain |
-| Definition | 4 | +1 per unfamiliar related concept |
-| Relational concept | 5 | +1 per prerequisite same session |
-| Procedure (3-5 steps) | 7 | +2 software-based |
-| Procedure (6+ steps) | 12 | Should be chunked |
-| Decision/strategic | 8 | +3 multiple conditions |
-| Perceptual pattern | 6 | -2 multiple examples |
+| Concept Type          | Base Cost | Modifier Examples                 |
+| --------------------- | --------- | --------------------------------- |
+| Simple fact           | 3         | +1 abstract, +2 novel domain      |
+| Definition            | 4         | +1 per unfamiliar related concept |
+| Relational concept    | 5         | +1 per prerequisite same session  |
+| Procedure (3-5 steps) | 7         | +2 software-based                 |
+| Procedure (6+ steps)  | 12        | Should be chunked                 |
+| Decision/strategic    | 8         | +3 multiple conditions            |
+| Perceptual pattern    | 6         | -2 multiple examples              |
 
 ### Appendix E: Glossary
 
-| Term | Definition |
-|------|------------|
-| FSRS | Free Spaced Repetition Scheduler — ML-based algorithm for optimal review timing |
-| Successive relearning | Protocol combining retrieval + spacing + criterion mastery |
-| Desirable difficulty | Learning that feels harder but produces better retention |
-| Interleaving | Mixing different topics during practice |
-| Pretesting | Testing before instruction to prime encoding |
-| Consolidation | Brain process of stabilizing memories, primarily during sleep |
-| Criterion mastery | Requirement to achieve correct recall before advancing |
-| Transfer | Ability to apply knowledge to novel situations |
-| Elaborative interrogation | "Why" and "how" questions that deepen understanding |
-| Protégé effect | Learning improvement from teaching others |
+| Term                      | Definition                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| FSRS                      | Free Spaced Repetition Scheduler — ML-based algorithm for optimal review timing |
+| Successive relearning     | Protocol combining retrieval + spacing + criterion mastery                      |
+| Desirable difficulty      | Learning that feels harder but produces better retention                        |
+| Interleaving              | Mixing different topics during practice                                         |
+| Pretesting                | Testing before instruction to prime encoding                                    |
+| Consolidation             | Brain process of stabilizing memories, primarily during sleep                   |
+| Criterion mastery         | Requirement to achieve correct recall before advancing                          |
+| Transfer                  | Ability to apply knowledge to novel situations                                  |
+| Elaborative interrogation | "Why" and "how" questions that deepen understanding                             |
+| Protégé effect            | Learning improvement from teaching others                                       |
 
 ---
 
 ## Document Approval
 
-| Role | Name | Date | Signature |
-|------|------|------|-----------|
-| Product Owner | | | |
-| Engineering Lead | | | |
-| Research Advisor | | | |
-| UX Lead | | | |
+| Role             | Name | Date | Signature |
+| ---------------- | ---- | ---- | --------- |
+| Product Owner    |      |      |           |
+| Engineering Lead |      |      |           |
+| Research Advisor |      |      |           |
+| UX Lead          |      |      |           |
 
 ### Appendix F: Review Integration Matrix
 
@@ -5900,56 +5926,56 @@ This appendix documents how critical insights from external review were incorpor
 
 #### Review Source: Blind Spot Analysis
 
-| Review Insight | Severity | Feature Added | Section |
-|----------------|----------|---------------|---------|
-| **Transfer deficit: Retention ≠ Application** | Critical | F-015: Transfer-Focused Retrieval | 4.15 |
-| Cognitive type tagging needed | Critical | Cognitive Type Taxonomy | 4.15 |
-| Retrieval prompts must match application demands | Critical | Retrieval Prompt Generation by Type | 4.15 |
-| **Wall of Debt / Review overload** | Critical | F-016: Forgiveness-First Scheduling | 4.16 |
-| Bankruptcy options needed | Critical | Bankruptcy Mode | 4.16.3 |
-| Load balancing across days | Critical | Load Spreading Algorithm | 4.16.2 |
-| Forgiveness by default | Critical | Design Principle | 4.16 |
-| **Adult autonomy / Andragogical concerns** | Critical | F-017: Learner Autonomy & Override | 4.17 |
-| Override controls | Critical | Schedule Override | 4.17.2 |
-| Just-in-time access | Critical | Just-In-Time Mode | 4.17.1 |
-| Visible rationale | Critical | Visible Scheduling Rationale | 4.17.3 |
-| **Variable executive function** | High | F-018: Variable Executive Function | 4.18 |
-| Flexible daily caps | High | Flexible Daily Caps | 4.18.4 |
-| "Easy day" options | High | Easy Day Mode | 4.18.3 |
-| **Metacognition enhancement** | High | F-019: Confidence-Based Metacognition | 4.19 |
-| Confidence ratings | High | Pre-Answer Confidence Rating | 4.19.1 |
-| Calibration tracking | High | Calibration Dashboard | 4.19.3 |
-| **Cognitive load in UI / Mobile** | High | F-020: Integrated Question-Context | 4.20 |
-| Split-attention prevention | High | Contextual Question Display | 4.20.1 |
-| Mobile-optimized layouts | High | Progressive Disclosure | 4.20.2 |
+| Review Insight                                   | Severity | Feature Added                         | Section |
+| ------------------------------------------------ | -------- | ------------------------------------- | ------- |
+| **Transfer deficit: Retention ≠ Application**    | Critical | F-015: Transfer-Focused Retrieval     | 4.15    |
+| Cognitive type tagging needed                    | Critical | Cognitive Type Taxonomy               | 4.15    |
+| Retrieval prompts must match application demands | Critical | Retrieval Prompt Generation by Type   | 4.15    |
+| **Wall of Debt / Review overload**               | Critical | F-016: Forgiveness-First Scheduling   | 4.16    |
+| Bankruptcy options needed                        | Critical | Bankruptcy Mode                       | 4.16.3  |
+| Load balancing across days                       | Critical | Load Spreading Algorithm              | 4.16.2  |
+| Forgiveness by default                           | Critical | Design Principle                      | 4.16    |
+| **Adult autonomy / Andragogical concerns**       | Critical | F-017: Learner Autonomy & Override    | 4.17    |
+| Override controls                                | Critical | Schedule Override                     | 4.17.2  |
+| Just-in-time access                              | Critical | Just-In-Time Mode                     | 4.17.1  |
+| Visible rationale                                | Critical | Visible Scheduling Rationale          | 4.17.3  |
+| **Variable executive function**                  | High     | F-018: Variable Executive Function    | 4.18    |
+| Flexible daily caps                              | High     | Flexible Daily Caps                   | 4.18.4  |
+| "Easy day" options                               | High     | Easy Day Mode                         | 4.18.3  |
+| **Metacognition enhancement**                    | High     | F-019: Confidence-Based Metacognition | 4.19    |
+| Confidence ratings                               | High     | Pre-Answer Confidence Rating          | 4.19.1  |
+| Calibration tracking                             | High     | Calibration Dashboard                 | 4.19.3  |
+| **Cognitive load in UI / Mobile**                | High     | F-020: Integrated Question-Context    | 4.20    |
+| Split-attention prevention                       | High     | Contextual Question Display           | 4.20.1  |
+| Mobile-optimized layouts                         | High     | Progressive Disclosure                | 4.20.2  |
 
 #### Review Validations (Existing Strengths Confirmed)
 
-| Review Point | Spec Alignment |
-|--------------|----------------|
-| "Spacing and testing effects are robust" | Core architecture unchanged |
-| "Cognitive load budgeting well-positioned" | F-006 validated, extended with F-018 |
-| "Build measurement from day one" | Section 7: Success Metrics includes research validation |
-| "Self-referential progress over leaderboards" | F-012: Progress Dashboard (no leaderboards) |
-| "Single-player experience first" | Social features deprioritized |
+| Review Point                                  | Spec Alignment                                          |
+| --------------------------------------------- | ------------------------------------------------------- |
+| "Spacing and testing effects are robust"      | Core architecture unchanged                             |
+| "Cognitive load budgeting well-positioned"    | F-006 validated, extended with F-018                    |
+| "Build measurement from day one"              | Section 7: Success Metrics includes research validation |
+| "Self-referential progress over leaderboards" | F-012: Progress Dashboard (no leaderboards)             |
+| "Single-player experience first"              | Social features deprioritized                           |
 
 #### Review Corrections Incorporated
 
-| Review Claim | Spec Response |
-|--------------|---------------|
-| "Retrieval doesn't help problem-solving" | Clarified: retrieval of *procedures and principles* transfers; F-015 ensures prompt type matching |
-| "Delayed feedback superior" | Maintained immediate feedback with added confidence rating for metacognitive benefit |
-| "Gamification concerns" | Avoided game mechanics; focused on competence visualization and intrinsic motivation |
+| Review Claim                             | Spec Response                                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| "Retrieval doesn't help problem-solving" | Clarified: retrieval of _procedures and principles_ transfers; F-015 ensures prompt type matching |
+| "Delayed feedback superior"              | Maintained immediate feedback with added confidence rating for metacognitive benefit              |
+| "Gamification concerns"                  | Avoided game mechanics; focused on competence visualization and intrinsic motivation              |
 
 #### Design Philosophy Additions from Review
 
-| Principle | Implementation |
-|-----------|----------------|
-| **Recommendations, not commands** | All scheduling framed as suggestions (F-017) |
-| **Forgiveness by default** | System assumes life happens (F-016) |
-| **Autonomy preserves motivation** | User can override anything without penalty (F-017) |
-| **Emotional load matters** | Capacity budgeting extended to motivational state (F-016, F-018) |
-| **Transfer is the goal** | Mastery definition updated to require application (F-015) |
+| Principle                         | Implementation                                                   |
+| --------------------------------- | ---------------------------------------------------------------- |
+| **Recommendations, not commands** | All scheduling framed as suggestions (F-017)                     |
+| **Forgiveness by default**        | System assumes life happens (F-016)                              |
+| **Autonomy preserves motivation** | User can override anything without penalty (F-017)               |
+| **Emotional load matters**        | Capacity budgeting extended to motivational state (F-016, F-018) |
+| **Transfer is the goal**          | Mastery definition updated to require application (F-015)        |
 
 ---
 
@@ -5957,33 +5983,33 @@ This appendix documents how critical insights from external review were incorpor
 
 Following review integration, feature priorities have been re-assessed:
 
-| Priority | Feature ID | Feature Name | Rationale |
-|----------|------------|--------------|-----------|
-| **P0 Critical** | F-001 | Content Upload & Analysis | Foundational |
-| **P0 Critical** | F-025 | **Project & Source Management** | *Infrastructure: Multi-source integration, persistence* |
-| **P0 Critical** | F-002 | Pretest Generation | High effect size (d=1.1) |
-| **P0 Critical** | F-003 | Retrieval Practice Generation | Core methodology |
-| **P0 Critical** | F-004 | FSRS Scheduling | Core methodology |
-| **P0 Critical** | F-005 | Successive Relearning | Highest effect size (d=1.52-4.19) |
-| **P0 Critical** | F-006 | Cognitive Load Budget | Prevents failure mode |
-| **P0 Critical** | F-015 | Transfer-Focused Retrieval | *Review insight: Retention ≠ application* |
-| **P0 Critical** | F-016 | Forgiveness-First Scheduling | *Review insight: Wall of debt* |
-| **P0 Critical** | F-017 | Learner Autonomy & Override | *Review insight: Adult autonomy* |
-| **P0 Critical** | F-021 | AI-Powered Interactive Practice | *Productive struggle; execution > recognition* |
-| **P0 Critical** | F-023 | Learning Roadmap & Session Planning | *User visibility, motivation, gamification* |
-| **P0 Critical** | F-024 | Direct Call-to-Action | *Real-world practice for unsimulable skills* |
-| **P1 High** | F-007 | Sleep-Aware Scheduling | Consolidation (20-40% effects) |
-| **P1 High** | F-008 | Real-Time Assessment | Enables adaptation |
-| **P1 High** | F-009 | Misconception Detection | Prevents entrenchment |
-| **P1 High** | F-010 | Mastery Gates | Ensures foundations |
-| **P1 High** | F-011 | Adaptive Method Selection | Personalization |
-| **P1 High** | F-018 | Variable Executive Function | *Review insight: Flexible capacity* |
-| **P1 High** | F-019 | Confidence-Based Metacognition | *Review insight: Calibration* |
-| **P1 High** | F-020 | Integrated Question-Context | *Review insight: Mobile UX* |
-| **P1 High** | F-022 | Open-Ended Generation Tasks | *Generation > recognition* |
-| **P2 Medium** | F-012 | Progress Dashboard | Metacognition support |
-| **P2 Medium** | F-013 | Maintenance Mode | Long-term retention |
-| **P2 Medium** | F-014 | Teach-Back Mode | Protégé effect |
+| Priority        | Feature ID | Feature Name                        | Rationale                                               |
+| --------------- | ---------- | ----------------------------------- | ------------------------------------------------------- |
+| **P0 Critical** | F-001      | Content Upload & Analysis           | Foundational                                            |
+| **P0 Critical** | F-025      | **Project & Source Management**     | _Infrastructure: Multi-source integration, persistence_ |
+| **P0 Critical** | F-002      | Pretest Generation                  | High effect size (d=1.1)                                |
+| **P0 Critical** | F-003      | Retrieval Practice Generation       | Core methodology                                        |
+| **P0 Critical** | F-004      | FSRS Scheduling                     | Core methodology                                        |
+| **P0 Critical** | F-005      | Successive Relearning               | Highest effect size (d=1.52-4.19)                       |
+| **P0 Critical** | F-006      | Cognitive Load Budget               | Prevents failure mode                                   |
+| **P0 Critical** | F-015      | Transfer-Focused Retrieval          | _Review insight: Retention ≠ application_               |
+| **P0 Critical** | F-016      | Forgiveness-First Scheduling        | _Review insight: Wall of debt_                          |
+| **P0 Critical** | F-017      | Learner Autonomy & Override         | _Review insight: Adult autonomy_                        |
+| **P0 Critical** | F-021      | AI-Powered Interactive Practice     | _Productive struggle; execution > recognition_          |
+| **P0 Critical** | F-023      | Learning Roadmap & Session Planning | _User visibility, motivation, gamification_             |
+| **P0 Critical** | F-024      | Direct Call-to-Action               | _Real-world practice for unsimulable skills_            |
+| **P1 High**     | F-007      | Sleep-Aware Scheduling              | Consolidation (20-40% effects)                          |
+| **P1 High**     | F-008      | Real-Time Assessment                | Enables adaptation                                      |
+| **P1 High**     | F-009      | Misconception Detection             | Prevents entrenchment                                   |
+| **P1 High**     | F-010      | Mastery Gates                       | Ensures foundations                                     |
+| **P1 High**     | F-011      | Adaptive Method Selection           | Personalization                                         |
+| **P1 High**     | F-018      | Variable Executive Function         | _Review insight: Flexible capacity_                     |
+| **P1 High**     | F-019      | Confidence-Based Metacognition      | _Review insight: Calibration_                           |
+| **P1 High**     | F-020      | Integrated Question-Context         | _Review insight: Mobile UX_                             |
+| **P1 High**     | F-022      | Open-Ended Generation Tasks         | _Generation > recognition_                              |
+| **P2 Medium**   | F-012      | Progress Dashboard                  | Metacognition support                                   |
+| **P2 Medium**   | F-013      | Maintenance Mode                    | Long-term retention                                     |
+| **P2 Medium**   | F-014      | Teach-Back Mode                     | Protégé effect                                          |
 
 **Note:** Thirteen features at P0 Critical. F-025 provides data infrastructure for multi-source projects. F-021 + F-023 + F-024 form the "Active Practice System"—the core differentiator from traditional Q&A apps.
 
@@ -5991,17 +6017,17 @@ Following review integration, feature priorities have been re-assessed:
 
 Based on research, interactions are ranked by learning effectiveness:
 
-| Rank | Interaction Type | Effectiveness | App Implementation |
-|------|------------------|---------------|-------------------|
-| 1 | **Execute actual skill (real tool)** | Highest | F-024: Direct Call-to-Action |
-| 2 | **Execute in simulation** | Very High | F-021: Dynamic Playground |
-| 3 | **Generate without cues** | Very High | F-022: Open-ended generation |
-| 4 | **Free recall explanation** | High (g=0.81) | F-003: "Explain in own words" |
-| 5 | **Application scenarios** | High | F-015: Transfer-focused retrieval |
-| 6 | **Cued recall** | Medium (g=0.50) | F-003: Fill-in-blank |
-| 7 | **Recognition (MC)** | Lower | Early exposure only |
-| 8 | **Re-reading** | Low (d=0.53) | **Not included** |
-| 9 | **Highlighting** | Low (d=0.44) | **Not included** |
+| Rank | Interaction Type                     | Effectiveness   | App Implementation                |
+| ---- | ------------------------------------ | --------------- | --------------------------------- |
+| 1    | **Execute actual skill (real tool)** | Highest         | F-024: Direct Call-to-Action      |
+| 2    | **Execute in simulation**            | Very High       | F-021: Dynamic Playground         |
+| 3    | **Generate without cues**            | Very High       | F-022: Open-ended generation      |
+| 4    | **Free recall explanation**          | High (g=0.81)   | F-003: "Explain in own words"     |
+| 5    | **Application scenarios**            | High            | F-015: Transfer-focused retrieval |
+| 6    | **Cued recall**                      | Medium (g=0.50) | F-003: Fill-in-blank              |
+| 7    | **Recognition (MC)**                 | Lower           | Early exposure only               |
+| 8    | **Re-reading**                       | Low (d=0.53)    | **Not included**                  |
+| 9    | **Highlighting**                     | Low (d=0.44)    | **Not included**                  |
 
 **Design Principle:** Default to highest-effectiveness interactions. The app should feel harder than traditional apps because productive struggle drives retention.
 
@@ -6011,27 +6037,27 @@ The AI determines the optimal practice modality for each concept.
 
 #### Decision Matrix
 
-| Skill Type | Examples | Primary Modality | Fallback |
-|------------|----------|------------------|----------|
-| **Pure Conceptual** | Economics, physics laws | PROBLEM | — |
-| **Analytical** | Financial analysis, debugging | PUZZLE | PROBLEM |
-| **Software (UI)** | Tool locations, menus | INTERACTION | CTA |
-| **Software (Workflow)** | Complete edit, full process | CALL_TO_ACTION | INTERACTION |
-| **3D/Creative Software** | Blender, CAD | CALL_TO_ACTION | — |
-| **Motor/Physical** | Sports, cooking | CALL_TO_ACTION | — |
-| **Language Speaking** | Conversation | INTERACTION + CTA | INTERACTION |
-| **Writing/Creative** | Essays, design | CALL_TO_ACTION | — |
-| **Strategic/Decision** | Trading, negotiation | INTERACTION | GAME |
+| Skill Type               | Examples                      | Primary Modality  | Fallback    |
+| ------------------------ | ----------------------------- | ----------------- | ----------- |
+| **Pure Conceptual**      | Economics, physics laws       | PROBLEM           | —           |
+| **Analytical**           | Financial analysis, debugging | PUZZLE            | PROBLEM     |
+| **Software (UI)**        | Tool locations, menus         | INTERACTION       | CTA         |
+| **Software (Workflow)**  | Complete edit, full process   | CALL_TO_ACTION    | INTERACTION |
+| **3D/Creative Software** | Blender, CAD                  | CALL_TO_ACTION    | —           |
+| **Motor/Physical**       | Sports, cooking               | CALL_TO_ACTION    | —           |
+| **Language Speaking**    | Conversation                  | INTERACTION + CTA | INTERACTION |
+| **Writing/Creative**     | Essays, design                | CALL_TO_ACTION    | —           |
+| **Strategic/Decision**   | Trading, negotiation          | INTERACTION       | GAME        |
 
 #### Modality Definitions
 
-| Modality | Location | Best For |
-|----------|----------|----------|
-| **PROBLEM** | In-app | Conceptual understanding |
-| **PUZZLE** | In-app | Logic, patterns |
-| **INTERACTION** | In-app | Simplified skill practice |
-| **GAME** | In-app | Pattern recognition, speed |
-| **CALL_TO_ACTION** | Outside app | Genuine skill execution |
+| Modality           | Location    | Best For                   |
+| ------------------ | ----------- | -------------------------- |
+| **PROBLEM**        | In-app      | Conceptual understanding   |
+| **PUZZLE**         | In-app      | Logic, patterns            |
+| **INTERACTION**    | In-app      | Simplified skill practice  |
+| **GAME**           | In-app      | Pattern recognition, speed |
+| **CALL_TO_ACTION** | Outside app | Genuine skill execution    |
 
 #### AI Decision Logic
 
@@ -6079,4 +6105,4 @@ Sessions Per Week:
 
 ---
 
-*End of Specification Document*
+_End of Specification Document_

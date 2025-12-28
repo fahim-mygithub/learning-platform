@@ -50,18 +50,14 @@ const asyncStorageAdapter = {
  * - Auto-refresh enabled (tokens refresh before expiration)
  * - Detect session in URL disabled (not needed for mobile)
  */
-export const supabase: SupabaseClient = createClient(
-  env.supabaseUrl,
-  env.supabaseAnonKey,
-  {
-    auth: {
-      storage: asyncStorageAdapter,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false,
-    },
-  }
-);
+export const supabase: SupabaseClient = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+  auth: {
+    storage: asyncStorageAdapter,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false,
+  },
+});
 
 /**
  * Error type for Supabase operations
