@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(openspec-workflow)",
+      "Bash(openspec list:*)",
+      "Bash(openspec spec list:*)",
+      "Skill(openspec:proposal)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(npx create-expo-app:*)",
+      "Bash(taskkill:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitialize Expo project with TypeScript template\n\nSet up foundational React Native project using Expo SDK 54 with TypeScript\nstrict mode enabled. This establishes the base infrastructure for the\nAI-powered learning platform.\n\n- Create Expo project structure with blank TypeScript template\n- Configure app.json with correct name \\(\"Learning Platform\"\\) and slug\n- Enable TypeScript strict mode via tsconfig.json\n- Include standard Expo assets \\(icons, splash screen\\)\n- Add .gitignore for node_modules, build artifacts, and env files\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(dir:*)",
+      "Bash(git commit:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(gitignore \")",
+      "Bash(npx expo install:*)",
+      "Bash(npx expo export:*)",
+      "Bash(del \"C:\\\\Users\\\\fahim\\\\Desktop\\\\Pojects\\\\Learning Platform\\\\app\\\\\\(auth\\)\\\\home.tsx\")",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(findstr:*)",
+      "Bash(cat:*)",
+      "Bash(npm test)",
+      "Bash(npx eslint:*)",
+      "Bash(npm test:*)",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Skill(openspec:archive)",
+      "Bash(openspec archive add-react-native-init:*)",
+      "Bash(openspec validate:*)",
+      "Bash(openspec show:*)"
+    ]
+  }
+}
