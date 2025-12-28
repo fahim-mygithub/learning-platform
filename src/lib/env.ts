@@ -61,8 +61,8 @@ export const env = {
  */
 export function validateEnv(): void {
   // Accessing all env vars will throw if any are missing
-  const _url = env.supabaseUrl;
-  const _key = env.supabaseAnonKey;
+  void env.supabaseUrl;
+  void env.supabaseAnonKey;
 }
 
 export type { EnvVariables };
