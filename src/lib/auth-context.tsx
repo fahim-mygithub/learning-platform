@@ -17,7 +17,7 @@ import React, {
   useCallback,
   type ReactNode,
 } from 'react';
-import { Session, User, AuthError } from '@supabase/supabase-js';
+import { Session, User, AuthError, AuthResponse } from '@supabase/supabase-js';
 
 import { supabase } from './supabase';
 
@@ -36,9 +36,32 @@ interface AuthState {
 }
 
 /**
+ * Sign up response type
+ */
+type SignUpResponse = Pick<AuthResponse, 'data' | 'error'>;
+
+/**
+ * Sign in response type
+ */
+type SignInResponse = Pick<AuthResponse, 'data' | 'error'>;
+
+/**
+ * Resend verification response type
+ */
+interface ResendVerificationResponse {
+  error: AuthError | null;
+}
+
+/**
  * Authentication context value interface
  */
 interface AuthContextValue extends AuthState {
+  /** Sign up a new user with email and password */
+  signUp: (email: string, password: string) => Promise<SignUpResponse>;
+  /** Sign in an existing user with email and password */
+  signIn: (email: string, password: string) => Promise<SignInResponse>;
+  /** Resend email verification to the specified email */
+  resendVerification: (email: string) => Promise<ResendVerificationResponse>;
   /** Sign out the current user */
   signOut: () => Promise<{ error: AuthError | null }>;
   /** Refresh the current session */
@@ -53,6 +76,9 @@ const defaultContextValue: AuthContextValue = {
   user: null,
   isLoading: true,
   isAuthenticated: false,
+  signUp: async () => ({ data: { user: null, session: null }, error: null }),
+  signIn: async () => ({ data: { user: null, session: null }, error: null }),
+  resendVerification: async () => ({ error: null }),
   signOut: async () => ({ error: null }),
   refreshSession: async () => ({ error: null }),
 };
@@ -126,6 +152,48 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
   }, []);
 
   /**
+   * Sign up a new user with email and password
+   */
+  const signUp = useCallback(
+    async (email: string, password: string): Promise<SignUpResponse> => {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        console.error('Error signing up:', error.message);
+      }
+      return { data, error };
+    },
+    []
+  );
+
+  /**
+   * Sign in an existing user with email and password
+   */
+  const signIn = useCallback(
+    async (email: string, password: string): Promise<SignInResponse> => {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        console.error('Error signing in:', error.message);
+      }
+      return { data, error };
+    },
+    []
+  );
+
+  /**
+   * Resend email verification to the specified email
+   */
+  const resendVerification = useCallback(
+    async (email: string): Promise<ResendVerificationResponse> => {
+      const { error } = await supabase.auth.resend({ type: 'signup', email });
+      if (error) {
+        console.error('Error resending verification:', error.message);
+      }
+      return { error };
+    },
+    []
+  );
+
+  /**
    * Sign out the current user
    */
   const signOut = useCallback(async (): Promise<{ error: AuthError | null }> => {
@@ -158,10 +226,13 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
       user: session?.user ?? null,
       isLoading,
       isAuthenticated: !!session,
+      signUp,
+      signIn,
+      resendVerification,
       signOut,
       refreshSession,
     }),
-    [session, isLoading, signOut, refreshSession]
+    [session, isLoading, signUp, signIn, resendVerification, signOut, refreshSession]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
@@ -209,4 +280,11 @@ export function useAuth(): AuthContextValue {
 /**
  * Re-export types for consumers
  */
-export type { AuthState, AuthContextValue, AuthProviderProps };
+export type {
+  AuthState,
+  AuthContextValue,
+  AuthProviderProps,
+  SignUpResponse,
+  SignInResponse,
+  ResendVerificationResponse,
+};
