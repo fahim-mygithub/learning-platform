@@ -44,5 +44,8 @@ export {
   type FileAcceptType,
 } from './FileUploadButton';
 
+// UrlInputForm component and types
+export { UrlInputForm, type UrlInputFormProps } from './UrlInputForm';
+
 // Re-export theme for convenient access
 export { colors, palette, spacing, semanticSpacing, typography, fontSize, fontWeight, lineHeight } from '../../theme';
