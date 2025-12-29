@@ -44,10 +44,9 @@ export interface ValidationResult {
 /**
  * Validates if a file type is allowed for upload
  * @param mimeType - The MIME type of the file
- * @param extension - The file extension (with or without leading dot)
  * @returns Validation result with error message if invalid
  */
-export function validateFileType(mimeType: string, extension: string): ValidationResult {
+export function validateFileType(mimeType: string): ValidationResult {
   const normalizedMime = mimeType.toLowerCase();
 
   const isAllowed = ALL_ALLOWED_TYPES.some((type) => type.toLowerCase() === normalizedMime);

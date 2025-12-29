@@ -33,3 +33,16 @@ export {
   deleteProject,
   touchProject,
 } from './projects';
+
+// File validation utilities
+export {
+  ALLOWED_VIDEO_TYPES,
+  ALLOWED_PDF_TYPES,
+  MAX_VIDEO_SIZE,
+  MAX_PDF_SIZE,
+  validateFileType,
+  validateFileSize,
+  getSourceTypeFromMime,
+  formatFileSize,
+  type ValidationResult,
+} from './file-validation';

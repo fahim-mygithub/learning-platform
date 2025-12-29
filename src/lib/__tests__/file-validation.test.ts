@@ -59,28 +59,28 @@ describe('file validation constants', () => {
 
 describe('validateFileType', () => {
   describe('valid video types', () => {
-    it('accepts video/mp4 with .mp4 extension', () => {
-      const result = validateFileType('video/mp4', '.mp4');
+    it('accepts video/mp4', () => {
+      const result = validateFileType('video/mp4');
       expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
-    it('accepts video/quicktime with .mov extension', () => {
-      const result = validateFileType('video/quicktime', '.mov');
+    it('accepts video/quicktime', () => {
+      const result = validateFileType('video/quicktime');
       expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
-    it('accepts video/webm with .webm extension', () => {
-      const result = validateFileType('video/webm', '.webm');
+    it('accepts video/webm', () => {
+      const result = validateFileType('video/webm');
       expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
   });
 
   describe('valid PDF types', () => {
-    it('accepts application/pdf with .pdf extension', () => {
-      const result = validateFileType('application/pdf', '.pdf');
+    it('accepts application/pdf', () => {
+      const result = validateFileType('application/pdf');
       expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
@@ -88,25 +88,25 @@ describe('validateFileType', () => {
 
   describe('invalid file types', () => {
     it('rejects unsupported video types', () => {
-      const result = validateFileType('video/avi', '.avi');
+      const result = validateFileType('video/avi');
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File type not allowed');
     });
 
     it('rejects image types', () => {
-      const result = validateFileType('image/png', '.png');
+      const result = validateFileType('image/png');
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File type not allowed');
     });
 
     it('rejects text files', () => {
-      const result = validateFileType('text/plain', '.txt');
+      const result = validateFileType('text/plain');
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File type not allowed');
     });
 
     it('provides allowed types in error message', () => {
-      const result = validateFileType('video/avi', '.avi');
+      const result = validateFileType('video/avi');
       expect(result.error).toContain('video/mp4');
       expect(result.error).toContain('application/pdf');
     });
@@ -114,18 +114,13 @@ describe('validateFileType', () => {
 
   describe('edge cases', () => {
     it('handles empty mime type', () => {
-      const result = validateFileType('', '.mp4');
+      const result = validateFileType('');
       expect(result.valid).toBe(false);
       expect(result.error).toContain('File type not allowed');
     });
 
     it('handles mime type case-insensitively', () => {
-      const result = validateFileType('VIDEO/MP4', '.mp4');
-      expect(result.valid).toBe(true);
-    });
-
-    it('handles extension without dot', () => {
-      const result = validateFileType('video/mp4', 'mp4');
+      const result = validateFileType('VIDEO/MP4');
       expect(result.valid).toBe(true);
     });
   });
