@@ -17,7 +17,6 @@
       "Bash(git commit:*)",
       "Bash(npx tsc:*)",
       "Bash(git check-ignore:*)",
-      "Bash(gitignore \")",
       "Bash(npx expo install:*)",
       "Bash(npx expo export:*)",
       "Bash(del \"C:\\\\Users\\\\fahim\\\\Desktop\\\\Pojects\\\\Learning Platform\\\\app\\\\\\(auth\\)\\\\home.tsx\")",

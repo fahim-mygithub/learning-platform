@@ -19,6 +19,7 @@ import SignInScreen from '../sign-in';
 // Mock expo-router
 const mockPush = jest.fn();
 jest.mock('expo-router', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const React = require('react');
   return {
     useRouter: () => ({

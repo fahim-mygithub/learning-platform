@@ -20,6 +20,7 @@ const mockBack = jest.fn();
 let mockSearchParams: { email?: string } = { email: 'test@example.com' };
 
 jest.mock('expo-router', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const React = require('react');
   return {
     useRouter: () => ({
