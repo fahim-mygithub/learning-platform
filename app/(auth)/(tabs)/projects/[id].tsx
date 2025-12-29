@@ -7,7 +7,7 @@
  * - Progress visualization (ProgressCircle)
  * - Edit button -> opens edit modal/sheet
  * - Delete button -> shows confirmation Modal
- * - Sources placeholder section (for Phase 1.5)
+ * - Sources section with file upload and URL addition
  *
  * Accessible and follows WCAG 2.1 AAA guidelines.
  */
@@ -25,6 +25,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import { useProjects } from '@/src/lib/projects-context';
+import { SourcesProvider } from '@/src/lib/sources-context';
 import { getProject, deleteProject, updateProject } from '@/src/lib/projects';
 import {
   Button,
@@ -37,6 +38,8 @@ import {
   fontSize,
   fontWeight,
 } from '@/src/components/ui';
+import { SourcesSection } from '@/src/components/sources/SourcesSection';
+import { AddSourceSheet } from '@/src/components/sources/AddSourceSheet';
 import type { Project } from '@/src/types';
 
 /**
@@ -61,6 +64,7 @@ export default function ProjectDetailScreen(): React.ReactElement {
   // Modal states
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddSourceSheet, setShowAddSourceSheet] = useState(false);
 
   // Edit form state
   const [editTitle, setEditTitle] = useState('');
@@ -178,6 +182,20 @@ export default function ProjectDetailScreen(): React.ReactElement {
   }, []);
 
   /**
+   * Open add source sheet
+   */
+  const handleOpenAddSource = useCallback(() => {
+    setShowAddSourceSheet(true);
+  }, []);
+
+  /**
+   * Close add source sheet
+   */
+  const handleCloseAddSource = useCallback(() => {
+    setShowAddSourceSheet(false);
+  }, []);
+
+  /**
    * Confirm and execute delete
    */
   const handleConfirmDelete = useCallback(async () => {
@@ -237,8 +255,9 @@ export default function ProjectDetailScreen(): React.ReactElement {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView
+    <SourcesProvider projectId={id}>
+      <View style={styles.container}>
+        <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -278,14 +297,9 @@ export default function ProjectDetailScreen(): React.ReactElement {
           </View>
         </Card>
 
-        {/* Sources Placeholder Section */}
+        {/* Sources Section */}
         <Card testID="sources-section" style={styles.sourcesCard}>
-          <Text style={styles.sectionLabel}>Sources</Text>
-          <View style={styles.sourcesPlaceholder}>
-            <Text style={styles.placeholderText}>
-              Sources management coming soon in Phase 1.5
-            </Text>
-          </View>
+          <SourcesSection onAddSource={handleOpenAddSource} />
         </Card>
 
         {/* Action Buttons */}
@@ -409,7 +423,14 @@ export default function ProjectDetailScreen(): React.ReactElement {
           </Text>
         </Modal>
       )}
-    </View>
+
+      {/* Add Source Sheet */}
+      <AddSourceSheet
+        visible={showAddSourceSheet}
+        onClose={handleCloseAddSource}
+      />
+      </View>
+    </SourcesProvider>
   );
 }
 
@@ -476,20 +497,6 @@ const styles = StyleSheet.create({
   sourcesCard: {
     marginBottom: spacing[4],
     padding: spacing[4],
-  },
-  sourcesPlaceholder: {
-    paddingVertical: spacing[6],
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    backgroundColor: colors.backgroundTertiary,
-  },
-  placeholderText: {
-    fontSize: fontSize.sm,
-    color: colors.textTertiary,
-    fontStyle: 'italic',
   },
 
   // Actions
