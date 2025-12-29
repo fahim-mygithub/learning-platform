@@ -146,8 +146,7 @@ export default function VerifyEmailScreen() {
 
         {/* Instructions */}
         <Text style={styles.instructions}>
-          Click the link in the email to verify your account. If you don't see
-          it, check your spam folder.
+          {"Click the link in the email to verify your account. If you don't see it, check your spam folder."}
         </Text>
 
         {/* Feedback Message */}
