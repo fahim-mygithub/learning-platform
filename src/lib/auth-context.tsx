@@ -20,6 +20,13 @@ import React, {
 import { Session, User, AuthError, AuthResponse } from '@supabase/supabase-js';
 
 import { supabase } from './supabase';
+// DEV ONLY - Import dev auth utilities for testing bypass
+import {
+  isDevEnvironment,
+  devSignIn as devSignInFn,
+  devSignOut as devSignOutFn,
+  getDevAuthState,
+} from './dev-auth';
 
 /**
  * Authentication state interface
@@ -66,6 +73,11 @@ interface AuthContextValue extends AuthState {
   signOut: () => Promise<{ error: AuthError | null }>;
   /** Refresh the current session */
   refreshSession: () => Promise<{ error: AuthError | null }>;
+  // DEV ONLY - Dev authentication bypass methods
+  /** DEV ONLY - Sign in with dev bypass (only available in dev environment) */
+  devSignIn: (() => void) | null;
+  /** DEV ONLY - Check if dev environment is available */
+  isDevEnvironment: boolean;
 }
 
 /**
@@ -81,6 +93,9 @@ const defaultContextValue: AuthContextValue = {
   resendVerification: async () => ({ error: null }),
   signOut: async () => ({ error: null }),
   refreshSession: async () => ({ error: null }),
+  // DEV ONLY - Dev auth defaults
+  devSignIn: null,
+  isDevEnvironment: false,
 };
 
 /**
@@ -114,11 +129,24 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps): React.ReactElement {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // DEV ONLY - Track if user is authenticated via dev bypass
+  const [isDevAuth, setIsDevAuth] = useState(false);
 
   useEffect(() => {
     // Restore session from storage on mount
     const initializeSession = async () => {
       try {
+        // DEV ONLY - Check for existing dev auth state first
+        if (isDevEnvironment()) {
+          const devState = getDevAuthState();
+          if (devState.isDevAuthenticated && devState.session) {
+            setSession(devState.session);
+            setIsDevAuth(true);
+            setIsLoading(false);
+            return;
+          }
+        }
+
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error restoring session:', error.message);
@@ -140,7 +168,10 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
+      // DEV ONLY - Don't override dev auth session with Supabase events
+      if (!isDevAuth) {
+        setSession(newSession);
+      }
       // Ensure loading is false after any auth state change
       setIsLoading(false);
     });
@@ -149,7 +180,7 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [isDevAuth]);
 
   /**
    * Sign up a new user with email and password
@@ -197,17 +228,30 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
    * Sign out the current user
    */
   const signOut = useCallback(async (): Promise<{ error: AuthError | null }> => {
+    // DEV ONLY - Handle dev auth sign out
+    if (isDevAuth) {
+      devSignOutFn();
+      setSession(null);
+      setIsDevAuth(false);
+      return { error: null };
+    }
+
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Error signing out:', error.message);
     }
     return { error };
-  }, []);
+  }, [isDevAuth]);
 
   /**
    * Refresh the current session
    */
   const refreshSession = useCallback(async (): Promise<{ error: AuthError | null }> => {
+    // DEV ONLY - No refresh needed for dev auth
+    if (isDevAuth) {
+      return { error: null };
+    }
+
     const { data, error } = await supabase.auth.refreshSession();
     if (error) {
       console.error('Error refreshing session:', error.message);
@@ -215,7 +259,27 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
       setSession(data.session);
     }
     return { error };
+  }, [isDevAuth]);
+
+  /**
+   * DEV ONLY - Sign in with dev bypass
+   * Only available when isDevEnvironment() returns true
+   */
+  const devSignIn = useCallback(() => {
+    if (!isDevEnvironment()) {
+      console.warn('[DEV AUTH] Dev sign in blocked - not in dev environment');
+      return;
+    }
+
+    const devSession = devSignInFn();
+    if (devSession) {
+      setSession(devSession);
+      setIsDevAuth(true);
+    }
   }, []);
+
+  // DEV ONLY - Check if dev environment is available
+  const isDevEnv = isDevEnvironment();
 
   /**
    * Memoized context value to prevent unnecessary re-renders
@@ -231,8 +295,11 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
       resendVerification,
       signOut,
       refreshSession,
+      // DEV ONLY - Dev auth properties (only expose devSignIn in dev environment)
+      devSignIn: isDevEnv ? devSignIn : null,
+      isDevEnvironment: isDevEnv,
     }),
-    [session, isLoading, signUp, signIn, resendVerification, signOut, refreshSession]
+    [session, isLoading, signUp, signIn, resendVerification, signOut, refreshSession, isDevEnv, devSignIn]
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

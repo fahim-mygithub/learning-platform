@@ -48,7 +48,8 @@ const initialErrors: FormErrors = {
 
 export default function SignInScreen() {
   const router = useRouter();
-  const { signIn } = useAuth();
+  // DEV ONLY - Get dev auth methods from context
+  const { signIn, devSignIn, isDevEnvironment } = useAuth();
 
   // Form state
   const [email, setEmail] = useState('');
@@ -121,6 +122,18 @@ export default function SignInScreen() {
   }, []);
 
   /**
+   * DEV ONLY - Handle dev login button press
+   * Bypasses authentication for testing purposes
+   */
+  const handleDevLogin = useCallback(() => {
+    if (devSignIn) {
+      devSignIn();
+      // DEV ONLY - Navigate to authenticated area after dev sign in
+      router.replace('/(auth)/(tabs)');
+    }
+  }, [devSignIn, router]);
+
+  /**
    * Handle form submission
    */
   const handleSubmit = useCallback(async () => {
@@ -174,6 +187,23 @@ export default function SignInScreen() {
           <Text style={styles.title}>Welcome Back</Text>
           <Text style={styles.subtitle}>Sign in to continue</Text>
         </View>
+
+        {/* DEV ONLY - Dev Login Button */}
+        {isDevEnvironment && devSignIn && (
+          <View style={styles.devLoginContainer} testID="dev-login-container">
+            <Text style={styles.devLoginWarning}>DEV ONLY - REMOVE BEFORE PRODUCTION</Text>
+            <Pressable
+              onPress={handleDevLogin}
+              style={styles.devLoginButton}
+              accessibilityLabel="Dev Login - Bypass Authentication"
+              accessibilityRole="button"
+              testID="dev-login-button"
+            >
+              <Text style={styles.devLoginButtonText}>Dev Login (Bypass Auth)</Text>
+            </Pressable>
+            <Text style={styles.devLoginHint}>Signs in as dev@localhost.test</Text>
+          </View>
+        )}
 
         {/* API Error Display */}
         {errors.api && (
@@ -350,5 +380,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#3B82F6',
     fontWeight: '600',
+  },
+  // DEV ONLY - Styles for dev login button
+  devLoginContainer: {
+    backgroundColor: '#fef3c7',
+    borderWidth: 2,
+    borderColor: '#f59e0b',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  devLoginWarning: {
+    color: '#92400e',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+  },
+  devLoginButton: {
+    backgroundColor: '#f59e0b',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minWidth: 200,
+    alignItems: 'center',
+  },
+  devLoginButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  devLoginHint: {
+    color: '#92400e',
+    fontSize: 12,
+    marginTop: 8,
+    fontStyle: 'italic',
   },
 });

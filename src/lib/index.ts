@@ -67,3 +67,15 @@ export {
   type SourcesContextValue,
   type SourcesProviderProps,
 } from './sources-context';
+
+// DEV ONLY - Development authentication bypass utilities
+// REMOVE BEFORE PRODUCTION or ensure these are not used in production code
+export {
+  isDevEnvironment,
+  devSignIn,
+  devSignOut,
+  getDevAuthState,
+  isDevAuthenticated,
+  DEV_USER,
+  DEV_SESSION,
+} from './dev-auth';
