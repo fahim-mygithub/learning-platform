@@ -185,11 +185,13 @@ export async function uploadFile(
   // Step 3: Generate storage path and upload file
   const storagePath = generateStoragePath(userId, projectId, source.id, file.name);
 
+  // Note: Supabase JS client doesn't support upload progress callbacks directly.
+  // Progress tracking would require a custom upload implementation.
+  // For now, we simulate progress at start (0) and end (100) via the context.
   const { data: uploadData, error: uploadError } = await supabase.storage
     .from(STORAGE_BUCKET)
     .upload(storagePath, file.uri, {
       contentType: file.type,
-      onUploadProgress: onProgress,
     });
 
   // Step 4/5: Update source record based on upload result

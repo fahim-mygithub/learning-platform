@@ -647,15 +647,11 @@ describe('SourcesContext', () => {
       mockGetSources.mockResolvedValueOnce({ data: project1Sources, error: null });
 
       // Start with project-1
-      const { result, rerender } = renderHook(
-        ({ projectId }) => useSources(),
-        {
-          wrapper: ({ children }) => (
-            <SourcesProvider projectId="project-1">{children}</SourcesProvider>
-          ),
-          initialProps: { projectId: 'project-1' },
-        }
-      );
+      const { result } = renderHook(() => useSources(), {
+        wrapper: ({ children }: { children: React.ReactNode }) => (
+          <SourcesProvider projectId="project-1">{children}</SourcesProvider>
+        ),
+      });
 
       await waitFor(() => {
         expect(result.current.sources).toEqual(project1Sources);

@@ -46,3 +46,24 @@ export {
   formatFileSize,
   type ValidationResult,
 } from './file-validation';
+
+// Sources service
+export {
+  createSource,
+  getSources,
+  getSource,
+  updateSource,
+  deleteSource,
+  uploadFile,
+  deleteStorageFile,
+  type UploadFile,
+  type OnProgressCallback,
+} from './sources';
+
+// Sources context
+export {
+  SourcesProvider,
+  useSources,
+  type SourcesContextValue,
+  type SourcesProviderProps,
+} from './sources-context';

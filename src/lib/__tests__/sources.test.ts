@@ -451,12 +451,14 @@ describe('sources service', () => {
       const onProgress = jest.fn();
       await uploadFile('user-789', 'project-456', mockFile, onProgress);
 
-      // Verify upload was called with options including onUploadProgress
+      // Verify upload was called with correct file options
+      // Note: Supabase JS client doesn't support onUploadProgress directly,
+      // so we only verify contentType is passed
       expect(mockStorageChain.upload).toHaveBeenCalledWith(
         expect.any(String),
         expect.anything(),
         expect.objectContaining({
-          onUploadProgress: expect.any(Function),
+          contentType: 'video/mp4',
         })
       );
     });
