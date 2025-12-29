@@ -298,7 +298,7 @@ export default function ProjectDetailScreen(): React.ReactElement {
         </Card>
 
         {/* Sources Section */}
-        <Card testID="sources-section" style={styles.sourcesCard}>
+        <Card testID="sources-card" style={styles.sourcesCard}>
           <SourcesSection onAddSource={handleOpenAddSource} />
         </Card>
 

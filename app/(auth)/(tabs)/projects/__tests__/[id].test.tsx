@@ -59,6 +59,21 @@ jest.mock('@/src/components/ui/Toast', () => ({
   }),
 }));
 
+// Mock sources context
+jest.mock('@/src/lib/sources-context', () => ({
+  SourcesProvider: ({ children }: { children: React.ReactNode }) => children,
+  useSources: () => ({
+    sources: [],
+    loading: false,
+    error: null,
+    refreshSources: jest.fn(),
+    uploadProgress: null,
+    addUrlSource: jest.fn(),
+    uploadFileSource: jest.fn(),
+    removeSource: jest.fn(),
+  }),
+}));
+
 /**
  * Helper to create a mock project
  */
@@ -495,12 +510,12 @@ describe('ProjectDetailScreen', () => {
       });
     });
 
-    it('shows placeholder message for Phase 1.5', async () => {
+    it('shows sources section with add source button', async () => {
       render(<ProjectDetailScreen />);
 
       await waitFor(() => {
-        // Check for specific placeholder text
-        expect(screen.getByText(/Sources management coming soon/i)).toBeTruthy();
+        // Check for SourcesSection content (empty state shows "No sources yet")
+        expect(screen.getByTestId('sources-section')).toBeTruthy();
       });
     });
   });
