@@ -404,7 +404,7 @@ export default function ProjectDetailScreen(): React.ReactElement {
           }
         >
           <Text style={styles.deleteWarning}>
-            Are you sure you want to delete "{project.title}"? This action cannot be
+            Are you sure you want to delete &quot;{project.title}&quot;? This action cannot be
             undone.
           </Text>
         </Modal>

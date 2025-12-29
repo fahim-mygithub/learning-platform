@@ -16,6 +16,7 @@ import {
   type StyleProp,
   type ViewProps,
 } from 'react-native';
+import { colors } from '../../theme';
 
 /**
  * Props for the Card component
@@ -70,11 +71,11 @@ export function Card({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     borderRadius: 12,
     padding: 16,
     // Shadow for iOS
-    shadowColor: '#000000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,

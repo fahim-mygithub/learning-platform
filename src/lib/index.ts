@@ -23,3 +23,13 @@ export {
 
 // Form validation utilities
 export { validateEmail, validatePassword } from './validation';
+
+// Projects service
+export {
+  createProject,
+  getProjects,
+  getProject,
+  updateProject,
+  deleteProject,
+  touchProject,
+} from './projects';

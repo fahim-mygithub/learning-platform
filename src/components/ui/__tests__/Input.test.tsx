@@ -15,6 +15,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
 
 import { Input } from '../Input';
+import { colors } from '../../../theme';
 
 describe('Input Component', () => {
   describe('Basic Rendering', () => {
@@ -105,7 +106,7 @@ describe('Input Component', () => {
         : style;
 
       // Error styling should have red border
-      expect(flatStyle.borderColor).toBe('#dc2626');
+      expect(flatStyle.borderColor).toBe(colors.error);
       expect(flatStyle.borderWidth).toBe(2);
     });
 
@@ -118,7 +119,7 @@ describe('Input Component', () => {
         : style;
 
       // Default border, not error style
-      expect(flatStyle.borderColor).toBe('#d1d5db');
+      expect(flatStyle.borderColor).toBe(colors.border);
       expect(flatStyle.borderWidth).toBe(1);
     });
 
@@ -220,7 +221,7 @@ describe('Input Component', () => {
         ? Object.assign({}, ...style.filter(Boolean))
         : style;
 
-      expect(flatStyle.backgroundColor).toBe('#f3f4f6');
+      expect(flatStyle.backgroundColor).toBe(colors.backgroundTertiary);
     });
 
     it('sets accessibility state disabled', () => {

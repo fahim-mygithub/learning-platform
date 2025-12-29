@@ -20,6 +20,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { colors } from '../../theme';
 
 /**
  * Button variant types for styling
@@ -214,38 +215,38 @@ function getVariantStyles(
     case 'secondary':
       return {
         button: {
-          backgroundColor: '#6B7280',
+          backgroundColor: colors.secondary,
           opacity,
         },
         text: {
-          color: '#FFFFFF',
+          color: colors.white,
         },
-        loadingColor: '#FFFFFF',
+        loadingColor: colors.white,
       };
     case 'outline':
       return {
         button: {
-          backgroundColor: 'transparent',
+          backgroundColor: colors.transparent,
           borderWidth: 2,
-          borderColor: '#3B82F6',
+          borderColor: colors.primary,
           opacity,
         },
         text: {
-          color: '#3B82F6',
+          color: colors.primary,
         },
-        loadingColor: '#3B82F6',
+        loadingColor: colors.primary,
       };
     case 'primary':
     default:
       return {
         button: {
-          backgroundColor: '#3B82F6',
+          backgroundColor: colors.primary,
           opacity,
         },
         text: {
-          color: '#FFFFFF',
+          color: colors.white,
         },
-        loadingColor: '#FFFFFF',
+        loadingColor: colors.white,
       };
   }
 }

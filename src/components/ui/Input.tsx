@@ -35,6 +35,7 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { colors } from '../../theme';
 
 /**
  * Minimum touch target size for accessibility (WCAG 2.1 Success Criterion 2.5.5)
@@ -126,7 +127,7 @@ export const Input = forwardRef<TextInput, InputProps>(function Input(
         ]}
         editable={!disabled}
         placeholder={placeholder}
-        placeholderTextColor={hasError ? '#dc2626' : '#9ca3af'}
+        placeholderTextColor={hasError ? colors.error : colors.textTertiary}
         accessibilityLabel={computedAccessibilityLabel}
         accessibilityHint={computedAccessibilityHint}
         accessibilityState={{
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#374151',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   input: {
@@ -185,28 +186,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: colors.border,
     borderRadius: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.background,
     fontSize: 16,
-    color: '#111827',
+    color: colors.text,
   },
   inputError: {
-    borderColor: '#dc2626',
+    borderColor: colors.error,
     borderWidth: 2,
   },
   inputDisabled: {
-    backgroundColor: '#f3f4f6',
-    color: '#9ca3af',
+    backgroundColor: colors.backgroundTertiary,
+    color: colors.textTertiary,
   },
   errorText: {
     fontSize: 12,
-    color: '#dc2626',
+    color: colors.error,
     marginTop: 4,
   },
   helperText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textSecondary,
     marginTop: 4,
   },
 });

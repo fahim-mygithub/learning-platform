@@ -139,7 +139,6 @@ export default function CreateProjectScreen(): React.ReactElement {
             placeholder="Enter project title"
             error={titleError ?? undefined}
             disabled={isSubmitting}
-            autoFocus
             returnKeyType="next"
             accessibilityLabel="Project title"
             accessibilityHint="Enter a title for your project. This field is required."
