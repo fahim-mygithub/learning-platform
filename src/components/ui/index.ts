@@ -47,5 +47,8 @@ export {
 // UrlInputForm component and types
 export { UrlInputForm, type UrlInputFormProps } from './UrlInputForm';
 
+// SourceCard component and types
+export { SourceCard, type SourceCardProps } from './SourceCard';
+
 // Re-export theme for convenient access
 export { colors, palette, spacing, semanticSpacing, typography, fontSize, fontWeight, lineHeight } from '../../theme';
