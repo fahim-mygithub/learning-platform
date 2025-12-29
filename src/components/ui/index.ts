@@ -37,5 +37,12 @@ export { Modal, type ModalProps } from './Modal';
 // BottomSheet component and types
 export { BottomSheet, type BottomSheetProps } from './BottomSheet';
 
+// FileUploadButton component and types
+export {
+  FileUploadButton,
+  type FileUploadButtonProps,
+  type FileAcceptType,
+} from './FileUploadButton';
+
 // Re-export theme for convenient access
 export { colors, palette, spacing, semanticSpacing, typography, fontSize, fontWeight, lineHeight } from '../../theme';
