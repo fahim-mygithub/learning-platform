@@ -44,3 +44,66 @@ export interface ProjectUpdate {
   progress?: number;
   last_accessed_at?: string;
 }
+
+/**
+ * Source type enum
+ */
+export type SourceType = 'video' | 'pdf' | 'url';
+
+/**
+ * Source status enum
+ */
+export type SourceStatus =
+  | 'pending'
+  | 'uploading'
+  | 'processing'
+  | 'completed'
+  | 'failed';
+
+/**
+ * Source record from database
+ */
+export interface Source {
+  id: string;
+  project_id: string;
+  user_id: string;
+  type: SourceType;
+  name: string;
+  url: string | null;
+  storage_path: string | null;
+  file_size: number | null;
+  mime_type: string | null;
+  status: SourceStatus;
+  error_message: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Data for inserting a new source
+ */
+export interface SourceInsert {
+  project_id: string;
+  type: SourceType;
+  name: string;
+  url?: string | null;
+  storage_path?: string | null;
+  file_size?: number | null;
+  mime_type?: string | null;
+  status?: SourceStatus;
+  metadata?: Record<string, unknown>;
+  // user_id is set by the service from auth context
+}
+
+/**
+ * Data for updating a source
+ */
+export interface SourceUpdate {
+  name?: string;
+  url?: string | null;
+  storage_path?: string | null;
+  status?: SourceStatus;
+  error_message?: string | null;
+  metadata?: Record<string, unknown>;
+}
