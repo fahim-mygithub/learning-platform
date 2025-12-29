@@ -32,6 +32,7 @@ export default function TabsLayout() {
         name="projects"
         options={{
           title: 'Projects',
+          headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="folder-outline" size={size} color={color} />
           ),
