@@ -146,24 +146,33 @@ export default function SignInScreen() {
     }
 
     setIsLoading(true);
+    console.log('[SIGN-IN DEBUG] Starting sign-in attempt...');
 
     try {
       const { error } = await signIn(email.trim(), password);
+      console.log('[SIGN-IN DEBUG] Sign-in response received, error:', error?.message ?? 'none');
 
       if (error) {
-        // Check if this is an unverified email error
+        console.log('[SIGN-IN DEBUG] Error received:', error.message);
+
+        // Check if this is an unverified email error and redirect (don't show error UI)
         if (isUnverifiedEmailError(error.message)) {
+          console.log('[SIGN-IN DEBUG] Detected unverified email, redirecting...');
           router.push(`/verify-email?email=${encodeURIComponent(email.trim())}`);
           return;
         }
 
+        // Show other errors in UI
+        console.log('[SIGN-IN DEBUG] Setting error in UI:', error.message);
         setErrors((prev) => ({ ...prev, api: error.message }));
         return;
       }
 
-      // Success: Auth state change will trigger auto-redirect via layout
-      // No manual navigation needed
-    } catch {
+      console.log('[SIGN-IN DEBUG] Sign-in successful, navigating to authenticated area...');
+      // Navigate to the authenticated area
+      router.replace('/(auth)/(tabs)');
+    } catch (e) {
+      console.error('[SIGN-IN DEBUG] Unexpected error:', e);
       setErrors((prev) => ({
         ...prev,
         api: 'An unexpected error occurred. Please try again.',

@@ -201,13 +201,35 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
    */
   const signIn = useCallback(
     async (email: string, password: string): Promise<SignInResponse> => {
+      console.log('[AUTH DEBUG] Attempting sign in for:', email);
+
+      // DEV ONLY - Clear any existing dev auth state before real sign-in
+      // This fixes the bug where dev auth blocks real auth state updates
+      if (isDevAuth) {
+        console.log('[AUTH DEBUG] Clearing dev auth state before real sign-in');
+        devSignOutFn();
+        setIsDevAuth(false);
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      console.log('[AUTH DEBUG] Response:', {
+        hasData: !!data,
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+        error: error?.message ?? null,
+      });
+
       if (error) {
         console.error('Error signing in:', error.message);
+      } else if (data?.session) {
+        // Explicitly set session on success (don't rely solely on onAuthStateChange)
+        console.log('[AUTH DEBUG] Setting session explicitly');
+        setSession(data.session);
       }
+
       return { data, error };
     },
-    []
+    [isDevAuth]
   );
 
   /**

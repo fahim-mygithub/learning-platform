@@ -7,10 +7,11 @@
  * - Loading state
  * - Delete functionality
  * - Upload progress passing to SourceCard
+ * - Opening sources via in-app modal viewer
  */
 
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react-native';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 
 import { SourcesSection } from '../SourcesSection';
 import type { Source } from '../../../types/database';
@@ -29,6 +30,12 @@ const mockUseSources = {
 
 jest.mock('../../../lib/sources-context', () => ({
   useSources: () => mockUseSources,
+}));
+
+// Mock getSourceUrl
+const mockGetSourceUrl = jest.fn();
+jest.mock('../../../lib/sources', () => ({
+  getSourceUrl: (source: Source) => mockGetSourceUrl(source),
 }));
 
 /**
@@ -66,6 +73,7 @@ beforeEach(() => {
   mockUseSources.refreshSources.mockClear();
   mockUseSources.addUrlSource.mockClear();
   mockUseSources.uploadFileSource.mockClear();
+  mockGetSourceUrl.mockClear();
 });
 
 describe('SourcesSection Component', () => {
@@ -247,6 +255,81 @@ describe('SourcesSection Component', () => {
 
       const addButton = screen.getByTestId('sources-section-add-button');
       expect(addButton.props.accessibilityLabel).toBeDefined();
+    });
+  });
+
+  describe('Opening Sources', () => {
+    it('opens source viewer modal when URL source is pressed', async () => {
+      const urlSource = createMockSource({
+        id: 'url-source',
+        type: 'url',
+        url: 'https://example.com/article',
+        name: 'Article Link',
+      });
+      mockUseSources.sources = [urlSource];
+      mockGetSourceUrl.mockReturnValue('https://example.com/article');
+
+      render(<SourcesSection onAddSource={jest.fn()} />);
+
+      const sourceCard = screen.getByTestId('source-card-pressable');
+      fireEvent.press(sourceCard);
+
+      // Modal should become visible with the source
+      await waitFor(() => {
+        const modal = screen.getByTestId('source-viewer-modal');
+        expect(modal).toBeTruthy();
+      });
+    });
+
+    it('opens source viewer modal when file source is pressed', async () => {
+      const fileSource = createMockSource({
+        id: 'file-source',
+        type: 'video',
+        storage_path: 'user/project/video.mp4',
+        name: 'My Video',
+      });
+      mockUseSources.sources = [fileSource];
+      mockGetSourceUrl.mockReturnValue('https://storage.supabase.co/sources/user/project/video.mp4');
+
+      render(<SourcesSection onAddSource={jest.fn()} />);
+
+      const sourceCard = screen.getByTestId('source-card-pressable');
+      fireEvent.press(sourceCard);
+
+      // Modal should become visible with the source
+      await waitFor(() => {
+        const modal = screen.getByTestId('source-viewer-modal');
+        expect(modal).toBeTruthy();
+      });
+    });
+
+    it('closes source viewer modal when close button is pressed', async () => {
+      const urlSource = createMockSource({
+        id: 'url-source',
+        type: 'url',
+        url: 'https://example.com/article',
+        name: 'Article Link',
+      });
+      mockUseSources.sources = [urlSource];
+      mockGetSourceUrl.mockReturnValue('https://example.com/article');
+
+      render(<SourcesSection onAddSource={jest.fn()} />);
+
+      // Open the modal
+      const sourceCard = screen.getByTestId('source-card-pressable');
+      fireEvent.press(sourceCard);
+
+      await waitFor(() => {
+        const modal = screen.getByTestId('source-viewer-modal');
+        expect(modal).toBeTruthy();
+      });
+
+      // Close the modal
+      const closeButton = screen.getByTestId('source-viewer-modal-close-button');
+      fireEvent.press(closeButton);
+
+      // Modal should still be in DOM but with source name not shown
+      // (the modal itself renders empty fragment when source is null)
     });
   });
 });

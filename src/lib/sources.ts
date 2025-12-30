@@ -227,3 +227,29 @@ export async function deleteStorageFile(storagePath: string): Promise<{ error: E
 
   return { error };
 }
+
+/**
+ * Get the viewable URL for a source
+ *
+ * For URL sources, returns the stored URL directly.
+ * For file sources, returns the public Supabase Storage URL.
+ *
+ * @param source - The source to get the URL for
+ * @returns The viewable URL, or null if not available
+ */
+export function getSourceUrl(source: Source): string | null {
+  // URL sources: return the stored URL directly
+  if (source.type === 'url' && source.url) {
+    return source.url;
+  }
+
+  // File sources: get public URL from Supabase Storage
+  if (source.storage_path) {
+    const { data } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(source.storage_path);
+    return data?.publicUrl || null;
+  }
+
+  return null;
+}

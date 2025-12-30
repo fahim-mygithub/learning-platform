@@ -8,11 +8,12 @@
  * - Shows list of SourceCards when sources exist
  * - Passes uploadProgress to SourceCard when source is uploading
  * - Handles delete via useSources().removeSource
+ * - Opens sources in-app via SourceViewerModal
  *
  * Follows accessibility guidelines from the Base Component Library spec.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -23,6 +24,7 @@ import {
 
 import { Button } from '../ui/Button';
 import { SourceCard } from '../ui/SourceCard';
+import { SourceViewerModal } from './SourceViewerModal';
 import { useSources } from '../../lib/sources-context';
 import { colors } from '../../theme';
 import type { Source } from '../../types/database';
@@ -52,12 +54,28 @@ export function SourcesSection({
   onAddSource,
 }: SourcesSectionProps): React.ReactElement {
   const { sources, loading, uploadProgress, removeSource } = useSources();
+  const [viewingSource, setViewingSource] = useState<Source | null>(null);
 
   /**
    * Handle delete button press on SourceCard
    */
   const handleDelete = (sourceId: string) => {
     removeSource(sourceId);
+  };
+
+  /**
+   * Handle press on SourceCard to open the source
+   * Opens in-app viewer modal with appropriate viewer type
+   */
+  const handleOpenSource = (source: Source) => {
+    setViewingSource(source);
+  };
+
+  /**
+   * Handle closing the source viewer modal
+   */
+  const handleCloseViewer = () => {
+    setViewingSource(null);
   };
 
   /**
@@ -70,6 +88,7 @@ export function SourcesSection({
     return (
       <SourceCard
         source={item}
+        onPress={() => handleOpenSource(item)}
         onDelete={() => handleDelete(item.id)}
         uploadProgress={progress}
         style={styles.sourceCard}
@@ -143,6 +162,11 @@ export function SourcesSection({
     <View testID="sources-section" style={styles.container}>
       <Text style={styles.sectionHeader}>Sources</Text>
       {renderContent()}
+      <SourceViewerModal
+        visible={viewingSource !== null}
+        source={viewingSource}
+        onClose={handleCloseViewer}
+      />
     </View>
   );
 }

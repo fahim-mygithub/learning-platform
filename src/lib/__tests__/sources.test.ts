@@ -13,6 +13,7 @@ import {
   deleteSource,
   uploadFile,
   deleteStorageFile,
+  getSourceUrl,
 } from '../sources';
 import type { Source, SourceInsert, SourceUpdate } from '../../types';
 import * as fileValidation from '../file-validation';
@@ -53,6 +54,9 @@ function createMockStorageChain(result: { data: unknown; error: Error | null }) 
   return {
     upload: jest.fn().mockResolvedValue(result),
     remove: jest.fn().mockResolvedValue(result),
+    getPublicUrl: jest.fn().mockReturnValue({
+      data: { publicUrl: 'https://storage.example.com/sources/file.mp4' },
+    }),
   };
 }
 
@@ -497,6 +501,91 @@ describe('sources service', () => {
       const result = await deleteStorageFile('path/to/file.mp4');
 
       expect(result.error).toBe(mockError);
+    });
+  });
+
+  describe('getSourceUrl', () => {
+    it('returns the stored URL for URL-type sources', () => {
+      const urlSource: Source = {
+        ...mockSource,
+        type: 'url',
+        url: 'https://example.com/article',
+        storage_path: null,
+      };
+
+      const result = getSourceUrl(urlSource);
+
+      expect(result).toBe('https://example.com/article');
+    });
+
+    it('returns public storage URL for file-type sources', () => {
+      const mockStorageChain = {
+        getPublicUrl: jest.fn().mockReturnValue({
+          data: { publicUrl: 'https://storage.supabase.co/sources/user-789/project-456/source-123_test-video.mp4' },
+        }),
+      };
+      (supabase.storage.from as jest.Mock).mockReturnValue(mockStorageChain);
+
+      const fileSource: Source = {
+        ...mockSource,
+        type: 'video',
+        url: null,
+        storage_path: 'user-789/project-456/source-123_test-video.mp4',
+      };
+
+      const result = getSourceUrl(fileSource);
+
+      expect(supabase.storage.from).toHaveBeenCalledWith('sources');
+      expect(mockStorageChain.getPublicUrl).toHaveBeenCalledWith('user-789/project-456/source-123_test-video.mp4');
+      expect(result).toBe('https://storage.supabase.co/sources/user-789/project-456/source-123_test-video.mp4');
+    });
+
+    it('returns null for source without URL or storage_path', () => {
+      const emptySource: Source = {
+        ...mockSource,
+        type: 'url',
+        url: null,
+        storage_path: null,
+      };
+
+      const result = getSourceUrl(emptySource);
+
+      expect(result).toBeNull();
+    });
+
+    it('prefers URL over storage_path for URL-type sources', () => {
+      const mixedSource: Source = {
+        ...mockSource,
+        type: 'url',
+        url: 'https://example.com/article',
+        storage_path: 'some/storage/path.mp4',
+      };
+
+      const result = getSourceUrl(mixedSource);
+
+      // Should return URL for url-type sources
+      expect(result).toBe('https://example.com/article');
+    });
+
+    it('returns storage URL for PDF sources', () => {
+      const mockStorageChain = {
+        getPublicUrl: jest.fn().mockReturnValue({
+          data: { publicUrl: 'https://storage.supabase.co/sources/user/project/doc.pdf' },
+        }),
+      };
+      (supabase.storage.from as jest.Mock).mockReturnValue(mockStorageChain);
+
+      const pdfSource: Source = {
+        ...mockSource,
+        type: 'pdf',
+        url: null,
+        storage_path: 'user/project/doc.pdf',
+        mime_type: 'application/pdf',
+      };
+
+      const result = getSourceUrl(pdfSource);
+
+      expect(result).toBe('https://storage.supabase.co/sources/user/project/doc.pdf');
     });
   });
 });

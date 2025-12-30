@@ -61,6 +61,22 @@ jest.mock('@supabase/supabase-js', () => ({
 jest.mock('expo/src/winter/runtime.native', () => ({}), { virtual: true });
 jest.mock('expo/src/winter/installGlobal', () => ({}), { virtual: true });
 
+// Mock expo-av for video playback tests
+jest.mock('expo-av', () => ({
+  Video: 'Video',
+  ResizeMode: {
+    CONTAIN: 'contain',
+    COVER: 'cover',
+    STRETCH: 'stretch',
+  },
+  AVPlaybackStatus: {},
+}));
+
+// Mock react-native-webview for WebView tests
+jest.mock('react-native-webview', () => ({
+  WebView: 'WebView',
+}));
+
 // Silence console warnings during tests (optional, remove if you want to see warnings)
 const originalWarn = console.warn;
 beforeAll(() => {
