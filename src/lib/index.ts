@@ -68,6 +68,14 @@ export {
   type SourcesProviderProps,
 } from './sources-context';
 
+// Analysis context
+export {
+  AnalysisProvider,
+  useAnalysis,
+  type AnalysisContextValue,
+  type AnalysisProviderProps,
+} from './analysis-context';
+
 // DEV ONLY - Development authentication bypass utilities
 // REMOVE BEFORE PRODUCTION or ensure these are not used in production code
 export {
@@ -150,3 +158,10 @@ export {
   type PipelineStatus,
   type AnalyzeOptions,
 } from './content-analysis-pipeline';
+
+// Analysis Queries (Data Fetching)
+export {
+  getConceptsByProject,
+  getRoadmapByProject,
+  getTranscriptionBySource,
+} from './analysis-queries';
