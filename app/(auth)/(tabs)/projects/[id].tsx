@@ -25,7 +25,8 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 import { useProjects } from '@/src/lib/projects-context';
-import { SourcesProvider } from '@/src/lib/sources-context';
+import { SourcesProvider, useSources } from '@/src/lib/sources-context';
+import { AnalysisProvider, useAnalysis } from '@/src/lib/analysis-context';
 import { getProject, deleteProject, updateProject } from '@/src/lib/projects';
 import {
   Button,
@@ -40,6 +41,9 @@ import {
 } from '@/src/components/ui';
 import { SourcesSection } from '@/src/components/sources/SourcesSection';
 import { AddSourceSheet } from '@/src/components/sources/AddSourceSheet';
+import { AnalysisStatus } from '@/src/components/analysis';
+import { ConceptsList } from '@/src/components/concepts';
+import { RoadmapView } from '@/src/components/roadmap';
 import type { Project } from '@/src/types';
 
 /**
@@ -256,8 +260,94 @@ export default function ProjectDetailScreen(): React.ReactElement {
 
   return (
     <SourcesProvider projectId={id}>
-      <View style={styles.container}>
-        <ScrollView
+      <AnalysisProvider projectId={id}>
+        <ProjectDetailContent
+          project={project}
+          showEditModal={showEditModal}
+          showDeleteModal={showDeleteModal}
+          showAddSourceSheet={showAddSourceSheet}
+          isSaving={isSaving}
+          isDeleting={isDeleting}
+          editTitle={editTitle}
+          editDescription={editDescription}
+          setEditTitle={setEditTitle}
+          setEditDescription={setEditDescription}
+          handleOpenEdit={handleOpenEdit}
+          handleCloseEdit={handleCloseEdit}
+          handleSaveEdit={handleSaveEdit}
+          handleOpenDelete={handleOpenDelete}
+          handleCloseDelete={handleCloseDelete}
+          handleConfirmDelete={handleConfirmDelete}
+          handleOpenAddSource={handleOpenAddSource}
+          handleCloseAddSource={handleCloseAddSource}
+        />
+      </AnalysisProvider>
+    </SourcesProvider>
+  );
+}
+
+/**
+ * Props for ProjectDetailContent component
+ */
+interface ProjectDetailContentProps {
+  project: Project;
+  showEditModal: boolean;
+  showDeleteModal: boolean;
+  showAddSourceSheet: boolean;
+  isSaving: boolean;
+  isDeleting: boolean;
+  editTitle: string;
+  editDescription: string;
+  setEditTitle: (value: string) => void;
+  setEditDescription: (value: string) => void;
+  handleOpenEdit: () => void;
+  handleCloseEdit: () => void;
+  handleSaveEdit: () => Promise<void>;
+  handleOpenDelete: () => void;
+  handleCloseDelete: () => void;
+  handleConfirmDelete: () => Promise<void>;
+  handleOpenAddSource: () => void;
+  handleCloseAddSource: () => void;
+}
+
+/**
+ * Inner component that uses analysis and sources hooks
+ */
+function ProjectDetailContent({
+  project,
+  showEditModal,
+  showDeleteModal,
+  showAddSourceSheet,
+  isSaving,
+  isDeleting,
+  editTitle,
+  editDescription,
+  setEditTitle,
+  setEditDescription,
+  handleOpenEdit,
+  handleCloseEdit,
+  handleSaveEdit,
+  handleOpenDelete,
+  handleCloseDelete,
+  handleConfirmDelete,
+  handleOpenAddSource,
+  handleCloseAddSource,
+}: ProjectDetailContentProps): React.ReactElement {
+  const { sources } = useSources();
+  const { concepts, roadmap, pipelineStage, progress, error, retryAnalysis } = useAnalysis();
+
+  /**
+   * Handle retry analysis - uses first source if multiple exist
+   */
+  const handleRetryAnalysis = useCallback(() => {
+    if (sources.length > 0) {
+      retryAnalysis(sources[0].id);
+    }
+  }, [sources, retryAnalysis]);
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -301,6 +391,45 @@ export default function ProjectDetailScreen(): React.ReactElement {
         <Card testID="sources-card" style={styles.sourcesCard}>
           <SourcesSection onAddSource={handleOpenAddSource} />
         </Card>
+
+        {/* Analysis Status - show when sources exist */}
+        {sources.length > 0 && (
+          <Card testID="analysis-card" style={styles.analysisCard}>
+            <Text style={styles.sectionLabel}>Analysis</Text>
+            <AnalysisStatus
+              stage={pipelineStage}
+              progress={progress}
+              error={error ?? undefined}
+              onRetry={handleRetryAnalysis}
+              testID="analysis-status"
+            />
+          </Card>
+        )}
+
+        {/* Concepts - show when concepts exist */}
+        {concepts.length > 0 && (
+          <Card testID="concepts-card" style={styles.conceptsCard}>
+            <Text style={styles.sectionLabel}>Concepts ({concepts.length})</Text>
+            <View style={styles.conceptsListContainer}>
+              <ConceptsList
+                concepts={concepts}
+                testID="concepts-list"
+              />
+            </View>
+          </Card>
+        )}
+
+        {/* Roadmap - show when roadmap exists */}
+        {roadmap && (
+          <Card testID="roadmap-card" style={styles.roadmapCard}>
+            <Text style={styles.sectionLabel}>Learning Roadmap</Text>
+            <RoadmapView
+              roadmap={roadmap}
+              concepts={concepts}
+              testID="roadmap-view"
+            />
+          </Card>
+        )}
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
@@ -429,8 +558,7 @@ export default function ProjectDetailScreen(): React.ReactElement {
         visible={showAddSourceSheet}
         onClose={handleCloseAddSource}
       />
-      </View>
-    </SourcesProvider>
+    </View>
   );
 }
 
@@ -495,6 +623,27 @@ const styles = StyleSheet.create({
 
   // Sources Card
   sourcesCard: {
+    marginBottom: spacing[4],
+    padding: spacing[4],
+  },
+
+  // Analysis Card
+  analysisCard: {
+    marginBottom: spacing[4],
+    padding: spacing[4],
+  },
+
+  // Concepts Card
+  conceptsCard: {
+    marginBottom: spacing[4],
+    padding: spacing[4],
+  },
+  conceptsListContainer: {
+    maxHeight: 400,
+  },
+
+  // Roadmap Card
+  roadmapCard: {
     marginBottom: spacing[4],
     padding: spacing[4],
   },

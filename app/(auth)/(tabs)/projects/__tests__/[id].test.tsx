@@ -74,6 +74,22 @@ jest.mock('@/src/lib/sources-context', () => ({
   }),
 }));
 
+// Mock analysis context
+jest.mock('@/src/lib/analysis-context', () => ({
+  AnalysisProvider: ({ children }: { children: React.ReactNode }) => children,
+  useAnalysis: () => ({
+    concepts: [],
+    roadmap: null,
+    pipelineStage: 'pending' as const,
+    progress: 0,
+    error: null,
+    loading: false,
+    refreshAnalysis: jest.fn(),
+    startAnalysis: jest.fn(),
+    retryAnalysis: jest.fn(),
+  }),
+}));
+
 /**
  * Helper to create a mock project
  */
