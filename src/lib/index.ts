@@ -125,3 +125,28 @@ export {
   type KnowledgeGraphErrorCode,
   type IdentifiedRelationship,
 } from './knowledge-graph-service';
+
+// Roadmap Generation Service
+export {
+  createRoadmapGenerationService,
+  getDefaultRoadmapGenerationService,
+  RoadmapGenerationError,
+  calculateConceptTime,
+  DIFFICULTY_BASE_TIME,
+  COGNITIVE_TYPE_MODIFIER,
+  type RoadmapGenerationService,
+  type RoadmapGenerationErrorCode,
+} from './roadmap-generation';
+
+// Content Analysis Pipeline (Orchestration)
+export {
+  createContentAnalysisPipeline,
+  getDefaultContentAnalysisPipeline,
+  ContentAnalysisPipelineError,
+  PIPELINE_STAGES,
+  type ContentAnalysisPipeline,
+  type ContentAnalysisPipelineErrorCode,
+  type PipelineStage,
+  type PipelineStatus,
+  type AnalyzeOptions,
+} from './content-analysis-pipeline';
