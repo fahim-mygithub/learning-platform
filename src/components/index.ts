@@ -20,3 +20,16 @@ export {
   Card,
   type CardProps,
 } from './ui';
+
+// Re-export all Roadmap components
+export {
+  RoadmapLevel,
+  type RoadmapLevelProps,
+  RoadmapView,
+  type RoadmapViewProps,
+  MasteryGate,
+  type MasteryGateProps,
+  TimeEstimate,
+  type TimeEstimateProps,
+  formatMinutes,
+} from './roadmap';
