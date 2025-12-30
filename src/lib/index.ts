@@ -91,3 +91,13 @@ export {
   isRetryableError,
   type AIService,
 } from './ai-service';
+
+// Transcription Service (OpenAI Whisper API integration)
+export {
+  createTranscriptionService,
+  getDefaultTranscriptionService,
+  TranscriptionError,
+  WHISPER_MAX_FILE_SIZE,
+  type TranscriptionService,
+  type TranscriptionErrorCode,
+} from './transcription-service';
