@@ -79,3 +79,15 @@ export {
   DEV_USER,
   DEV_SESSION,
 } from './dev-auth';
+
+// AI Service (Claude API integration)
+export {
+  createAIService,
+  sendMessage,
+  sendStructuredMessage,
+  getDefaultService,
+  resetDefaultService,
+  calculateBackoffDelay,
+  isRetryableError,
+  type AIService,
+} from './ai-service';
