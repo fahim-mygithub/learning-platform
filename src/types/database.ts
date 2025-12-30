@@ -157,6 +157,19 @@ export interface TranscriptionInsert {
   error_message?: string | null;
 }
 
+/**
+ * Data for updating a transcription
+ */
+export interface TranscriptionUpdate {
+  full_text?: string;
+  segments?: TranscriptionSegment[];
+  language?: string;
+  confidence?: number | null;
+  provider?: string | null;
+  status?: TranscriptionStatus;
+  error_message?: string | null;
+}
+
 // ============================================================================
 // Concept Types
 // ============================================================================
@@ -253,6 +266,15 @@ export interface ConceptRelationshipInsert {
   from_concept_id: string;
   to_concept_id: string;
   relationship_type: RelationshipType;
+  strength?: number;
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Data for updating a concept relationship
+ */
+export interface ConceptRelationshipUpdate {
+  relationship_type?: RelationshipType;
   strength?: number;
   metadata?: Record<string, unknown>;
 }
