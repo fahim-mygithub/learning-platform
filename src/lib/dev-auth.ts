@@ -19,7 +19,7 @@ import { Session, User } from '@supabase/supabase-js';
  * Used for testing the app without requiring actual Supabase authentication
  */
 export const DEV_USER: User = {
-  id: 'dev-user-00000000-0000-0000-0000-000000000000',
+  id: '00000000-0000-0000-0000-000000000001',
   aud: 'authenticated',
   role: 'authenticated',
   email: 'dev@localhost.test',
