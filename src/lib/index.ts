@@ -101,3 +101,27 @@ export {
   type TranscriptionService,
   type TranscriptionErrorCode,
 } from './transcription-service';
+
+// Concept Extraction Service
+export {
+  createConceptExtractionService,
+  getDefaultConceptExtractionService,
+  ConceptExtractionError,
+  validateExtractedConcept,
+  COGNITIVE_TYPES,
+  type ConceptExtractionService,
+  type ConceptExtractionErrorCode,
+  type ExtractedConcept,
+} from './concept-extraction';
+
+// Knowledge Graph Service (Concept Relationships)
+export {
+  createKnowledgeGraphService,
+  getDefaultKnowledgeGraphService,
+  KnowledgeGraphError,
+  validateIdentifiedRelationship,
+  RELATIONSHIP_TYPES,
+  type KnowledgeGraphService,
+  type KnowledgeGraphErrorCode,
+  type IdentifiedRelationship,
+} from './knowledge-graph-service';
