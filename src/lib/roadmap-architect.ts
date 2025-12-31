@@ -634,7 +634,6 @@ export function createRoadmapArchitectService(
             match = tier3Concepts.find(
               (c) =>
                 thesisLower.includes(c.name.toLowerCase()) ||
-                c.name.toLowerCase().includes('scenario') ||
                 c.name.toLowerCase().includes('overview') ||
                 c.name.toLowerCase().includes('introduction')
             );
