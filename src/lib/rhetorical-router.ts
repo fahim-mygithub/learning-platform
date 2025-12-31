@@ -237,6 +237,19 @@ function normalizeClassificationResult(
     bloomCeiling = defaultCeiling;
   }
 
+  // Enforce multi-topic short content = survey
+  // If content < 10 min and 3+ topics, it should be survey regardless of AI classification
+  let contentType = raw.content_type;
+  if (
+    durationSeconds &&
+    durationSeconds < 600 && // < 10 minutes
+    raw.topic_count >= 3 &&
+    raw.content_type !== 'survey'
+  ) {
+    contentType = 'survey';
+    bloomCeiling = getDefaultBloomCeiling('survey'); // 'understand'
+  }
+
   // Validate extraction depth
   const validDepths: ExtractionDepth[] = ['mentions', 'explanations'];
   const extractionDepth = validDepths.includes(raw.extraction_depth as ExtractionDepth)
@@ -244,10 +257,10 @@ function normalizeClassificationResult(
     : 'explanations';
 
   return {
-    contentType: raw.content_type,
+    contentType,
     thesisStatement: raw.thesis_statement?.trim() || null,
     bloomCeiling,
-    modeMultiplier: getModeMultiplier(raw.content_type),
+    modeMultiplier: getModeMultiplier(contentType),
     extractionDepth,
     sourceDurationSeconds: durationSeconds || null,
     conceptDensity: null, // Calculated after concept extraction
@@ -309,6 +322,7 @@ export function createRhetoricalRouterService(
             extraction_depth: result.extractionDepth,
             mode_multiplier: result.modeMultiplier,
             has_thesis: result.thesisStatement !== null,
+            topic_count: result.topicCount,
           },
           timer.stop()
         );
