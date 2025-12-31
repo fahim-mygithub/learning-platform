@@ -152,6 +152,8 @@ export interface ContentAnalysis {
   extraction_depth: ExtractionDepth;
   source_duration_seconds: number | null;
   concept_density: number | null;
+  /** Number of topics/sections identified in content (for multi-topic detection) */
+  topic_count?: number | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
@@ -170,6 +172,7 @@ export interface ContentAnalysisInsert {
   extraction_depth?: ExtractionDepth;
   source_duration_seconds?: number | null;
   concept_density?: number | null;
+  topic_count?: number | null;
   metadata?: Record<string, unknown>;
 }
 

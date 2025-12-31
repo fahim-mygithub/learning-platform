@@ -3,6 +3,19 @@
  * These types match the SQL schema defined in the database
  */
 
+// Import three-pass types for internal use
+import type {
+  BloomLevel as BloomLevelType,
+  ConceptTier as ConceptTierType,
+  TimeCalibration as TimeCalibrationImport,
+  ValidationResults as ValidationResultsImport,
+  LearningObjective as LearningObjectiveType,
+  AssessmentSpec as AssessmentSpecType,
+  SourceMapping as SourceMappingType,
+  Misconception as MisconceptionType,
+  ModuleSummary as ModuleSummaryImport,
+} from './three-pass';
+
 // Re-export three-pass types for convenience
 export type {
   ContentType,
@@ -21,6 +34,17 @@ export type {
   QuestionType,
   DifficultyLevel,
 } from './three-pass';
+
+// Type aliases for internal use
+type BloomLevel = BloomLevelType;
+type ConceptTier = ConceptTierType;
+type TimeCalibration = TimeCalibrationImport;
+type ValidationResults = ValidationResultsImport;
+type LearningObjective = LearningObjectiveType;
+type AssessmentSpec = AssessmentSpecType;
+type SourceMapping = SourceMappingType;
+type Misconception = MisconceptionType;
+type ModuleSummary = ModuleSummaryImport;
 
 /**
  * Project status enum
@@ -202,18 +226,6 @@ export type CognitiveType =
   | 'procedural'
   | 'conditional'
   | 'metacognitive';
-
-/**
- * Import BloomLevel, ConceptTier, and enhanced pedagogical types for Concept fields
- */
-import type {
-  BloomLevel,
-  ConceptTier,
-  LearningObjective,
-  AssessmentSpec,
-  SourceMapping,
-  Misconception,
-} from './three-pass';
 
 /**
  * Concept record from database
@@ -399,11 +411,6 @@ export interface MasteryGate {
   required_score: number;
   quiz_concept_ids: string[];
 }
-
-/**
- * Import TimeCalibration, ValidationResults, and ModuleSummary for Roadmap fields
- */
-import type { TimeCalibration, ValidationResults, ModuleSummary } from './three-pass';
 
 /**
  * Roadmap record from database
