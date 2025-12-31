@@ -58,14 +58,18 @@ export interface AnalysisStatusProps {
 }
 
 /**
- * Stage descriptions for display
+ * Stage descriptions for display (three-pass architecture with new stages)
  */
 const STAGE_DESCRIPTIONS: Record<PipelineStage, string> = {
   pending: 'Preparing analysis...',
   transcribing: 'Transcribing audio...',
-  extracting_concepts: 'Extracting concepts...',
+  routing_content: 'Classifying content type...',           // Pass 1
+  extracting_concepts: 'Extracting concepts...',            // Pass 2
+  generating_misconceptions: 'Generating misconceptions...', // After Pass 2
   building_graph: 'Building knowledge graph...',
-  generating_roadmap: 'Generating learning roadmap...',
+  architecting_roadmap: 'Architecting learning roadmap...', // Pass 3
+  generating_summary: 'Generating module summary...',       // After Pass 3
+  validating: 'Validating analysis results...',
   completed: 'Analysis complete!',
   failed: 'Analysis failed',
 };

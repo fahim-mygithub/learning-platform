@@ -1,14 +1,17 @@
 /**
  * Content Analysis Pipeline Orchestration
  *
- * Orchestrates the full analysis flow from source upload to roadmap generation:
+ * Orchestrates the full analysis flow using the three-pass pedagogical architecture:
  * 1. Fetch source from database
  * 2. Transcribe (if video/audio)
- * 3. Extract concepts
- * 4. Build knowledge graph
- * 5. Generate roadmap
+ * 3. Route content (Pass 1: Classify content type, set Bloom's ceiling)
+ * 4. Extract concepts (Pass 2: Enhanced extraction with pedagogical metadata)
+ * 5. Build knowledge graph
+ * 6. Architect roadmap (Pass 3: Elaboration Theory hierarchy, calibrated time)
+ * 7. Validate analysis results
  *
  * Features:
+ * - Three-pass pedagogical analysis based on cognitive science
  * - Stage-based progress tracking (0-100%)
  * - Error handling and recovery
  * - Retry from failed stage
@@ -40,9 +43,11 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import {
   Source,
   Concept,
+  ConceptRelationship,
   Transcription,
   Roadmap,
 } from '@/src/types/database';
+import { Pass1Result, Pass3Result } from '@/src/types/three-pass';
 import {
   createTranscriptionService,
   TranscriptionService,
@@ -52,6 +57,14 @@ import {
   ConceptExtractionService,
 } from './concept-extraction';
 import {
+  createEnhancedConceptExtractionService,
+  EnhancedConceptExtractionService,
+} from './enhanced-concept-extraction';
+import {
+  createRhetoricalRouterService,
+  RhetoricalRouterService,
+} from './rhetorical-router';
+import {
   createKnowledgeGraphService,
   KnowledgeGraphService,
 } from './knowledge-graph-service';
@@ -59,16 +72,40 @@ import {
   createRoadmapGenerationService,
   RoadmapGenerationService,
 } from './roadmap-generation';
+import {
+  createRoadmapArchitectService,
+  RoadmapArchitectService,
+} from './roadmap-architect';
+import { createAnalysisValidatorService, AnalysisValidatorService, applyValidation } from './analysis-validator';
+import { createAIService, AIService } from './ai-service';
+import { isYouTubeUrl } from './youtube-url-utils';
+import {
+  fetchYouTubeTranscript,
+  YouTubeTranscriptError,
+} from './youtube-transcript-service';
+import {
+  createMisconceptionService,
+  MisconceptionService,
+} from './misconception-service';
+import {
+  createModuleSummaryService,
+  ModuleSummaryService,
+} from './module-summary-service';
+import { EnhancedExtractedConcept, Misconception } from '@/src/types/three-pass';
 
 /**
- * Pipeline stages representing the analysis workflow
+ * Pipeline stages representing the three-pass analysis workflow
  */
 export type PipelineStage =
   | 'pending'
   | 'transcribing'
-  | 'extracting_concepts'
+  | 'routing_content'            // Pass 1: Rhetorical Router
+  | 'extracting_concepts'        // Pass 2: Enhanced Concept Extraction
+  | 'generating_misconceptions'  // Misconception generation (after Pass 2)
   | 'building_graph'
-  | 'generating_roadmap'
+  | 'architecting_roadmap'       // Pass 3: Roadmap Architect
+  | 'generating_summary'         // Module summary generation (after Pass 3)
+  | 'validating'                 // Validation gate
   | 'completed'
   | 'failed';
 
@@ -78,22 +115,30 @@ export type PipelineStage =
 export const PIPELINE_STAGES: PipelineStage[] = [
   'pending',
   'transcribing',
+  'routing_content',
   'extracting_concepts',
+  'generating_misconceptions',
   'building_graph',
-  'generating_roadmap',
+  'architecting_roadmap',
+  'generating_summary',
+  'validating',
   'completed',
   'failed',
 ];
 
 /**
- * Progress ranges for each stage
+ * Progress ranges for each stage (three-pass architecture with new stages)
  */
 const STAGE_PROGRESS: Record<PipelineStage, { start: number; end: number }> = {
   pending: { start: 0, end: 0 },
-  transcribing: { start: 0, end: 25 },
-  extracting_concepts: { start: 25, end: 50 },
-  building_graph: { start: 50, end: 75 },
-  generating_roadmap: { start: 75, end: 100 },
+  transcribing: { start: 0, end: 15 },
+  routing_content: { start: 15, end: 25 },
+  extracting_concepts: { start: 25, end: 40 },
+  generating_misconceptions: { start: 40, end: 50 },
+  building_graph: { start: 50, end: 60 },
+  architecting_roadmap: { start: 60, end: 75 },
+  generating_summary: { start: 75, end: 85 },
+  validating: { start: 85, end: 100 },
   completed: { start: 100, end: 100 },
   failed: { start: 0, end: 0 },
 };
@@ -142,6 +187,10 @@ export interface PipelineStatus {
   startedAt: string;
   completedAt?: string;
   lastFailedStage?: PipelineStage;
+  /** Pass 1 result (content classification) */
+  pass1Result?: Pass1Result;
+  /** Pass 3 result (roadmap architecture) */
+  pass3Result?: Pass3Result;
 }
 
 /**
@@ -205,6 +254,13 @@ function requiresTranscription(sourceType: string): boolean {
 }
 
 /**
+ * Check if source is a YouTube URL that needs transcript fetching
+ */
+function isYouTubeSource(source: Source): boolean {
+  return source.type === 'url' && !!source.url && isYouTubeUrl(source.url);
+}
+
+/**
  * Create a content analysis pipeline instance
  *
  * @param supabase - Supabase client instance
@@ -215,7 +271,10 @@ export function createContentAnalysisPipeline(
   supabase: SupabaseClient
 ): ContentAnalysisPipeline {
   // Validate API keys
+  // NOTE: Using literal process.env access for Babel to inline at bundle time
   const anthropicApiKey = process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY;
+  console.log('[DEBUG] EXPO_PUBLIC_ANTHROPIC_API_KEY value:', anthropicApiKey ? `${anthropicApiKey.substring(0, 10)}...` : 'undefined');
+  console.log('[DEBUG] process.env keys:', Object.keys(process.env || {}).filter(k => k.startsWith('EXPO')));
   if (!anthropicApiKey) {
     throw new ContentAnalysisPipelineError(
       'API key is required. Set EXPO_PUBLIC_ANTHROPIC_API_KEY environment variable.',
@@ -225,7 +284,19 @@ export function createContentAnalysisPipeline(
 
   const openaiApiKey = process.env.EXPO_PUBLIC_OPENAI_API_KEY || '';
 
-  // Create service instances
+  // Create a shared AI service instance with explicit API key
+  let aiService: AIService;
+  try {
+    aiService = createAIService({ apiKey: anthropicApiKey });
+    console.log('[DEBUG] AIService created successfully');
+  } catch (error) {
+    throw new ContentAnalysisPipelineError(
+      `Failed to create AI service: ${(error as Error).message}`,
+      'API_KEY_MISSING'
+    );
+  }
+
+  // Create service instances using the shared AI service
   let transcriptionService: TranscriptionService | null = null;
   try {
     if (openaiApiKey) {
@@ -235,9 +306,47 @@ export function createContentAnalysisPipeline(
     // Transcription service is optional - some sources don't need it
   }
 
+  // Three-pass services
+  let rhetoricalRouterService: RhetoricalRouterService;
+  try {
+    rhetoricalRouterService = createRhetoricalRouterService(aiService, supabase);
+  } catch (error) {
+    throw new ContentAnalysisPipelineError(
+      `Failed to create rhetorical router service: ${(error as Error).message}`,
+      'API_KEY_MISSING'
+    );
+  }
+
+  let enhancedConceptExtractionService: EnhancedConceptExtractionService;
+  try {
+    enhancedConceptExtractionService = createEnhancedConceptExtractionService(supabase, aiService);
+  } catch (error) {
+    throw new ContentAnalysisPipelineError(
+      `Failed to create enhanced concept extraction service: ${(error as Error).message}`,
+      'API_KEY_MISSING'
+    );
+  }
+
+  let roadmapArchitectService: RoadmapArchitectService;
+  try {
+    roadmapArchitectService = createRoadmapArchitectService(supabase, aiService);
+  } catch (error) {
+    throw new ContentAnalysisPipelineError(
+      `Failed to create roadmap architect service: ${(error as Error).message}`,
+      'API_KEY_MISSING'
+    );
+  }
+
+  const analysisValidatorService: AnalysisValidatorService = createAnalysisValidatorService();
+
+  // New services for misconception and module summary generation
+  const misconceptionService: MisconceptionService = createMisconceptionService(aiService, supabase);
+  const moduleSummaryService: ModuleSummaryService = createModuleSummaryService(aiService, supabase);
+
+  // Legacy services (kept for backward compatibility)
   let conceptExtractionService: ConceptExtractionService;
   try {
-    conceptExtractionService = createConceptExtractionService(supabase);
+    conceptExtractionService = createConceptExtractionService(supabase, aiService);
   } catch (error) {
     throw new ContentAnalysisPipelineError(
       `Failed to create concept extraction service: ${(error as Error).message}`,
@@ -247,7 +356,7 @@ export function createContentAnalysisPipeline(
 
   let knowledgeGraphService: KnowledgeGraphService;
   try {
-    knowledgeGraphService = createKnowledgeGraphService(supabase);
+    knowledgeGraphService = createKnowledgeGraphService(supabase, aiService);
   } catch (error) {
     throw new ContentAnalysisPipelineError(
       `Failed to create knowledge graph service: ${(error as Error).message}`,
@@ -257,7 +366,7 @@ export function createContentAnalysisPipeline(
 
   let roadmapGenerationService: RoadmapGenerationService;
   try {
-    roadmapGenerationService = createRoadmapGenerationService(supabase);
+    roadmapGenerationService = createRoadmapGenerationService(supabase, knowledgeGraphService);
   } catch (error) {
     throw new ContentAnalysisPipelineError(
       `Failed to create roadmap generation service: ${(error as Error).message}`,
@@ -321,6 +430,64 @@ export function createContentAnalysisPipeline(
   }
 
   /**
+   * Run transcription stage for YouTube URLs
+   */
+  async function runYouTubeTranscriptionStage(
+    source: Source,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<Transcription> {
+    updateStatus(status, 'transcribing', STAGE_PROGRESS.transcribing.start, options);
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    try {
+      // Fetch transcript from YouTube
+      const youtubeTranscript = await fetchYouTubeTranscript(source.url!);
+
+      // Convert to our Transcription format and save to database
+      const transcriptionData = {
+        source_id: source.id,
+        full_text: youtubeTranscript.fullText,
+        segments: youtubeTranscript.segments,
+        language: youtubeTranscript.language,
+        provider: 'youtube' as const,
+        status: 'completed' as const,
+      };
+
+      // Insert into database
+      const { data, error } = await supabase
+        .from('transcriptions')
+        .insert(transcriptionData)
+        .select()
+        .single();
+
+      if (error) {
+        throw new ContentAnalysisPipelineError(
+          `Failed to save YouTube transcript: ${error.message}`,
+          'DATABASE_ERROR',
+          { stage: 'transcribing' }
+        );
+      }
+
+      updateStatus(status, 'transcribing', STAGE_PROGRESS.transcribing.end, options);
+
+      return data as Transcription;
+    } catch (error) {
+      if (error instanceof YouTubeTranscriptError) {
+        throw new ContentAnalysisPipelineError(
+          `YouTube transcript error: ${error.message}`,
+          'STAGE_FAILED',
+          { stage: 'transcribing', youtubeErrorCode: error.code }
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Run transcription stage
    */
   async function runTranscriptionStage(
@@ -328,8 +495,13 @@ export function createContentAnalysisPipeline(
     status: PipelineStatus,
     options?: AnalyzeOptions
   ): Promise<Transcription | null> {
+    // Check if it's a YouTube URL - use YouTube.js for transcripts
+    if (isYouTubeSource(source)) {
+      return runYouTubeTranscriptionStage(source, status, options);
+    }
+
     if (!requiresTranscription(source.type)) {
-      // Skip transcription for non-video sources
+      // Skip transcription for non-video/non-YouTube sources
       return null;
     }
 
@@ -372,9 +544,143 @@ export function createContentAnalysisPipeline(
   }
 
   /**
-   * Run concept extraction stage
+   * Get text content from source and transcription
    */
-  async function runConceptExtractionStage(
+  function getTextContent(source: Source, transcription: Transcription | null): string {
+    if (transcription) {
+      return transcription.full_text;
+    }
+    return (source.metadata?.text_content as string) || source.name || '';
+  }
+
+  /**
+   * Get source duration from metadata or transcription
+   */
+  function getSourceDuration(source: Source, transcription: Transcription | null): number | undefined {
+    // Try metadata first
+    const metadataDuration = source.metadata?.duration_seconds as number | undefined;
+    if (metadataDuration) {
+      return metadataDuration;
+    }
+
+    // Try to infer from transcription segments
+    if (transcription?.segments && transcription.segments.length > 0) {
+      const lastSegment = transcription.segments[transcription.segments.length - 1];
+      return Math.ceil(lastSegment.end);
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Run content routing stage (Pass 1: Rhetorical Router)
+   * Classifies content type, sets Bloom's ceiling, and extraction constraints
+   */
+  async function runContentRoutingStage(
+    source: Source,
+    transcription: Transcription | null,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<Pass1Result> {
+    updateStatus(
+      status,
+      'routing_content',
+      STAGE_PROGRESS.routing_content.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    const textContent = getTextContent(source, transcription);
+    const sourceDuration = getSourceDuration(source, transcription);
+
+    // Run Pass 1: Content classification
+    const pass1Result = await rhetoricalRouterService.classifyContent(
+      textContent,
+      sourceDuration
+    );
+
+    // Store Pass 1 result
+    await rhetoricalRouterService.storeClassification(
+      source.id,
+      source.project_id,
+      pass1Result
+    );
+
+    // Update status with Pass 1 result
+    status.pass1Result = pass1Result;
+    pipelineStatuses.set(status.sourceId, status);
+
+    updateStatus(
+      status,
+      'routing_content',
+      STAGE_PROGRESS.routing_content.end,
+      options
+    );
+
+    return pass1Result;
+  }
+
+  /**
+   * Run enhanced concept extraction stage (Pass 2: Enhanced Concept Extraction)
+   * Extracts concepts with pedagogical metadata respecting Pass 1 constraints
+   */
+  async function runEnhancedConceptExtractionStage(
+    source: Source,
+    transcription: Transcription | null,
+    pass1Result: Pass1Result,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<Concept[]> {
+    updateStatus(
+      status,
+      'extracting_concepts',
+      STAGE_PROGRESS.extracting_concepts.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    let concepts: Concept[];
+
+    if (transcription) {
+      // Extract from transcription with Pass 1 constraints
+      concepts = await enhancedConceptExtractionService.extractFromTranscription(
+        source.project_id,
+        source.id,
+        transcription,
+        pass1Result
+      );
+    } else {
+      // Extract from text content with Pass 1 constraints
+      const textContent =
+        (source.metadata?.text_content as string) || source.name || '';
+      concepts = await enhancedConceptExtractionService.extractFromText(
+        source.project_id,
+        source.id,
+        textContent,
+        pass1Result
+      );
+    }
+
+    updateStatus(
+      status,
+      'extracting_concepts',
+      STAGE_PROGRESS.extracting_concepts.end,
+      options
+    );
+
+    return concepts;
+  }
+
+  /**
+   * Run legacy concept extraction stage (for backward compatibility)
+   */
+  async function runLegacyConceptExtractionStage(
     source: Source,
     transcription: Transcription | null,
     status: PipelineStatus,
@@ -423,13 +729,14 @@ export function createContentAnalysisPipeline(
 
   /**
    * Run knowledge graph building stage
+   * Returns the relationships for use in roadmap architect
    */
   async function runKnowledgeGraphStage(
     projectId: string,
     concepts: Concept[],
     status: PipelineStatus,
     options?: AnalyzeOptions
-  ): Promise<void> {
+  ): Promise<ConceptRelationship[]> {
     updateStatus(status, 'building_graph', STAGE_PROGRESS.building_graph.start, options);
 
     if (isCancelled(status.sourceId)) {
@@ -439,21 +746,37 @@ export function createContentAnalysisPipeline(
     // Build knowledge graph
     await knowledgeGraphService.buildKnowledgeGraph(projectId, concepts);
 
+    // Fetch the relationships that were created
+    const { data: relationships, error } = await supabase
+      .from('concept_relationships')
+      .select('*')
+      .eq('project_id', projectId);
+
+    if (error) {
+      console.warn('Failed to fetch relationships:', error.message);
+    }
+
     updateStatus(status, 'building_graph', STAGE_PROGRESS.building_graph.end, options);
+
+    return (relationships as ConceptRelationship[]) || [];
   }
 
   /**
-   * Run roadmap generation stage
+   * Run roadmap architect stage (Pass 3)
+   * Builds Elaboration Theory hierarchy with calibrated time estimation
    */
-  async function runRoadmapGenerationStage(
+  async function runRoadmapArchitectStage(
     projectId: string,
+    concepts: Concept[],
+    relationships: ConceptRelationship[],
+    pass1Result: Pass1Result,
     status: PipelineStatus,
     options?: AnalyzeOptions
-  ): Promise<Roadmap> {
+  ): Promise<Pass3Result> {
     updateStatus(
       status,
-      'generating_roadmap',
-      STAGE_PROGRESS.generating_roadmap.start,
+      'architecting_roadmap',
+      STAGE_PROGRESS.architecting_roadmap.start,
       options
     );
 
@@ -461,13 +784,77 @@ export function createContentAnalysisPipeline(
       throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
     }
 
-    // Generate roadmap
-    const roadmap = await roadmapGenerationService.generateRoadmap(projectId);
+    // Build roadmap with Elaboration Theory
+    const pass3Result = await roadmapArchitectService.buildRoadmap(
+      projectId,
+      concepts,
+      relationships,
+      pass1Result
+    );
+
+    // Update status with Pass 3 result
+    status.pass3Result = pass3Result;
+    pipelineStatuses.set(status.sourceId, status);
 
     updateStatus(
       status,
-      'generating_roadmap',
-      STAGE_PROGRESS.generating_roadmap.end,
+      'architecting_roadmap',
+      STAGE_PROGRESS.architecting_roadmap.end,
+      options
+    );
+
+    return pass3Result;
+  }
+
+  /**
+   * Run validation stage
+   * Validates analysis results before completion
+   */
+  async function runValidationStage(
+    projectId: string,
+    concepts: Concept[],
+    pass1Result: Pass1Result,
+    pass3Result: Pass3Result,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<Roadmap> {
+    updateStatus(
+      status,
+      'validating',
+      STAGE_PROGRESS.validating.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    // Apply validation and get updated Pass 3 result
+    const validatedPass3Result = applyValidation(concepts, pass3Result, pass1Result);
+
+    // Log warnings if any
+    if (validatedPass3Result.validationResults.warnings.length > 0) {
+      console.warn(
+        'Analysis validation warnings:',
+        validatedPass3Result.validationResults.warnings
+      );
+    }
+
+    // Store the roadmap with validation results
+    const roadmap = await roadmapArchitectService.storeRoadmap(
+      projectId,
+      validatedPass3Result,
+      'Learning Roadmap'
+    );
+
+    // Update status with validated Pass 3 result
+    status.pass3Result = validatedPass3Result;
+    pipelineStatuses.set(status.sourceId, status);
+
+    updateStatus(
+      status,
+      'validating',
+      STAGE_PROGRESS.validating.end,
       options
     );
 
@@ -475,7 +862,134 @@ export function createContentAnalysisPipeline(
   }
 
   /**
-   * Run the complete pipeline
+   * Run legacy roadmap generation stage (for backward compatibility)
+   */
+  async function runLegacyRoadmapGenerationStage(
+    projectId: string,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<Roadmap> {
+    updateStatus(
+      status,
+      'architecting_roadmap',
+      STAGE_PROGRESS.architecting_roadmap.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    // Generate roadmap using legacy service
+    const roadmap = await roadmapGenerationService.generateRoadmap(projectId);
+
+    updateStatus(
+      status,
+      'architecting_roadmap',
+      STAGE_PROGRESS.architecting_roadmap.end,
+      options
+    );
+
+    return roadmap;
+  }
+
+  /**
+   * Run misconception generation stage
+   * Generates common misconceptions for tier 2-3 concepts (not mentioned_only)
+   */
+  async function runMisconceptionGenerationStage(
+    concepts: Concept[],
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<Map<string, Misconception[]>> {
+    updateStatus(
+      status,
+      'generating_misconceptions',
+      STAGE_PROGRESS.generating_misconceptions.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    // Convert Concept[] to EnhancedExtractedConcept[] format for misconception service
+    const enhancedConcepts: EnhancedExtractedConcept[] = concepts.map((concept) => ({
+      name: concept.name,
+      definition: concept.definition,
+      key_points: concept.key_points || [],
+      cognitive_type: concept.cognitive_type,
+      difficulty: concept.difficulty || 5,
+      source_timestamps: concept.source_timestamps as { start: number; end: number }[] | undefined,
+      tier: concept.tier as 1 | 2 | 3,
+      mentioned_only: concept.mentioned_only || false,
+      bloom_level: concept.bloom_level || 'understand',
+      definition_provided: true,
+      time_allocation_percent: concept.time_allocation_percent || 10,
+    }));
+
+    // Generate misconceptions
+    const misconceptionMap = await misconceptionService.generateMisconceptions(enhancedConcepts);
+
+    // Store misconceptions for each concept
+    for (const concept of concepts) {
+      const misconceptions = misconceptionMap.get(concept.name);
+      if (misconceptions && misconceptions.length > 0) {
+        await misconceptionService.storeMisconceptions(concept.id, misconceptions);
+      }
+    }
+
+    updateStatus(
+      status,
+      'generating_misconceptions',
+      STAGE_PROGRESS.generating_misconceptions.end,
+      options
+    );
+
+    return misconceptionMap;
+  }
+
+  /**
+   * Run module summary generation stage
+   * Generates user-facing module summary after roadmap is built
+   */
+  async function runModuleSummaryGenerationStage(
+    concepts: Concept[],
+    pass3Result: Pass3Result,
+    roadmapId: string,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<void> {
+    updateStatus(
+      status,
+      'generating_summary',
+      STAGE_PROGRESS.generating_summary.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    // Generate module summary using time calibration from Pass 3
+    const moduleSummary = await moduleSummaryService.generateModuleSummary(
+      concepts,
+      pass3Result.timeCalibration
+    );
+
+    // Store module summary in roadmap
+    await moduleSummaryService.storeModuleSummary(roadmapId, moduleSummary);
+
+    updateStatus(
+      status,
+      'generating_summary',
+      STAGE_PROGRESS.generating_summary.end,
+      options
+    );
+  }
+
+  /**
+   * Run the complete pipeline with three-pass architecture
    */
   async function runPipeline(
     source: Source,
@@ -484,12 +998,16 @@ export function createContentAnalysisPipeline(
     startFromStage?: PipelineStage
   ): Promise<void> {
     try {
-      // Determine where to start
+      // Determine where to start - new three-pass stages with misconception and summary generation
       const stages: PipelineStage[] = [
         'transcribing',
-        'extracting_concepts',
+        'routing_content',            // Pass 1
+        'extracting_concepts',        // Pass 2
+        'generating_misconceptions',  // Misconception generation (after Pass 2)
         'building_graph',
-        'generating_roadmap',
+        'architecting_roadmap',       // Pass 3
+        'generating_summary',         // Module summary generation (after Pass 3)
+        'validating',
       ];
 
       let startIndex = 0;
@@ -499,7 +1017,11 @@ export function createContentAnalysisPipeline(
       }
 
       let transcription: Transcription | null = null;
+      let pass1Result: Pass1Result | null = null;
       let concepts: Concept[] = [];
+      let relationships: ConceptRelationship[] = [];
+      let pass3Result: Pass3Result | null = null;
+      let roadmapId: string | null = null;
 
       // Run each stage
       for (let i = startIndex; i < stages.length; i++) {
@@ -514,8 +1036,9 @@ export function createContentAnalysisPipeline(
             transcription = await runTranscriptionStage(source, status, options);
             break;
 
-          case 'extracting_concepts':
-            concepts = await runConceptExtractionStage(
+          case 'routing_content':
+            // Pass 1: Content classification
+            pass1Result = await runContentRoutingStage(
               source,
               transcription,
               status,
@@ -523,12 +1046,140 @@ export function createContentAnalysisPipeline(
             );
             break;
 
-          case 'building_graph':
-            await runKnowledgeGraphStage(source.project_id, concepts, status, options);
+          case 'extracting_concepts':
+            // Pass 2: Enhanced concept extraction with Pass 1 constraints
+            if (pass1Result) {
+              concepts = await runEnhancedConceptExtractionStage(
+                source,
+                transcription,
+                pass1Result,
+                status,
+                options
+              );
+            } else {
+              // Fallback to legacy extraction if no Pass 1 result
+              concepts = await runLegacyConceptExtractionStage(
+                source,
+                transcription,
+                status,
+                options
+              );
+            }
             break;
 
-          case 'generating_roadmap':
-            await runRoadmapGenerationStage(source.project_id, status, options);
+          case 'generating_misconceptions':
+            // Generate misconceptions for tier 2-3 concepts
+            if (concepts.length > 0) {
+              await runMisconceptionGenerationStage(
+                concepts,
+                status,
+                options
+              );
+            }
+            break;
+
+          case 'building_graph':
+            relationships = await runKnowledgeGraphStage(
+              source.project_id,
+              concepts,
+              status,
+              options
+            );
+            break;
+
+          case 'architecting_roadmap':
+            // Pass 3: Roadmap architect with Elaboration Theory
+            if (pass1Result) {
+              pass3Result = await runRoadmapArchitectStage(
+                source.project_id,
+                concepts,
+                relationships,
+                pass1Result,
+                status,
+                options
+              );
+            } else {
+              // Fallback to legacy roadmap if no Pass 1 result
+              await runLegacyRoadmapGenerationStage(
+                source.project_id,
+                status,
+                options
+              );
+            }
+            break;
+
+          case 'generating_summary':
+            // Generate module summary using time calibration from Pass 3
+            // Summary will be stored after roadmap is created in validating stage
+            if (pass1Result && pass3Result && concepts.length > 0) {
+              // Store roadmap first to get the ID
+              const roadmap = await roadmapArchitectService.storeRoadmap(
+                source.project_id,
+                pass3Result,
+                'Learning Roadmap'
+              );
+              roadmapId = roadmap.id;
+
+              // Generate and store module summary
+              await runModuleSummaryGenerationStage(
+                concepts,
+                pass3Result,
+                roadmapId,
+                status,
+                options
+              );
+            }
+            break;
+
+          case 'validating':
+            // Validation stage - applies validation to the stored roadmap
+            updateStatus(
+              status,
+              'validating',
+              STAGE_PROGRESS.validating.start,
+              options
+            );
+
+            if (pass1Result && pass3Result) {
+              // If roadmap wasn't created in generating_summary (shouldn't happen normally),
+              // create it now
+              if (!roadmapId) {
+                const roadmap = await roadmapArchitectService.storeRoadmap(
+                  source.project_id,
+                  pass3Result,
+                  'Learning Roadmap'
+                );
+                roadmapId = roadmap.id;
+              }
+
+              // Apply validation - update status with validated Pass 3 result
+              const validatedPass3Result = applyValidation(concepts, pass3Result, pass1Result);
+
+              // Log warnings if any
+              if (validatedPass3Result.validationResults.warnings.length > 0) {
+                console.warn(
+                  'Analysis validation warnings:',
+                  validatedPass3Result.validationResults.warnings
+                );
+              }
+
+              // Update the roadmap with validation results
+              await supabase
+                .from('roadmaps')
+                .update({ validation_results: validatedPass3Result.validationResults })
+                .eq('id', roadmapId);
+
+              // Update status with validated Pass 3 result
+              status.pass3Result = validatedPass3Result;
+              pipelineStatuses.set(status.sourceId, status);
+
+              updateStatus(
+                status,
+                'validating',
+                STAGE_PROGRESS.validating.end,
+                options
+              );
+            }
             break;
         }
       }

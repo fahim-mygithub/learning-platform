@@ -525,6 +525,15 @@ export interface ValidationResults {
   /** Learning time within reasonable bounds */
   time_sanity_passed: boolean;
 
+  /** Tier 2-3 concepts have learning objectives (optional) */
+  learning_objectives_passed?: boolean;
+
+  /** Assessment spec has appropriate question types for Bloom level (optional) */
+  assessment_spec_passed?: boolean;
+
+  /** Source mapping has valid timestamps (optional) */
+  source_mapping_passed?: boolean;
+
   /** Warning messages for failed checks */
   warnings: string[];
 }
@@ -564,11 +573,13 @@ export interface Pass3Result {
 export type ThreePassPipelineStage =
   | 'pending'
   | 'transcribing'
-  | 'routing_content' // Pass 1
-  | 'extracting_concepts' // Pass 2 (enhanced)
+  | 'routing_content'            // Pass 1
+  | 'extracting_concepts'        // Pass 2 (enhanced)
+  | 'generating_misconceptions'  // Misconception generation (after Pass 2)
   | 'building_graph'
-  | 'architecting_roadmap' // Pass 3 (enhanced)
-  | 'validating' // Validation gate
+  | 'architecting_roadmap'       // Pass 3 (enhanced)
+  | 'generating_summary'         // Module summary generation (after Pass 3)
+  | 'validating'                 // Validation gate
   | 'completed'
   | 'failed';
 
@@ -580,12 +591,14 @@ export const THREE_PASS_STAGE_PROGRESS: Record<
   { start: number; end: number }
 > = {
   pending: { start: 0, end: 0 },
-  transcribing: { start: 0, end: 20 },
-  routing_content: { start: 20, end: 30 },
-  extracting_concepts: { start: 30, end: 55 },
-  building_graph: { start: 55, end: 70 },
-  architecting_roadmap: { start: 70, end: 90 },
-  validating: { start: 90, end: 100 },
+  transcribing: { start: 0, end: 15 },
+  routing_content: { start: 15, end: 25 },
+  extracting_concepts: { start: 25, end: 40 },
+  generating_misconceptions: { start: 40, end: 50 },
+  building_graph: { start: 50, end: 60 },
+  architecting_roadmap: { start: 60, end: 75 },
+  generating_summary: { start: 75, end: 85 },
+  validating: { start: 85, end: 100 },
   completed: { start: 100, end: 100 },
   failed: { start: 0, end: 0 },
 };
@@ -601,8 +614,10 @@ export const THREE_PASS_STAGE_DESCRIPTIONS: Record<
   transcribing: 'Transcribing audio',
   routing_content: 'Analyzing content type',
   extracting_concepts: 'Extracting concepts',
+  generating_misconceptions: 'Generating misconceptions',
   building_graph: 'Building knowledge graph',
   architecting_roadmap: 'Creating learning roadmap',
+  generating_summary: 'Generating module summary',
   validating: 'Validating results',
   completed: 'Analysis complete',
   failed: 'Analysis failed',

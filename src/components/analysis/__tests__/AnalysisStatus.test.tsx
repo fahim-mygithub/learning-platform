@@ -59,9 +59,13 @@ describe('AnalysisStatus Component', () => {
     const stageDescriptions: Record<PipelineStage, string> = {
       pending: 'Preparing analysis...',
       transcribing: 'Transcribing audio...',
+      routing_content: 'Classifying content type...',
       extracting_concepts: 'Extracting concepts...',
+      generating_misconceptions: 'Generating misconceptions...',
       building_graph: 'Building knowledge graph...',
-      generating_roadmap: 'Generating learning roadmap...',
+      architecting_roadmap: 'Architecting learning roadmap...',
+      generating_summary: 'Generating module summary...',
+      validating: 'Validating analysis results...',
       completed: 'Analysis complete!',
       failed: 'Analysis failed',
     };
