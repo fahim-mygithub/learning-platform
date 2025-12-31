@@ -2,6 +2,7 @@ import { Redirect, Slot, useSegments, useRootNavigationState } from 'expo-router
 import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 
 import { useAuth } from '@/src/lib/auth-context';
+import { ReviewProvider } from '@/src/lib/review-context';
 
 /**
  * Auth Layout - Protected Route Guard
@@ -40,9 +41,11 @@ export default function AuthLayout() {
   }
 
   return (
-    <View style={styles.container}>
-      <Slot />
-    </View>
+    <ReviewProvider>
+      <View style={styles.container}>
+        <Slot />
+      </View>
+    </ReviewProvider>
   );
 }
 
