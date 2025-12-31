@@ -3,6 +3,25 @@
  * These types match the SQL schema defined in the database
  */
 
+// Re-export three-pass types for convenience
+export type {
+  ContentType,
+  BloomLevel,
+  ConceptTier,
+  TimeCalibration,
+  ValidationResults,
+  ContentAnalysis,
+  ContentAnalysisInsert,
+  LearningObjective,
+  AssessmentSpec,
+  SampleQuestion,
+  SourceMapping,
+  Misconception,
+  ModuleSummary,
+  QuestionType,
+  DifficultyLevel,
+} from './three-pass';
+
 /**
  * Project status enum
  */
@@ -185,6 +204,18 @@ export type CognitiveType =
   | 'metacognitive';
 
 /**
+ * Import BloomLevel, ConceptTier, and enhanced pedagogical types for Concept fields
+ */
+import type {
+  BloomLevel,
+  ConceptTier,
+  LearningObjective,
+  AssessmentSpec,
+  SourceMapping,
+  Misconception,
+} from './three-pass';
+
+/**
  * Concept record from database
  */
 export interface Concept {
@@ -200,6 +231,34 @@ export interface Concept {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+
+  // Three-pass pedagogical fields (optional for backward compatibility)
+  /** Concept tier: 1=Familiar, 2=Important, 3=Enduring Understanding */
+  tier?: ConceptTier;
+  /** True if concept mentioned but not explained - excluded from roadmap */
+  mentioned_only?: boolean;
+  /** Bloom's taxonomy level - drives question generation */
+  bloom_level?: BloomLevel;
+  /** True if source provided definition */
+  definition_provided?: boolean;
+  /** Suggested % of learning time for this concept */
+  time_allocation_percent?: number | null;
+  /** True if concept from pre-three-pass analysis */
+  is_legacy?: boolean;
+
+  // Enhanced pedagogical fields (migration 006)
+  /** Plain-language one-sentence summary */
+  one_sentence_summary?: string;
+  /** Why this concept matters to the learner */
+  why_it_matters?: string;
+  /** Learning objectives with Bloom verbs */
+  learning_objectives?: LearningObjective[];
+  /** Assessment specification for quiz generation */
+  assessment_spec?: AssessmentSpec;
+  /** Source mapping for video review timestamps */
+  source_mapping?: SourceMapping;
+  /** Common misconceptions for targeted tutoring */
+  common_misconceptions?: Misconception[];
 }
 
 /**
@@ -215,6 +274,20 @@ export interface ConceptInsert {
   difficulty?: number | null;
   source_timestamps?: Record<string, unknown>[];
   metadata?: Record<string, unknown>;
+  // Three-pass pedagogical fields
+  tier?: ConceptTier;
+  mentioned_only?: boolean;
+  bloom_level?: BloomLevel;
+  definition_provided?: boolean;
+  time_allocation_percent?: number | null;
+  is_legacy?: boolean;
+  // Enhanced pedagogical fields (migration 006)
+  one_sentence_summary?: string;
+  why_it_matters?: string;
+  learning_objectives?: LearningObjective[];
+  assessment_spec?: AssessmentSpec;
+  source_mapping?: SourceMapping;
+  common_misconceptions?: Misconception[];
 }
 
 /**
@@ -228,6 +301,20 @@ export interface ConceptUpdate {
   difficulty?: number | null;
   source_timestamps?: Record<string, unknown>[];
   metadata?: Record<string, unknown>;
+  // Three-pass pedagogical fields
+  tier?: ConceptTier;
+  mentioned_only?: boolean;
+  bloom_level?: BloomLevel;
+  definition_provided?: boolean;
+  time_allocation_percent?: number | null;
+  is_legacy?: boolean;
+  // Enhanced pedagogical fields (migration 006)
+  one_sentence_summary?: string;
+  why_it_matters?: string;
+  learning_objectives?: LearningObjective[];
+  assessment_spec?: AssessmentSpec;
+  source_mapping?: SourceMapping;
+  common_misconceptions?: Misconception[];
 }
 
 // ============================================================================
@@ -236,13 +323,19 @@ export interface ConceptUpdate {
 
 /**
  * Relationship type enum for concept connections
+ * Includes original types plus RST-based types for elaboration hierarchy
  */
 export type RelationshipType =
   | 'prerequisite'
   | 'causal'
   | 'taxonomic'
   | 'temporal'
-  | 'contrasts_with';
+  | 'contrasts_with'
+  // RST-based types for three-pass analysis
+  | 'elaboration_of'
+  | 'evidence_for'
+  | 'example_of'
+  | 'definition_of';
 
 /**
  * Concept relationship record from database
@@ -308,6 +401,11 @@ export interface MasteryGate {
 }
 
 /**
+ * Import TimeCalibration, ValidationResults, and ModuleSummary for Roadmap fields
+ */
+import type { TimeCalibration, ValidationResults, ModuleSummary } from './three-pass';
+
+/**
  * Roadmap record from database
  */
 export interface Roadmap {
@@ -321,6 +419,16 @@ export interface Roadmap {
   status: RoadmapStatus;
   created_at: string;
   updated_at: string;
+
+  // Three-pass roadmap architect fields (optional for backward compatibility)
+  /** Epitome (thesis) concept ID at Level 0 */
+  epitome_concept_id?: string | null;
+  /** Time calibration formula components */
+  time_calibration?: TimeCalibration;
+  /** Validation gate results and warnings */
+  validation_results?: ValidationResults;
+  /** User-facing module summary with title, description, outcomes */
+  module_summary?: ModuleSummary;
 }
 
 /**
@@ -334,6 +442,11 @@ export interface RoadmapInsert {
   total_estimated_minutes?: number | null;
   mastery_gates?: MasteryGate[];
   status?: RoadmapStatus;
+  // Three-pass roadmap architect fields
+  epitome_concept_id?: string | null;
+  time_calibration?: TimeCalibration;
+  validation_results?: ValidationResults;
+  module_summary?: ModuleSummary;
 }
 
 /**
@@ -346,6 +459,11 @@ export interface RoadmapUpdate {
   total_estimated_minutes?: number | null;
   mastery_gates?: MasteryGate[];
   status?: RoadmapStatus;
+  // Three-pass roadmap architect fields
+  epitome_concept_id?: string | null;
+  time_calibration?: TimeCalibration;
+  validation_results?: ValidationResults;
+  module_summary?: ModuleSummary;
 }
 
 // ============================================================================
