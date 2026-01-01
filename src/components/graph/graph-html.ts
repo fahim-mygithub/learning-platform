@@ -4,7 +4,7 @@
  * Generates HTML/JS for vis-network graph visualization.
  * Features minimalist floating aesthetic with:
  * - Dynamic node sizing based on connections
- * - Labels appear on hover
+ * - Visible node and edge labels
  * - Gentle floating physics
  * - Clean, light theme matching app aesthetic
  */
@@ -47,8 +47,8 @@ function conceptsToNodes(concepts: Concept[], relationships: ConceptRelationship
 
     return {
       id: concept.id,
-      label: '', // Hidden by default, shown on hover via title
-      title: concept.name, // Tooltip on hover
+      label: concept.name,
+      title: `${concept.name}\n${concept.definition?.substring(0, 100) || ''}...`,
       size,
       color: {
         background: tierColor,
@@ -64,8 +64,10 @@ function conceptsToNodes(concepts: Concept[], relationships: ConceptRelationship
       },
       font: {
         color: '#374151',
-        size: 12,
+        size: 11,
         face: 'system-ui, -apple-system, sans-serif',
+        strokeWidth: 3,
+        strokeColor: '#FFFFFF',
       },
       shape: 'dot',
       borderWidth: 0,
@@ -88,18 +90,26 @@ function relationshipsToEdges(relationships: ConceptRelationship[]): object[] {
   return relationships.map((rel) => ({
     from: rel.from_concept_id,
     to: rel.to_concept_id,
+    label: rel.relationship_type.replace(/_/g, ' '),
     color: {
       color: '#D1D5DB',
-      highlight: '#9CA3AF',
-      hover: '#9CA3AF',
+      highlight: '#6B7280',
+      hover: '#6B7280',
+    },
+    font: {
+      size: 9,
+      color: '#9CA3AF',
+      strokeWidth: 2,
+      strokeColor: '#FFFFFF',
+      align: 'middle',
     },
     width: 1,
     smooth: {
       type: 'continuous',
       roundness: 0.5,
     },
-    hoverWidth: 0,
-    selectionWidth: 0,
+    hoverWidth: 0.5,
+    selectionWidth: 0.5,
   }));
 }
 
@@ -136,26 +146,6 @@ export function generateGraphHTML(
     #graph {
       width: 100%;
       height: 100%;
-    }
-    .hover-label {
-      position: absolute;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-family: system-ui, -apple-system, sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      color: #374151;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      pointer-events: none;
-      opacity: 0;
-      transform: translateX(-50%) translateY(-100%);
-      transition: opacity 0.15s ease;
-      white-space: nowrap;
-      z-index: 1000;
-    }
-    .hover-label.visible {
-      opacity: 1;
     }
     .legend {
       position: absolute;
@@ -194,7 +184,6 @@ export function generateGraphHTML(
 </head>
 <body>
   <div id="graph"></div>
-  <div class="hover-label" id="hoverLabel"></div>
   <div class="legend">
     <div class="legend-title">Concepts</div>
     <div class="legend-item">
@@ -215,7 +204,6 @@ export function generateGraphHTML(
     const edges = new vis.DataSet(${JSON.stringify(edges)});
 
     const container = document.getElementById('graph');
-    const hoverLabel = document.getElementById('hoverLabel');
     const data = { nodes, edges };
 
     const options = {
@@ -271,33 +259,6 @@ export function generateGraphHTML(
     };
 
     const network = new vis.Network(container, data, options);
-
-    // Custom hover label that follows cursor
-    let currentHoveredNode = null;
-
-    network.on('hoverNode', function(params) {
-      const nodeId = params.node;
-      const nodeData = nodes.get(nodeId);
-      currentHoveredNode = nodeId;
-
-      if (nodeData && nodeData.title) {
-        hoverLabel.textContent = nodeData.title;
-        hoverLabel.classList.add('visible');
-      }
-    });
-
-    network.on('blurNode', function(params) {
-      currentHoveredNode = null;
-      hoverLabel.classList.remove('visible');
-    });
-
-    // Update label position on mouse move
-    container.addEventListener('mousemove', function(e) {
-      if (currentHoveredNode !== null) {
-        hoverLabel.style.left = e.clientX + 'px';
-        hoverLabel.style.top = (e.clientY - 12) + 'px';
-      }
-    });
 
     // Send selected node back to React Native / parent window
     network.on('selectNode', function(params) {
