@@ -8,7 +8,7 @@
  */
 
 import { supabase } from './supabase';
-import type { Concept, Roadmap, Transcription } from '../types';
+import type { Concept, Roadmap, Transcription, ConceptRelationship } from '../types';
 
 /**
  * Get all concepts for a project
@@ -57,6 +57,23 @@ export async function getTranscriptionBySource(
     .select('*')
     .eq('source_id', sourceId)
     .single();
+
+  return { data, error };
+}
+
+/**
+ * Get all concept relationships for a project
+ * @param projectId - The ID of the project
+ * @returns Array of concept relationships or error
+ */
+export async function getRelationshipsByProject(
+  projectId: string
+): Promise<{ data: ConceptRelationship[] | null; error: Error | null }> {
+  const { data, error } = await supabase
+    .from('concept_relationships')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: true });
 
   return { data, error };
 }

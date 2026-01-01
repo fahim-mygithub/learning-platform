@@ -21,13 +21,13 @@ import React, {
 } from 'react';
 
 import { supabase } from './supabase';
-import { getConceptsByProject, getRoadmapByProject } from './analysis-queries';
+import { getConceptsByProject, getRoadmapByProject, getRelationshipsByProject } from './analysis-queries';
 import {
   createContentAnalysisPipeline,
   type PipelineStage,
   type ContentAnalysisPipeline,
 } from './content-analysis-pipeline';
-import type { Concept, Roadmap } from '../types';
+import type { Concept, Roadmap, ConceptRelationship } from '../types';
 
 /**
  * Analysis context value interface
@@ -35,6 +35,8 @@ import type { Concept, Roadmap } from '../types';
 interface AnalysisContextValue {
   /** List of project concepts */
   concepts: Concept[];
+  /** List of concept relationships (for knowledge graph) */
+  relationships: ConceptRelationship[];
   /** Project roadmap (null if not generated) */
   roadmap: Roadmap | null;
   /** Current pipeline stage */
@@ -87,6 +89,7 @@ interface AnalysisProviderProps {
  */
 export function AnalysisProvider({ projectId, children }: AnalysisProviderProps): React.ReactElement {
   const [concepts, setConcepts] = useState<Concept[]>([]);
+  const [relationships, setRelationships] = useState<ConceptRelationship[]>([]);
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [pipelineStage, setPipelineStage] = useState<PipelineStage>('pending');
   const [progress, setProgress] = useState(0);
@@ -117,9 +120,10 @@ export function AnalysisProvider({ projectId, children }: AnalysisProviderProps)
     setError(null);
 
     try {
-      // Fetch concepts and roadmap in parallel
-      const [conceptsResult, roadmapResult] = await Promise.all([
+      // Fetch concepts, relationships, and roadmap in parallel
+      const [conceptsResult, relationshipsResult, roadmapResult] = await Promise.all([
         getConceptsByProject(pid),
+        getRelationshipsByProject(pid),
         getRoadmapByProject(pid),
       ]);
 
@@ -128,6 +132,13 @@ export function AnalysisProvider({ projectId, children }: AnalysisProviderProps)
         setConcepts([]);
       } else {
         setConcepts(conceptsResult.data ?? []);
+      }
+
+      if (relationshipsResult.error) {
+        // Relationships might not exist yet, which is okay
+        setRelationships([]);
+      } else {
+        setRelationships(relationshipsResult.data ?? []);
       }
 
       if (roadmapResult.error) {
@@ -146,6 +157,7 @@ export function AnalysisProvider({ projectId, children }: AnalysisProviderProps)
       console.error('Unexpected error loading analysis data:', err);
       setError(err instanceof Error ? err.message : 'Failed to load analysis data');
       setConcepts([]);
+      setRelationships([]);
       setRoadmap(null);
     } finally {
       setLoading(false);
@@ -238,6 +250,7 @@ export function AnalysisProvider({ projectId, children }: AnalysisProviderProps)
     if (!projectId) {
       if (currentProjectIdRef.current !== null) {
         setConcepts([]);
+        setRelationships([]);
         setRoadmap(null);
         setError(null);
         setLoading(false);
@@ -261,6 +274,7 @@ export function AnalysisProvider({ projectId, children }: AnalysisProviderProps)
   const contextValue = useMemo<AnalysisContextValue>(
     () => ({
       concepts,
+      relationships,
       roadmap,
       pipelineStage,
       progress,
@@ -270,7 +284,7 @@ export function AnalysisProvider({ projectId, children }: AnalysisProviderProps)
       startAnalysis,
       retryAnalysis,
     }),
-    [concepts, roadmap, pipelineStage, progress, error, loading, refreshAnalysis, startAnalysis, retryAnalysis]
+    [concepts, relationships, roadmap, pipelineStage, progress, error, loading, refreshAnalysis, startAnalysis, retryAnalysis]
   );
 
   return <AnalysisContext.Provider value={contextValue}>{children}</AnalysisContext.Provider>;

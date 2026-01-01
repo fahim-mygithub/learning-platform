@@ -12,7 +12,7 @@
  * Accessible and follows WCAG 2.1 AAA guidelines.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -41,10 +41,16 @@ import {
 } from '@/src/components/ui';
 import { SourcesSection } from '@/src/components/sources/SourcesSection';
 import { AddSourceSheet } from '@/src/components/sources/AddSourceSheet';
-import { AnalysisStatus } from '@/src/components/analysis';
+import { AnalysisStatus, AnalysisCostDialog, LearningAgendaCard } from '@/src/components/analysis';
 import { ConceptsList } from '@/src/components/concepts';
 import { RoadmapView } from '@/src/components/roadmap';
-import type { Project } from '@/src/types';
+import { KnowledgeGraphView } from '@/src/components/graph';
+import {
+  estimateAnalysisCost,
+  type CostEstimate,
+  type SourceType,
+} from '@/src/lib/cost-estimator';
+import type { Project, Source } from '@/src/types';
 
 /**
  * Minimum touch target size per WCAG 2.1 AAA guidelines
@@ -333,8 +339,30 @@ function ProjectDetailContent({
   handleOpenAddSource,
   handleCloseAddSource,
 }: ProjectDetailContentProps): React.ReactElement {
-  const { sources } = useSources();
-  const { concepts, roadmap, pipelineStage, progress, error, retryAnalysis } = useAnalysis();
+  const { sources, refreshSources } = useSources();
+  const { concepts, relationships, roadmap, pipelineStage, progress, error, retryAnalysis, startAnalysis } = useAnalysis();
+  const { showToast } = useToast();
+
+  // Get learning agenda from first source that has one
+  const learningAgenda = useMemo(() => {
+    const sourceWithAgenda = sources.find(s => s.learning_agenda);
+    return sourceWithAgenda?.learning_agenda ?? null;
+  }, [sources]);
+
+  // Analysis cost dialog state
+  const [showCostDialog, setShowCostDialog] = useState(false);
+  const [costEstimate, setCostEstimate] = useState<CostEstimate | null>(null);
+  const [pendingSourceId, setPendingSourceId] = useState<string | null>(null);
+  const [isStartingAnalysis, setIsStartingAnalysis] = useState(false);
+
+  /**
+   * Refresh sources when analysis completes to get updated learning_agenda
+   */
+  useEffect(() => {
+    if (pipelineStage === 'completed') {
+      refreshSources();
+    }
+  }, [pipelineStage, refreshSources]);
 
   /**
    * Handle retry analysis - uses first source if multiple exist
@@ -344,6 +372,56 @@ function ProjectDetailContent({
       retryAnalysis(sources[0].id);
     }
   }, [sources, retryAnalysis]);
+
+  /**
+   * Handle analyze button click - shows cost dialog
+   */
+  const handleAnalyzeClick = useCallback((source: Source) => {
+    // Determine source type for cost estimation
+    const sourceType: SourceType = source.type === 'video' ? 'video' :
+                                   source.type === 'pdf' ? 'pdf' : 'url';
+
+    // Estimate content length based on available metadata
+    const contentLength = source.type === 'video'
+      ? (source.file_size || 1024 * 1024) // Default 1MB for video
+      : ((source.metadata?.content_length as number) || source.name.length * 100);
+
+    const estimate = estimateAnalysisCost(sourceType, contentLength);
+    setCostEstimate(estimate);
+    setPendingSourceId(source.id);
+    setShowCostDialog(true);
+  }, []);
+
+  /**
+   * Handle closing cost dialog
+   */
+  const handleCloseCostDialog = useCallback(() => {
+    setShowCostDialog(false);
+    setPendingSourceId(null);
+    setCostEstimate(null);
+  }, []);
+
+  /**
+   * Handle confirming analysis after cost dialog
+   */
+  const handleConfirmAnalysis = useCallback(async () => {
+    if (!pendingSourceId) return;
+
+    setIsStartingAnalysis(true);
+    setShowCostDialog(false);
+
+    try {
+      await startAnalysis(pendingSourceId);
+      showToast('success', 'Analysis started');
+    } catch (err) {
+      console.error('Failed to start analysis:', err);
+      showToast('error', 'Failed to start analysis');
+    } finally {
+      setIsStartingAnalysis(false);
+      setPendingSourceId(null);
+      setCostEstimate(null);
+    }
+  }, [pendingSourceId, startAnalysis, showToast]);
 
   return (
     <View style={styles.container}>
@@ -395,7 +473,24 @@ function ProjectDetailContent({
         {/* Analysis Status - show when sources exist */}
         {sources.length > 0 && (
           <Card testID="analysis-card" style={styles.analysisCard}>
-            <Text style={styles.sectionLabel}>Analysis</Text>
+            <View style={styles.analysisSectionHeader}>
+              <Text style={styles.sectionLabel}>Analysis</Text>
+              {/* Show Analyze button when not running */}
+              {pipelineStage === 'pending' && (
+                <Pressable
+                  testID="analyze-button"
+                  style={styles.analyzeButton}
+                  onPress={() => handleAnalyzeClick(sources[0])}
+                  disabled={isStartingAnalysis}
+                  accessibilityLabel="Start analysis"
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.analyzeButtonText}>
+                    {isStartingAnalysis ? 'Starting...' : 'Analyze'}
+                  </Text>
+                </Pressable>
+              )}
+            </View>
             <AnalysisStatus
               stage={pipelineStage}
               progress={progress}
@@ -404,6 +499,14 @@ function ProjectDetailContent({
               testID="analysis-status"
             />
           </Card>
+        )}
+
+        {/* Learning Agenda - show after analysis completes */}
+        {learningAgenda && (
+          <LearningAgendaCard
+            agenda={learningAgenda}
+            testID="learning-agenda-card"
+          />
         )}
 
         {/* Concepts - show when concepts exist */}
@@ -416,6 +519,22 @@ function ProjectDetailContent({
                 testID="concepts-list"
               />
             </View>
+          </Card>
+        )}
+
+        {/* Knowledge Graph - show when relationships exist */}
+        {relationships.length > 0 && (
+          <Card testID="knowledge-graph-card" style={styles.graphCard}>
+            <Text style={styles.sectionLabel}>Knowledge Graph</Text>
+            <Text style={styles.graphSubtitle}>
+              {concepts.length} concepts, {relationships.length} connections
+            </Text>
+            <KnowledgeGraphView
+              concepts={concepts}
+              relationships={relationships}
+              height={350}
+              testID="knowledge-graph"
+            />
           </Card>
         )}
 
@@ -558,6 +677,16 @@ function ProjectDetailContent({
         visible={showAddSourceSheet}
         onClose={handleCloseAddSource}
       />
+
+      {/* Analysis Cost Dialog */}
+      <AnalysisCostDialog
+        visible={showCostDialog}
+        onClose={handleCloseCostDialog}
+        onConfirm={handleConfirmAnalysis}
+        estimate={costEstimate}
+        sourceName={sources.find(s => s.id === pendingSourceId)?.name ?? 'Source'}
+        loading={isStartingAnalysis}
+      />
     </View>
   );
 }
@@ -632,6 +761,26 @@ const styles = StyleSheet.create({
     marginBottom: spacing[4],
     padding: spacing[4],
   },
+  analysisSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing[2],
+  },
+  analyzeButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: 6,
+    minHeight: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  analyzeButtonText: {
+    color: colors.white,
+    fontSize: fontSize.sm,
+    fontWeight: fontWeight.semibold,
+  },
 
   // Concepts Card
   conceptsCard: {
@@ -640,6 +789,17 @@ const styles = StyleSheet.create({
   },
   conceptsListContainer: {
     maxHeight: 400,
+  },
+
+  // Knowledge Graph Card
+  graphCard: {
+    marginBottom: spacing[4],
+    padding: spacing[4],
+  },
+  graphSubtitle: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+    marginBottom: spacing[3],
   },
 
   // Roadmap Card
