@@ -92,24 +92,24 @@
 - [x] 8.2 Create `src/components/concepts/BloomLevelBadge.tsx`
 - [x] 8.3 Create `src/components/concepts/MentionedOnlyWarning.tsx`
 - [x] 8.4 Create `src/components/analysis/ContentTypeIndicator.tsx`
-- [ ] 8.5 Create `src/components/roadmap/EpitomeHighlight.tsx`
+- [x] 8.5 Create `src/components/roadmap/EpitomeHighlight.tsx`
 - [x] 8.6 Create `src/components/analysis/ValidationWarnings.tsx`
 
 ## 9. UI Components - Updates
 
 - [x] 9.1 Update `ConceptCard.tsx` with tier badge, bloom level, mentioned_only indicator
-- [ ] 9.2 Update `RoadmapView.tsx` with Level 0 epitome, calibrated time display
+- [x] 9.2 Update `RoadmapView.tsx` with Level 0 epitome, calibrated time display
 - [x] 9.3 Update `AnalysisStatus.tsx` with new stage descriptions
-- [ ] 9.4 Add legacy badge for concepts with is_legacy=true
+- [x] 9.4 Add legacy badge for concepts with is_legacy=true
 
 ## 10. Testing & Validation
 
 - [x] 10.1 Run all unit tests
-- [ ] 10.2 Test with Kurzgesagt-style survey content
+- [x] 10.2 Test with Kurzgesagt-style survey content
 - [ ] 10.3 Test with tutorial/procedural content
 - [ ] 10.4 Test with conceptual/deep explanation content
-- [ ] 10.5 Verify time estimates are reasonable
-- [ ] 10.6 Test UI with Chrome DevTools MCP
+- [x] 10.5 Verify time estimates are reasonable
+- [x] 10.6 Test UI with Chrome DevTools MCP
 
 ## 11. New Services (Enhancement)
 
