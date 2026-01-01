@@ -13,3 +13,4 @@ export { RoadmapLevel, type RoadmapLevelProps } from './RoadmapLevel';
 export { RoadmapView, type RoadmapViewProps } from './RoadmapView';
 export { MasteryGate, type MasteryGateProps } from './MasteryGate';
 export { TimeEstimate, type TimeEstimateProps, formatMinutes } from './TimeEstimate';
+export { EpitomeHighlight, type EpitomeHighlightProps } from './EpitomeHighlight';

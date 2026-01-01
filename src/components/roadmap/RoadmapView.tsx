@@ -23,6 +23,7 @@ import type { Roadmap, RoadmapLevel as RoadmapLevelType, Concept } from '../../t
 import { RoadmapLevel } from './RoadmapLevel';
 import { MasteryGate } from './MasteryGate';
 import { TimeEstimate, formatMinutes } from './TimeEstimate';
+import { EpitomeHighlight } from './EpitomeHighlight';
 
 /**
  * Props for the RoadmapView component
@@ -97,15 +98,23 @@ export function RoadmapView({
     [roadmap.mastery_gates]
   );
 
-  // Check if a level is unlocked
+  // Check if a level is unlocked (Level 0 is always unlocked)
   const isLevelUnlocked = useCallback(
     (levelNumber: number): boolean => {
-      if (levelNumber === 1) return true;
+      if (levelNumber === 0 || levelNumber === 1) return true;
       if (currentLevel !== undefined && levelNumber <= currentLevel) return true;
       return completedLevels.includes(levelNumber - 1);
     },
     [completedLevels, currentLevel]
   );
+
+  // Get epitome concept if available
+  const epitomeConcept = useMemo(() => {
+    if (roadmap.epitome_concept_id) {
+      return conceptMap.get(roadmap.epitome_concept_id);
+    }
+    return undefined;
+  }, [roadmap.epitome_concept_id, conceptMap]);
 
   // Check if a level is completed
   const isLevelCompleted = useCallback(
@@ -167,6 +176,19 @@ export function RoadmapView({
             </Text>
           </View>
         )}
+        {/* Show calibration info if available */}
+        {roadmap.time_calibration && (
+          <View testID={`${testID}-calibration`} style={styles.calibrationInfo}>
+            <Text style={styles.calibrationText}>
+              {/* Derive content type from mode_multiplier: survey=1.5, conceptual=2.5, procedural=4.0 */}
+              {roadmap.time_calibration.mode_multiplier <= 1.5 && 'Overview content'}
+              {roadmap.time_calibration.mode_multiplier > 1.5 && roadmap.time_calibration.mode_multiplier <= 2.5 && 'Deep explanation'}
+              {roadmap.time_calibration.mode_multiplier > 2.5 && 'Hands-on tutorial'}
+              {' '}&bull;{' '}
+              {roadmap.time_calibration.mode_multiplier.toFixed(1)}x learning ratio
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Timeline with levels */}
@@ -182,23 +204,32 @@ export function RoadmapView({
           const levelConcepts = getConceptsForLevel(level);
           const gate = getGateAfterLevel(levelNumber);
           const nextLevel = sortedLevels[index + 1];
+          const isEpitome = levelNumber === 0;
 
           return (
             <View key={level.level} style={styles.levelContainer}>
-              {/* Level card */}
-              <RoadmapLevel
-                level={level}
-                levelNumber={levelNumber}
-                concepts={levelConcepts}
-                isUnlocked={isUnlocked}
-                isCompleted={isCompleted}
-                onPress={
-                  onLevelPress
-                    ? () => handleLevelPress(level, levelNumber)
-                    : undefined
-                }
-                testID={`${testID}-level-${levelNumber}`}
-              />
+              {/* Level card - use EpitomeHighlight for Level 0 */}
+              {isEpitome ? (
+                <EpitomeHighlight
+                  level={level}
+                  concept={epitomeConcept}
+                  testID={`${testID}-epitome`}
+                />
+              ) : (
+                <RoadmapLevel
+                  level={level}
+                  levelNumber={levelNumber}
+                  concepts={levelConcepts}
+                  isUnlocked={isUnlocked}
+                  isCompleted={isCompleted}
+                  onPress={
+                    onLevelPress
+                      ? () => handleLevelPress(level, levelNumber)
+                      : undefined
+                  }
+                  testID={`${testID}-level-${levelNumber}`}
+                />
+              )}
 
               {/* Connection line to next level */}
               {nextLevel && (
@@ -272,6 +303,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.text,
+  },
+  calibrationInfo: {
+    marginTop: spacing[1],
+  },
+  calibrationText: {
+    fontSize: 12,
+    color: colors.textTertiary,
   },
   timeline: {
     flex: 1,
