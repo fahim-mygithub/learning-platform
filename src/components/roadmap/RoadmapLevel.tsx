@@ -24,6 +24,12 @@ import { colors, spacing } from '../../theme';
 import type { RoadmapLevel as RoadmapLevelType, Concept } from '../../types';
 import { Card } from '../ui';
 import { TimeEstimate, formatMinutes } from './TimeEstimate';
+import {
+  type MasteryDistribution,
+  calculateMasteryProgress,
+  getLowestState,
+} from '../mastery';
+import { STATE_METADATA } from '../../lib/spaced-repetition';
 
 /**
  * Props for the RoadmapLevel component
@@ -39,6 +45,8 @@ export interface RoadmapLevelProps {
   isUnlocked?: boolean;
   /** Whether this level is completed */
   isCompleted?: boolean;
+  /** Optional mastery distribution for concepts in this level */
+  masteryDistribution?: MasteryDistribution;
   /** Callback when the level is pressed */
   onPress?: () => void;
   /** Test ID for testing */
@@ -67,12 +75,21 @@ export function RoadmapLevel({
   concepts,
   isUnlocked = true,
   isCompleted = false,
+  masteryDistribution,
   onPress,
   testID = 'roadmap-level',
   style,
 }: RoadmapLevelProps): React.ReactElement {
   const conceptCount = level.concept_ids.length;
   const isInProgress = isUnlocked && !isCompleted;
+
+  // Calculate mastery progress if distribution is provided
+  const masteryProgress = masteryDistribution
+    ? calculateMasteryProgress(masteryDistribution)
+    : null;
+  const lowestState = masteryDistribution
+    ? getLowestState(masteryDistribution)
+    : null;
 
   // Build accessibility label
   const accessibilityParts = [
@@ -81,6 +98,10 @@ export function RoadmapLevel({
     `${conceptCount} concept${conceptCount === 1 ? '' : 's'}`,
     `approximately ${formatMinutes(level.estimated_minutes)}`,
   ];
+
+  if (masteryProgress !== null) {
+    accessibilityParts.push(`${masteryProgress}% mastery`);
+  }
 
   if (isCompleted) {
     accessibilityParts.push('completed');
@@ -163,6 +184,24 @@ export function RoadmapLevel({
           ~{formatMinutes(level.estimated_minutes)}
         </Text>
       </View>
+
+      {/* Mastery progress bar (if distribution provided) */}
+      {masteryProgress !== null && lowestState && isUnlocked && (
+        <View style={styles.masteryRow} testID={`${testID}-mastery`}>
+          <View style={styles.masteryBarContainer}>
+            <View
+              style={[
+                styles.masteryBar,
+                {
+                  width: `${masteryProgress}%`,
+                  backgroundColor: STATE_METADATA[lowestState].color,
+                },
+              ]}
+            />
+          </View>
+          <Text style={styles.masteryText}>{masteryProgress}%</Text>
+        </View>
+      )}
     </>
   );
 
@@ -320,6 +359,31 @@ const styles = StyleSheet.create({
   infoDot: {
     fontSize: 13,
     color: colors.textTertiary,
+  },
+  masteryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginTop: spacing[2],
+    paddingLeft: 32 + spacing[3], // Align with title (badge width + gap)
+  },
+  masteryBarContainer: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.backgroundTertiary,
+    overflow: 'hidden',
+  },
+  masteryBar: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  masteryText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    minWidth: 32,
+    textAlign: 'right',
   },
 });
 

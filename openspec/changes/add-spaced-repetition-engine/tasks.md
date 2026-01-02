@@ -172,7 +172,7 @@ Implement Phase 3: Spaced Repetition Engine with TDD approach. Start with pure a
   - Color-coded badge by state
   - Label text (UNSEEN, EXPOSED, etc.)
   - Uses theme colors from colors.mastery
-- [ ] Create `src/components/mastery/MasteryProgressBar.tsx` (optional enhancement):
+- [x] Create `src/components/mastery/MasteryProgressBar.tsx` (optional enhancement):
   - Shows aggregated mastery across concepts
   - Color gradient based on distribution
 - [x] Create `src/components/mastery/index.ts` exports
@@ -234,7 +234,7 @@ Implement Phase 3: Spaced Repetition Engine with TDD approach. Start with pure a
   - Answer reveal
   - Rating submission
   - Session completion
-- [ ] Update `src/components/roadmap/RoadmapLevel.tsx` (optional enhancement):
+- [x] Update `src/components/roadmap/RoadmapLevel.tsx` (optional enhancement):
   - Show aggregated mastery percentage
   - Color-code by lowest state
 

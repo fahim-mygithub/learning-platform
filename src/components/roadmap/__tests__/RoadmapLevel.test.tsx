@@ -16,6 +16,7 @@ import { render, screen, fireEvent } from '@testing-library/react-native';
 
 import { RoadmapLevel } from '../RoadmapLevel';
 import type { RoadmapLevel as RoadmapLevelType, Concept } from '../../../types';
+import type { MasteryDistribution } from '../../mastery';
 
 const createMockLevel = (overrides?: Partial<RoadmapLevelType>): RoadmapLevelType => ({
   level: 1,
@@ -38,6 +39,17 @@ const createMockConcept = (id: string, name: string): Concept => ({
   metadata: {},
   created_at: '2024-01-01T00:00:00Z',
   updated_at: '2024-01-01T00:00:00Z',
+});
+
+const createMockDistribution = (overrides?: Partial<MasteryDistribution>): MasteryDistribution => ({
+  unseen: 0,
+  exposed: 0,
+  fragile: 0,
+  developing: 0,
+  solid: 0,
+  mastered: 0,
+  misconceived: 0,
+  ...overrides,
 });
 
 describe('RoadmapLevel Component', () => {
@@ -334,6 +346,104 @@ describe('RoadmapLevel Component', () => {
 
       expect(screen.getByTestId('my-level')).toBeTruthy();
       expect(screen.queryByTestId('roadmap-level')).toBeNull();
+    });
+  });
+
+  describe('Mastery Distribution', () => {
+    it('shows mastery progress bar when distribution is provided', () => {
+      const level = createMockLevel();
+      const distribution = createMockDistribution({
+        developing: 2,
+        mastered: 3,
+      });
+
+      render(
+        <RoadmapLevel
+          level={level}
+          levelNumber={1}
+          isUnlocked={true}
+          masteryDistribution={distribution}
+          testID="roadmap-level"
+        />
+      );
+
+      expect(screen.getByTestId('roadmap-level-mastery')).toBeTruthy();
+    });
+
+    it('does not show mastery progress bar when level is locked', () => {
+      const level = createMockLevel();
+      const distribution = createMockDistribution({
+        developing: 2,
+        mastered: 3,
+      });
+
+      render(
+        <RoadmapLevel
+          level={level}
+          levelNumber={2}
+          isUnlocked={false}
+          masteryDistribution={distribution}
+          testID="roadmap-level"
+        />
+      );
+
+      expect(screen.queryByTestId('roadmap-level-mastery')).toBeNull();
+    });
+
+    it('does not show mastery progress bar when distribution is not provided', () => {
+      const level = createMockLevel();
+
+      render(
+        <RoadmapLevel
+          level={level}
+          levelNumber={1}
+          isUnlocked={true}
+          testID="roadmap-level"
+        />
+      );
+
+      expect(screen.queryByTestId('roadmap-level-mastery')).toBeNull();
+    });
+
+    it('includes mastery percentage in accessibility label', () => {
+      const level = createMockLevel({ title: 'React Hooks' });
+      const distribution = createMockDistribution({
+        mastered: 5, // 100% mastery
+      });
+
+      render(
+        <RoadmapLevel
+          level={level}
+          levelNumber={1}
+          isUnlocked={true}
+          masteryDistribution={distribution}
+          testID="roadmap-level"
+        />
+      );
+
+      const card = screen.getByTestId('roadmap-level');
+      expect(card.props.accessibilityLabel).toContain('100% mastery');
+    });
+
+    it('shows percentage text when mastery distribution provided', () => {
+      const level = createMockLevel();
+      const distribution = createMockDistribution({
+        developing: 5, // 50% progress each
+        mastered: 5, // 100% progress each
+      });
+      // (5*50 + 5*100) / 10 = 750/10 = 75%
+
+      render(
+        <RoadmapLevel
+          level={level}
+          levelNumber={1}
+          isUnlocked={true}
+          masteryDistribution={distribution}
+          testID="roadmap-level"
+        />
+      );
+
+      expect(screen.getByText('75%')).toBeTruthy();
     });
   });
 });
