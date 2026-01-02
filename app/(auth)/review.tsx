@@ -174,8 +174,7 @@ export default function ReviewScreen() {
             <View style={styles.answerContainer}>
               <Text style={styles.answerLabel}>Definition:</Text>
               <Text style={styles.answerText}>
-                {/* We'd need to fetch the concept definition here */}
-                (Concept definition would appear here. Full integration requires fetching from concepts table.)
+                {currentItem.conceptDefinition || 'No definition available for this concept.'}
               </Text>
             </View>
           )}

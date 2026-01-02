@@ -8,6 +8,7 @@
  * - Difficulty indicator
  * - Key points as bullet list (collapsible if many)
  * - Timestamp links for video sources
+ * - Three-pass pedagogical metadata (tier, bloom level, mentioned_only)
  */
 
 import React, { useState, useCallback } from 'react';
@@ -20,10 +21,16 @@ import {
   type StyleProp,
 } from 'react-native';
 import type { Concept } from '../../types';
+import type { ConceptTier, BloomLevel } from '../../types/three-pass';
 import { colors, spacing } from '../../theme';
 import { Card } from '../ui';
 import { CognitiveTypeBadge } from './CognitiveTypeBadge';
 import { DifficultyIndicator } from './DifficultyIndicator';
+import { TierBadge } from './TierBadge';
+import { BloomLevelBadge } from './BloomLevelBadge';
+import { MentionedOnlyWarning } from './MentionedOnlyWarning';
+import { MasteryStateBadge } from '../mastery/MasteryStateBadge';
+import type { MasteryState } from '../../lib/spaced-repetition';
 
 /**
  * Timestamp structure for source references
@@ -40,6 +47,10 @@ interface Timestamp {
 export interface ConceptCardProps {
   /** The concept to display */
   concept: Concept;
+  /** Optional mastery state for spaced repetition display */
+  masteryState?: MasteryState;
+  /** Next review date (for display) */
+  nextReviewDate?: Date | null;
   /** Callback when the card is pressed */
   onPress?: () => void;
   /** Callback when a timestamp link is pressed */
@@ -94,8 +105,27 @@ function extractTimestamps(
  * />
  * ```
  */
+/**
+ * Format next review date for display
+ */
+function formatNextReview(date: Date | null | undefined): string | null {
+  if (!date) return null;
+  const now = new Date();
+  const diffMs = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return 'Overdue';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  if (diffDays < 7) return `In ${diffDays} days`;
+  if (diffDays < 30) return `In ${Math.ceil(diffDays / 7)} weeks`;
+  return `In ${Math.ceil(diffDays / 30)} months`;
+}
+
 export function ConceptCard({
   concept,
+  masteryState,
+  nextReviewDate,
   onPress,
   onTimestampPress,
   testID = 'concept-card',
@@ -125,23 +155,74 @@ export function ConceptCard({
     [onTimestampPress]
   );
 
-  const accessibilityLabel = `${concept.name}, ${concept.cognitive_type} concept, difficulty ${concept.difficulty ?? 'unknown'} out of 10`;
+  // Check for three-pass pedagogical metadata
+  const hasTier = concept.tier !== undefined;
+  const hasBloomLevel = concept.bloom_level !== undefined;
+  const isMentionedOnly = concept.mentioned_only === true;
+  const isLegacy = concept.is_legacy === true;
+
+  const accessibilityLabel = `${concept.name}, ${concept.cognitive_type} concept, difficulty ${concept.difficulty ?? 'unknown'} out of 10${isMentionedOnly ? ', mentioned only' : ''}`;
 
   const cardContent = (
     <>
-      {/* Header with name and badge */}
+      {/* Mentioned Only Warning (if applicable) */}
+      {isMentionedOnly && (
+        <View style={styles.mentionedOnlyContainer}>
+          <MentionedOnlyWarning
+            isMentionedOnly={true}
+            showFullText
+            testID={`${testID}-mentioned-only`}
+          />
+        </View>
+      )}
+
+      {/* Header with name and badges */}
       <View style={styles.header}>
-        <Text style={styles.name} numberOfLines={2}>
+        <Text style={[styles.name, isMentionedOnly && styles.nameMentionedOnly]} numberOfLines={2}>
           {concept.name}
         </Text>
-        <CognitiveTypeBadge
-          type={concept.cognitive_type}
-          testID={`${testID}-badge`}
-        />
+        <View style={styles.badgesContainer}>
+          {masteryState && (
+            <MasteryStateBadge
+              state={masteryState}
+              compact
+              testID={`${testID}-mastery`}
+            />
+          )}
+          {hasTier && (
+            <TierBadge
+              tier={concept.tier as ConceptTier}
+              testID={`${testID}-tier`}
+            />
+          )}
+          <CognitiveTypeBadge
+            type={concept.cognitive_type}
+            testID={`${testID}-badge`}
+          />
+        </View>
       </View>
 
       {/* Definition */}
       <Text style={styles.definition}>{concept.definition}</Text>
+
+      {/* Pedagogical metadata row */}
+      {(hasBloomLevel || hasTier) && !isLegacy && (
+        <View style={styles.pedagogicalRow}>
+          {hasBloomLevel && (
+            <BloomLevelBadge
+              level={concept.bloom_level as BloomLevel}
+              testID={`${testID}-bloom`}
+            />
+          )}
+        </View>
+      )}
+
+      {/* Legacy badge */}
+      {isLegacy && (
+        <View style={styles.legacyBadge}>
+          <Text style={styles.legacyText}>Legacy</Text>
+        </View>
+      )}
 
       {/* Difficulty indicator */}
       <View style={styles.difficultyContainer}>
@@ -194,6 +275,15 @@ export function ConceptCard({
           </View>
         </View>
       )}
+
+      {/* Next review date (for spaced repetition) */}
+      {masteryState && masteryState !== 'unseen' && masteryState !== 'mastered' && (
+        <View style={styles.nextReviewContainer} testID={`${testID}-next-review`}>
+          <Text style={styles.nextReviewText}>
+            Next review: {formatNextReview(nextReviewDate) || 'Not scheduled'}
+          </Text>
+        </View>
+      )}
     </>
   );
 
@@ -241,6 +331,9 @@ const styles = StyleSheet.create({
   card: {
     padding: spacing[4],
   },
+  mentionedOnlyContainer: {
+    marginBottom: spacing[2],
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -248,11 +341,38 @@ const styles = StyleSheet.create({
     gap: spacing[2],
     marginBottom: spacing[2],
   },
+  badgesContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[1],
+  },
   name: {
     flex: 1,
     fontSize: 18,
     fontWeight: '600',
     color: colors.text,
+  },
+  nameMentionedOnly: {
+    color: colors.textSecondary,
+  },
+  pedagogicalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[2],
+  },
+  legacyBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.backgroundTertiary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginBottom: spacing[2],
+  },
+  legacyText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: colors.textTertiary,
   },
   definition: {
     fontSize: 14,
@@ -324,6 +444,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     color: colors.primary,
+  },
+  nextReviewContainer: {
+    borderTopWidth: 1,
+    borderTopColor: colors.borderLight,
+    paddingTop: spacing[2],
+    marginTop: spacing[2],
+  },
+  nextReviewText: {
+    fontSize: 12,
+    color: colors.textTertiary,
+    fontStyle: 'italic',
   },
 });
 

@@ -23,6 +23,7 @@ function createMockItem(
     conceptStateId: 'cs-1',
     conceptId: 'c-1',
     conceptName: 'Test Concept',
+    conceptDefinition: 'A test concept definition',
     projectId: 'p-1',
     state: 'exposed',
     dueDate: new Date().toISOString(),

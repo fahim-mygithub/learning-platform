@@ -204,6 +204,7 @@ SELECT
   cs.stability,
   cs.difficulty,
   c.name AS concept_name,
+  c.definition AS concept_definition,
   c.project_id,
   c.cognitive_type,
   c.difficulty AS concept_difficulty,

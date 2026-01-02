@@ -14,6 +14,7 @@ export interface ReviewQueueItem {
   conceptStateId: string;
   conceptId: string;
   conceptName: string;
+  conceptDefinition: string | null;
   projectId: string;
   state: MasteryState;
   dueDate: string;
@@ -175,6 +176,7 @@ export function mapDueReviewToQueueItem(row: {
   concept_state_id: string;
   concept_id: string;
   concept_name: string;
+  concept_definition?: string | null;
   project_id: string;
   state: string;
   due_date: string;
@@ -188,6 +190,7 @@ export function mapDueReviewToQueueItem(row: {
     conceptStateId: row.concept_state_id,
     conceptId: row.concept_id,
     conceptName: row.concept_name,
+    conceptDefinition: row.concept_definition ?? null,
     projectId: row.project_id,
     state: row.state as MasteryState,
     dueDate: row.due_date,
