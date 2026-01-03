@@ -2,12 +2,17 @@
  * Learning Session Screen
  *
  * Main learning experience that integrates:
+ * - Prerequisite check and pretest flow (Phase 6D)
  * - Progress bar and cognitive load indicator
  * - QuestionRenderer for question phase
  * - ConceptReveal for reveal phase
  * - Session completion navigation
  *
- * Flow: Question -> Answer -> Reveal -> Next Item -> Complete
+ * Flow:
+ * 1. Check prerequisites
+ * 2. Show pretest offer modal (if prerequisites exist)
+ * 3. Pretest -> Gap Results -> Mini-Lessons (optional)
+ * 4. Learning Session: Question -> Answer -> Reveal -> Next Item -> Complete
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -22,10 +27,20 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
-import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { QuestionRenderer, ConceptReveal } from '@/src/components/question';
 import { CognitiveLoadIndicator } from '@/src/components/session';
+import {
+  PretestOfferModal,
+  PrerequisitePretest,
+  GapResultsScreen,
+  MiniLesson,
+} from '@/src/components/prerequisite';
+import {
+  PrerequisiteProvider,
+  usePrerequisite,
+  type PrerequisiteService,
+} from '@/src/lib/prerequisite-context';
 import {
   LearningSessionProvider,
   useLearningSession,
@@ -33,14 +48,28 @@ import {
 import { useSession } from '@/src/lib/session-context';
 import { supabase } from '@/src/lib/supabase';
 import { buildInterleavedSession } from '@/src/lib/session/session-builder-service';
+import { createPrerequisiteAssessmentService } from '@/src/lib/prerequisite-assessment-service';
 import { colors, spacing } from '@/src/theme';
 import type { Concept, SampleQuestion } from '@/src/types/database';
-import type { SessionItem, CognitiveCapacity } from '@/src/types/session';
+import type { CognitiveCapacity } from '@/src/types/session';
 import type { QuestionType } from '@/src/types/three-pass';
+import type { Prerequisite } from '@/src/types/prerequisite';
 
 // ============================================================================
 // Types
 // ============================================================================
+
+/**
+ * Prerequisite flow state machine
+ * Controls what view is shown during the prerequisite assessment phase
+ */
+type PrerequisiteFlowState =
+  | 'checking'      // Loading prerequisites
+  | 'offer'         // Show PretestOfferModal
+  | 'pretest'       // Show PrerequisitePretest
+  | 'gaps'          // Show GapResultsScreen
+  | 'mini_lesson'   // Show MiniLesson
+  | 'learning';     // Show actual learning session
 
 /**
  * Concept data with sample questions loaded from database
@@ -57,7 +86,7 @@ interface ConceptWithQuestions extends Concept {
 /**
  * LearningScreenContent Component
  *
- * Inner component that uses the LearningSessionContext.
+ * Inner component that uses the LearningSessionContext and PrerequisiteContext.
  * Separated to allow provider wrapping at the top level.
  */
 function LearningScreenContent() {
@@ -70,7 +99,6 @@ function LearningScreenContent() {
     phase,
     progress,
     currentResponse,
-    items,
     getCurrentItem,
     startSession,
     submitAnswer,
@@ -78,6 +106,34 @@ function LearningScreenContent() {
     endSession,
     isSessionActive,
   } = useLearningSession();
+
+  // Prerequisite context
+  const {
+    prerequisites,
+    pretestStatus,
+    questions: pretestQuestions,
+    currentQuestionIndex,
+    gaps,
+    gapAnalysis,
+    miniLessons,
+    completedMiniLessons,
+    currentMiniLessonId,
+    isLoading: prereqLoading,
+    error: prereqError,
+    didSkipPretest,
+    checkPrerequisites,
+    startPretest,
+    skipPretest,
+    submitAnswer: submitPretestAnswer,
+    completePretest,
+    startMiniLesson,
+    completeMiniLesson,
+    proceedToLearning,
+    hasPrerequisites,
+  } = usePrerequisite();
+
+  // Prerequisite flow state
+  const [flowState, setFlowState] = useState<PrerequisiteFlowState>('checking');
 
   // State
   const [loading, setLoading] = useState(true);
@@ -135,10 +191,89 @@ function LearningScreenContent() {
   }, []);
 
   /**
+   * Check prerequisites on mount
+   * This runs first before initializing the learning session
+   */
+  useEffect(() => {
+    async function checkPrereqs() {
+      if (!projectId) {
+        setError('No project ID provided');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setFlowState('checking');
+        await checkPrerequisites(projectId);
+      } catch (err) {
+        console.error('Failed to check prerequisites:', err);
+        // If prerequisite check fails, proceed to learning anyway
+        setFlowState('learning');
+      }
+    }
+
+    checkPrereqs();
+  }, [projectId, checkPrerequisites]);
+
+  /**
+   * Handle prerequisite check completion
+   * Determines whether to show offer modal or proceed to learning
+   */
+  useEffect(() => {
+    // Skip if still in initial checking state or already past offer
+    if (flowState !== 'checking') return;
+    // Wait for prerequisite loading to complete
+    if (prereqLoading) return;
+
+    // After prerequisites are loaded, decide next state
+    if (hasPrerequisites()) {
+      setFlowState('offer');
+    } else {
+      setFlowState('learning');
+    }
+  }, [flowState, prereqLoading, hasPrerequisites]);
+
+  /**
+   * Handle pretest status changes
+   * Transitions flow state based on pretest progress
+   */
+  useEffect(() => {
+    if (pretestStatus === 'in_progress') {
+      setFlowState('pretest');
+    } else if (pretestStatus === 'completed') {
+      // Check if there are gaps
+      if (gaps.length > 0) {
+        setFlowState('gaps');
+      } else {
+        setFlowState('learning');
+      }
+    } else if (pretestStatus === 'skipped') {
+      setFlowState('learning');
+    }
+  }, [pretestStatus, gaps.length]);
+
+  /**
+   * Handle mini-lesson view
+   */
+  useEffect(() => {
+    if (currentMiniLessonId) {
+      setFlowState('mini_lesson');
+    } else if (flowState === 'mini_lesson') {
+      // Mini-lesson was closed, go back to gaps
+      setFlowState('gaps');
+    }
+  }, [currentMiniLessonId, flowState]);
+
+  /**
    * Initialize the learning session
+   * Only runs when flowState transitions to 'learning'
    */
   useEffect(() => {
     async function initSession() {
+      // Only initialize when we're in learning state and not already loading
+      if (flowState !== 'learning') return;
+      if (isSessionActive()) return; // Already initialized
+
       if (!projectId) {
         setError('No project ID provided');
         setLoading(false);
@@ -220,7 +355,7 @@ function LearningScreenContent() {
     }
 
     initSession();
-  }, [projectId, capacity, loadConcepts, loadMasteryStates, startSession]);
+  }, [flowState, projectId, capacity, loadConcepts, loadMasteryStates, startSession, isSessionActive]);
 
   /**
    * Reset question timer when moving to new question
@@ -336,7 +471,182 @@ function LearningScreenContent() {
     });
   }, [router, projectId]);
 
-  // Loading state
+  // ============================================================================
+  // Prerequisite Flow Handlers
+  // ============================================================================
+
+  /**
+   * Handle taking the pretest
+   */
+  const handleTakePretest = useCallback(() => {
+    startPretest();
+  }, [startPretest]);
+
+  /**
+   * Handle skipping the pretest
+   */
+  const handleSkipPretest = useCallback(() => {
+    skipPretest();
+  }, [skipPretest]);
+
+  /**
+   * Handle pretest answer submission
+   */
+  const handlePretestAnswer = useCallback(
+    (selectedIndex: number, responseTimeMs: number) => {
+      submitPretestAnswer(selectedIndex, responseTimeMs);
+    },
+    [submitPretestAnswer]
+  );
+
+  /**
+   * Handle pretest completion
+   */
+  const handlePretestComplete = useCallback(async () => {
+    await completePretest();
+  }, [completePretest]);
+
+  /**
+   * Handle learning a gap (start mini-lesson)
+   */
+  const handleLearnGap = useCallback(
+    (prerequisiteId: string) => {
+      startMiniLesson(prerequisiteId);
+    },
+    [startMiniLesson]
+  );
+
+  /**
+   * Handle mini-lesson completion
+   */
+  const handleMiniLessonComplete = useCallback(
+    (prerequisiteId: string) => {
+      completeMiniLesson(prerequisiteId);
+    },
+    [completeMiniLesson]
+  );
+
+  /**
+   * Handle continuing from gap results to learning
+   */
+  const handleContinueFromGaps = useCallback(() => {
+    proceedToLearning();
+    setFlowState('learning');
+  }, [proceedToLearning]);
+
+  /**
+   * Handle going back from mini-lesson to gap results
+   */
+  const handleBackToGaps = useCallback(() => {
+    proceedToLearning(); // This clears currentMiniLessonId
+  }, [proceedToLearning]);
+
+  /**
+   * Get the current prerequisite for mini-lesson display
+   */
+  const getCurrentMiniLessonPrerequisite = useCallback((): Prerequisite | null => {
+    if (!currentMiniLessonId) return null;
+    return prerequisites.find((p) => p.id === currentMiniLessonId) ?? null;
+  }, [currentMiniLessonId, prerequisites]);
+
+  /**
+   * Get the current mini-lesson content
+   */
+  const getCurrentMiniLessonContent = useCallback(() => {
+    if (!currentMiniLessonId) return null;
+    return miniLessons.get(currentMiniLessonId) ?? null;
+  }, [currentMiniLessonId, miniLessons]);
+
+  // ============================================================================
+  // Render States
+  // ============================================================================
+
+  // Prerequisite checking state
+  if (flowState === 'checking') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Checking prerequisites...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Pretest offer modal (shown over checking/loading state)
+  if (flowState === 'offer') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContent}>
+          <Text style={styles.loadingText}>Ready to learn!</Text>
+        </View>
+        <PretestOfferModal
+          visible={true}
+          prerequisiteCount={prerequisites.length}
+          onTakePretest={handleTakePretest}
+          onSkip={handleSkipPretest}
+          isLoading={prereqLoading}
+          testID="pretest-offer-modal"
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Pretest screen
+  if (flowState === 'pretest') {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <PrerequisitePretest
+          questions={pretestQuestions}
+          currentQuestionIndex={currentQuestionIndex}
+          onAnswer={handlePretestAnswer}
+          onComplete={handlePretestComplete}
+          isLoading={prereqLoading}
+          testID="prerequisite-pretest"
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Gap results screen
+  if (flowState === 'gaps' && gapAnalysis) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <GapResultsScreen
+          gapAnalysis={gapAnalysis}
+          completedMiniLessons={completedMiniLessons}
+          onLearnGap={handleLearnGap}
+          onContinue={handleContinueFromGaps}
+          isLoading={prereqLoading}
+          testID="gap-results-screen"
+        />
+      </SafeAreaView>
+    );
+  }
+
+  // Mini-lesson screen
+  if (flowState === 'mini_lesson') {
+    const prerequisite = getCurrentMiniLessonPrerequisite();
+    const miniLesson = getCurrentMiniLessonContent();
+
+    if (prerequisite) {
+      return (
+        <SafeAreaView style={styles.container} edges={['top']}>
+          <MiniLesson
+            prerequisite={prerequisite}
+            miniLesson={miniLesson}
+            onComplete={() => handleMiniLessonComplete(prerequisite.id)}
+            onBack={handleBackToGaps}
+            isLoading={prereqLoading}
+            error={prereqError}
+            testID="mini-lesson"
+          />
+        </SafeAreaView>
+      );
+    }
+  }
+
+  // Loading state (for learning session initialization)
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -479,6 +789,19 @@ function LearningScreenContent() {
         />
       </View>
 
+      {/* Skipped Pretest Warning Badge */}
+      {didSkipPretest && (
+        <View
+          style={styles.warningBadge}
+          testID="skipped-pretest-warning"
+          accessible={true}
+          accessibilityLabel="Warning: Prerequisite check was skipped. Some concepts may be harder to understand."
+        >
+          <Text style={styles.warningBadgeIcon}>!</Text>
+          <Text style={styles.warningBadgeText}>Prerequisite check skipped</Text>
+        </View>
+      )}
+
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
@@ -526,19 +849,73 @@ function LearningScreenContent() {
 }
 
 // ============================================================================
+// Create Prerequisite Service
+// ============================================================================
+
+/**
+ * Create the prerequisite service for the provider
+ * This adapts the assessment service to the PrerequisiteService interface
+ */
+function createPrerequisiteServiceAdapter(): PrerequisiteService {
+  const assessmentService = createPrerequisiteAssessmentService(supabase);
+
+  return {
+    getPrerequisites: assessmentService.getPrerequisites,
+    generatePretestQuestions: assessmentService.generatePretestQuestions,
+    analyzeGaps: assessmentService.analyzeGaps,
+    generateMiniLesson: assessmentService.generateMiniLesson,
+  };
+}
+
+// Create a singleton instance to avoid recreating on every render
+let prerequisiteServiceInstance: PrerequisiteService | null = null;
+
+function getPrerequisiteService(): PrerequisiteService {
+  if (!prerequisiteServiceInstance) {
+    try {
+      prerequisiteServiceInstance = createPrerequisiteServiceAdapter();
+    } catch (error) {
+      // If service creation fails (e.g., no API key), return a stub
+      console.warn('Failed to create prerequisite service:', error);
+      prerequisiteServiceInstance = {
+        getPrerequisites: async () => [],
+        generatePretestQuestions: async () => [],
+        analyzeGaps: async () => ({
+          totalPrerequisites: 0,
+          correct: 0,
+          percentage: 100,
+          gaps: [],
+          recommendation: 'proceed' as const,
+        }),
+        generateMiniLesson: async () => {
+          throw new Error('Prerequisite service not available');
+        },
+      };
+    }
+  }
+  return prerequisiteServiceInstance;
+}
+
+// ============================================================================
 // Main Component (provides context)
 // ============================================================================
 
 /**
  * LearningScreen Component
  *
- * Main learning session screen that wraps content with LearningSessionProvider.
+ * Main learning session screen that wraps content with:
+ * - PrerequisiteProvider for prerequisite assessment flow
+ * - LearningSessionProvider for learning session state
  */
 export default function LearningScreen() {
+  const prerequisiteService = getPrerequisiteService();
+
   return (
-    <LearningSessionProvider>
-      <LearningScreenContent />
-    </LearningSessionProvider>
+    <PrerequisiteProvider service={prerequisiteService}>
+      <LearningSessionProvider>
+        <LearningScreenContent />
+      </LearningSessionProvider>
+    </PrerequisiteProvider>
   );
 }
 
@@ -687,5 +1064,37 @@ const styles = StyleSheet.create({
   },
   completeButton: {
     minWidth: 160,
+  },
+  // Warning badge for skipped pretest
+  warningBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${colors.warning}15`,
+    borderWidth: 1,
+    borderColor: colors.warning,
+    borderRadius: 8,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[3],
+    marginHorizontal: spacing[4],
+    marginBottom: spacing[2],
+  },
+  warningBadgeIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.warning,
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginRight: spacing[2],
+    overflow: 'hidden',
+  },
+  warningBadgeText: {
+    fontSize: 12,
+    color: colors.warning,
+    fontWeight: '600',
   },
 });
