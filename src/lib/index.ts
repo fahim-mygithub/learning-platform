@@ -181,3 +181,54 @@ export {
   type FeedBuilderService,
   type FeedBuilderErrorCode,
 } from './feed-builder-service';
+
+// Streak Service (Habit tracking)
+export {
+  createStreakService,
+  getDefaultStreakService,
+  resetDefaultStreakService,
+  StreakServiceError,
+  type StreakService,
+  type StreakServiceErrorCode,
+} from './streak-service';
+
+// XP Service (Experience points and leveling)
+export {
+  createXPService,
+  getDefaultXPService,
+  resetDefaultXPService,
+  XPServiceError,
+  type XPService,
+  type XPServiceErrorCode,
+} from './xp-service';
+
+// Synthesis Detector Service (Concept connection prompts)
+export {
+  createSynthesisDetectorService,
+  getDefaultSynthesisDetectorService,
+  resetDefaultSynthesisDetectorService,
+  SynthesisDetectorError,
+  type SynthesisDetectorService,
+  type SynthesisDetectorErrorCode,
+  type SynthesisConcept,
+  type SynthesisPromptResult,
+} from './synthesis-detector-service';
+
+// Session Timer Service (Break suggestions)
+export {
+  createSessionTimerService,
+  getDefaultSessionTimerService,
+  resetDefaultSessionTimerService,
+  type SessionTimerService,
+  type SessionTimerConfig,
+  type SessionTimerState,
+} from './session-timer-service';
+
+// Haptic Feedback (Tactile feedback utility)
+export {
+  haptics,
+  isHapticsAvailable,
+  ImpactFeedbackStyle,
+  NotificationFeedbackType,
+  type HapticFeedback,
+} from './haptic-feedback';
