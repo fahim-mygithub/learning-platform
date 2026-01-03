@@ -6,9 +6,10 @@
  * 2. Transcribe (if video/audio)
  * 3. Route content (Pass 1: Classify content type, set Bloom's ceiling)
  * 4. Extract concepts (Pass 2: Enhanced extraction with pedagogical metadata)
- * 5. Build knowledge graph
- * 6. Architect roadmap (Pass 3: Elaboration Theory hierarchy, calibrated time)
- * 7. Validate analysis results
+ * 5. Detect prerequisites (from mentioned_only concepts and AI inference)
+ * 6. Build knowledge graph
+ * 7. Architect roadmap (Pass 3: Elaboration Theory hierarchy, calibrated time)
+ * 8. Validate analysis results
  *
  * Features:
  * - Three-pass pedagogical analysis based on cognitive science
@@ -91,7 +92,16 @@ import {
   createModuleSummaryService,
   ModuleSummaryService,
 } from './module-summary-service';
-import { EnhancedExtractedConcept, Misconception } from '@/src/types/three-pass';
+import {
+  createLearningAgendaService,
+  LearningAgendaService,
+} from './learning-agenda-service';
+import {
+  createPrerequisiteAssessmentService,
+  PrerequisiteAssessmentService,
+  PrerequisiteDetectionResult,
+} from './prerequisite-assessment-service';
+import { EnhancedExtractedConcept, Misconception, LearningAgenda } from '@/src/types/three-pass';
 
 /**
  * Pipeline stages representing the three-pass analysis workflow
@@ -101,7 +111,9 @@ export type PipelineStage =
   | 'transcribing'
   | 'routing_content'            // Pass 1: Rhetorical Router
   | 'extracting_concepts'        // Pass 2: Enhanced Concept Extraction
-  | 'generating_misconceptions'  // Misconception generation (after Pass 2)
+  | 'detecting_prerequisites'    // Prerequisite detection (after concept extraction)
+  | 'generating_agenda'          // Learning Agenda generation (after Pass 2)
+  | 'generating_misconceptions'  // Misconception generation (after agenda)
   | 'building_graph'
   | 'architecting_roadmap'       // Pass 3: Roadmap Architect
   | 'generating_summary'         // Module summary generation (after Pass 3)
@@ -117,6 +129,8 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   'transcribing',
   'routing_content',
   'extracting_concepts',
+  'detecting_prerequisites',
+  'generating_agenda',
   'generating_misconceptions',
   'building_graph',
   'architecting_roadmap',
@@ -132,13 +146,15 @@ export const PIPELINE_STAGES: PipelineStage[] = [
 const STAGE_PROGRESS: Record<PipelineStage, { start: number; end: number }> = {
   pending: { start: 0, end: 0 },
   transcribing: { start: 0, end: 15 },
-  routing_content: { start: 15, end: 25 },
-  extracting_concepts: { start: 25, end: 40 },
-  generating_misconceptions: { start: 40, end: 50 },
-  building_graph: { start: 50, end: 60 },
-  architecting_roadmap: { start: 60, end: 75 },
-  generating_summary: { start: 75, end: 85 },
-  validating: { start: 85, end: 100 },
+  routing_content: { start: 15, end: 22 },
+  extracting_concepts: { start: 22, end: 32 },
+  detecting_prerequisites: { start: 32, end: 38 },
+  generating_agenda: { start: 38, end: 44 },
+  generating_misconceptions: { start: 44, end: 50 },
+  building_graph: { start: 50, end: 58 },
+  architecting_roadmap: { start: 58, end: 72 },
+  generating_summary: { start: 72, end: 82 },
+  validating: { start: 82, end: 100 },
   completed: { start: 100, end: 100 },
   failed: { start: 0, end: 0 },
 };
@@ -339,9 +355,11 @@ export function createContentAnalysisPipeline(
 
   const analysisValidatorService: AnalysisValidatorService = createAnalysisValidatorService();
 
-  // New services for misconception and module summary generation
+  // New services for misconception, learning agenda, module summary, and prerequisite assessment
   const misconceptionService: MisconceptionService = createMisconceptionService(aiService, supabase);
+  const learningAgendaService: LearningAgendaService = createLearningAgendaService(aiService);
   const moduleSummaryService: ModuleSummaryService = createModuleSummaryService(aiService, supabase);
+  const prerequisiteAssessmentService: PrerequisiteAssessmentService = createPrerequisiteAssessmentService(supabase, aiService);
 
   // Legacy services (kept for backward compatibility)
   let conceptExtractionService: ConceptExtractionService;
@@ -728,6 +746,61 @@ export function createContentAnalysisPipeline(
   }
 
   /**
+   * Run prerequisite detection stage
+   * Detects prerequisites from mentioned_only concepts and AI inference
+   * This stage is non-blocking - the pipeline continues even if it fails
+   */
+  async function runPrerequisiteDetectionStage(
+    projectId: string,
+    sourceContent: string,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<PrerequisiteDetectionResult | null> {
+    updateStatus(
+      status,
+      'detecting_prerequisites',
+      STAGE_PROGRESS.detecting_prerequisites.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    try {
+      // Detect prerequisites using the service
+      const result = await prerequisiteAssessmentService.detectPrerequisites(
+        projectId,
+        sourceContent
+      );
+
+      updateStatus(
+        status,
+        'detecting_prerequisites',
+        STAGE_PROGRESS.detecting_prerequisites.end,
+        options
+      );
+
+      return result;
+    } catch (error) {
+      // Non-blocking: log the error but continue the pipeline
+      console.warn(
+        'Prerequisite detection failed (non-blocking):',
+        (error as Error).message
+      );
+
+      updateStatus(
+        status,
+        'detecting_prerequisites',
+        STAGE_PROGRESS.detecting_prerequisites.end,
+        options
+      );
+
+      return null;
+    }
+  }
+
+  /**
    * Run knowledge graph building stage
    * Returns the relationships for use in roadmap architect
    */
@@ -894,6 +967,72 @@ export function createContentAnalysisPipeline(
   }
 
   /**
+   * Run learning agenda generation stage
+   * Generates a unified "learning contract" from Pass 1 and Pass 2 results
+   */
+  async function runLearningAgendaGenerationStage(
+    source: Source,
+    pass1Result: Pass1Result,
+    concepts: Concept[],
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<LearningAgenda> {
+    updateStatus(
+      status,
+      'generating_agenda',
+      STAGE_PROGRESS.generating_agenda.start,
+      options
+    );
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    // Convert Concept[] to EnhancedExtractedConcept[] format for agenda service
+    const enhancedConcepts: EnhancedExtractedConcept[] = concepts.map((concept) => ({
+      name: concept.name,
+      definition: concept.definition,
+      key_points: concept.key_points || [],
+      cognitive_type: concept.cognitive_type,
+      difficulty: concept.difficulty || 5,
+      source_timestamps: concept.source_timestamps as { start: number; end: number }[] | undefined,
+      tier: (concept.tier || 2) as 1 | 2 | 3,
+      mentioned_only: concept.mentioned_only || false,
+      bloom_level: concept.bloom_level || 'understand',
+      definition_provided: concept.definition_provided !== false,
+      time_allocation_percent: concept.time_allocation_percent || 10,
+      one_sentence_summary: concept.one_sentence_summary,
+      why_it_matters: concept.why_it_matters,
+      learning_objectives: concept.learning_objectives,
+    }));
+
+    // Generate learning agenda
+    const learningAgenda = await learningAgendaService.generateAgenda(
+      pass1Result,
+      enhancedConcepts
+    );
+
+    // Store learning agenda in source
+    const { error } = await supabase
+      .from('sources')
+      .update({ learning_agenda: learningAgenda })
+      .eq('id', source.id);
+
+    if (error) {
+      console.warn('Failed to store learning agenda:', error.message);
+    }
+
+    updateStatus(
+      status,
+      'generating_agenda',
+      STAGE_PROGRESS.generating_agenda.end,
+      options
+    );
+
+    return learningAgenda;
+  }
+
+  /**
    * Run misconception generation stage
    * Generates common misconceptions for tier 2-3 concepts (not mentioned_only)
    */
@@ -998,12 +1137,14 @@ export function createContentAnalysisPipeline(
     startFromStage?: PipelineStage
   ): Promise<void> {
     try {
-      // Determine where to start - new three-pass stages with misconception and summary generation
+      // Determine where to start - new three-pass stages with agenda, misconception, and summary generation
       const stages: PipelineStage[] = [
         'transcribing',
         'routing_content',            // Pass 1
         'extracting_concepts',        // Pass 2
-        'generating_misconceptions',  // Misconception generation (after Pass 2)
+        'detecting_prerequisites',    // Prerequisite detection (after concept extraction)
+        'generating_agenda',          // Learning Agenda generation (after Pass 2)
+        'generating_misconceptions',  // Misconception generation (after agenda)
         'building_graph',
         'architecting_roadmap',       // Pass 3
         'generating_summary',         // Module summary generation (after Pass 3)
@@ -1018,6 +1159,22 @@ export function createContentAnalysisPipeline(
 
       let transcription: Transcription | null = null;
       let pass1Result: Pass1Result | null = null;
+
+      // If starting from a stage after transcribing, fetch existing transcription
+      if (startIndex > 0) {
+        const { data: existingTranscription } = await supabase
+          .from('transcriptions')
+          .select('*')
+          .eq('source_id', source.id)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (existingTranscription) {
+          transcription = existingTranscription as Transcription;
+        }
+      }
       let concepts: Concept[] = [];
       let relationships: ConceptRelationship[] = [];
       let pass3Result: Pass3Result | null = null;
@@ -1061,6 +1218,33 @@ export function createContentAnalysisPipeline(
               concepts = await runLegacyConceptExtractionStage(
                 source,
                 transcription,
+                status,
+                options
+              );
+            }
+            break;
+
+          case 'detecting_prerequisites':
+            // Detect prerequisites from mentioned_only concepts and AI inference
+            // This is non-blocking - continue even if it fails
+            {
+              const textContent = getTextContent(source, transcription);
+              await runPrerequisiteDetectionStage(
+                source.project_id,
+                textContent,
+                status,
+                options
+              );
+            }
+            break;
+
+          case 'generating_agenda':
+            // Generate learning agenda from Pass 1 and Pass 2 results
+            if (pass1Result && concepts.length > 0) {
+              await runLearningAgendaGenerationStage(
+                source,
+                pass1Result,
+                concepts,
                 status,
                 options
               );

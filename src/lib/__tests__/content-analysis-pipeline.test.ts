@@ -58,6 +58,14 @@ import {
   sampleRoadmap,
 } from '../__mocks__/roadmap-generation';
 
+import {
+  configureMock as configurePrerequisiteMock,
+  resetMock as resetPrerequisiteMock,
+  clearMockCallHistory as clearPrerequisiteCallHistory,
+  getMockCallHistory as getPrerequisiteCallHistory,
+  samplePrerequisites,
+} from '../__mocks__/prerequisite-assessment-service';
+
 // Mock all the services
 jest.mock('../transcription-service', () =>
   require('../__mocks__/transcription-service')
@@ -73,6 +81,10 @@ jest.mock('../knowledge-graph-service', () =>
 
 jest.mock('../roadmap-generation', () =>
   require('../__mocks__/roadmap-generation')
+);
+
+jest.mock('../prerequisite-assessment-service', () =>
+  require('../__mocks__/prerequisite-assessment-service')
 );
 
 // Import after mocking
@@ -210,6 +222,8 @@ describe('Content Analysis Pipeline', () => {
     clearKnowledgeGraphCallHistory();
     resetRoadmapMock();
     clearRoadmapCallHistory();
+    resetPrerequisiteMock();
+    clearPrerequisiteCallHistory();
 
     // Set up mock API key environment variable
     process.env.EXPO_PUBLIC_ANTHROPIC_API_KEY = 'test-api-key';
@@ -434,6 +448,51 @@ describe('Content Analysis Pipeline', () => {
       expect(
         roadmapCalls.some((c) => c.method === 'generateRoadmap')
       ).toBe(true);
+    });
+
+    it('prerequisite detection is called after concept extraction', async () => {
+      mockFrom.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: pdfSource,
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      await pipeline.analyzeSource(pdfSource.id);
+
+      // Check that prerequisite detection was called
+      const prereqCalls = getPrerequisiteCallHistory();
+      expect(
+        prereqCalls.some((c) => c.method === 'detectPrerequisites')
+      ).toBe(true);
+    });
+
+    it('pipeline continues even if prerequisite detection fails (non-blocking)', async () => {
+      mockFrom.mockReturnValueOnce({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            single: jest.fn().mockResolvedValue({
+              data: pdfSource,
+              error: null,
+            }),
+          }),
+        }),
+      });
+
+      // Configure prerequisite mock to fail
+      configurePrerequisiteMock({
+        shouldError: true,
+      });
+
+      const status = await pipeline.analyzeSource(pdfSource.id);
+
+      // Pipeline should still complete despite prerequisite detection failure
+      expect(status.stage).toBe('completed');
+      expect(status.progress).toBe(100);
     });
 
     it('completion status is set when pipeline finishes', async () => {
@@ -775,10 +834,19 @@ describe('Content Analysis Pipeline', () => {
       expect(PIPELINE_STAGES).toContain('pending');
       expect(PIPELINE_STAGES).toContain('transcribing');
       expect(PIPELINE_STAGES).toContain('extracting_concepts');
+      expect(PIPELINE_STAGES).toContain('detecting_prerequisites');
       expect(PIPELINE_STAGES).toContain('building_graph');
-      expect(PIPELINE_STAGES).toContain('generating_roadmap');
+      expect(PIPELINE_STAGES).toContain('architecting_roadmap');
+      expect(PIPELINE_STAGES).toContain('validating');
+      expect(PIPELINE_STAGES).toContain('routing_content');
       expect(PIPELINE_STAGES).toContain('completed');
       expect(PIPELINE_STAGES).toContain('failed');
+    });
+
+    it('has detecting_prerequisites after extracting_concepts', () => {
+      const extractIndex = PIPELINE_STAGES.indexOf('extracting_concepts');
+      const detectIndex = PIPELINE_STAGES.indexOf('detecting_prerequisites');
+      expect(detectIndex).toBe(extractIndex + 1);
     });
   });
 
@@ -806,7 +874,7 @@ describe('Content Analysis Pipeline', () => {
   });
 
   describe('Pipeline stage progress values', () => {
-    it('transcription stage spans 0-25%', async () => {
+    it('transcription stage spans 0-15%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -829,12 +897,12 @@ describe('Content Analysis Pipeline', () => {
         },
       });
 
-      // Transcription progress should be in 0-25 range
+      // Transcription progress should be in 0-15 range
       expect(transcriptionProgress).toBeGreaterThanOrEqual(0);
-      expect(transcriptionProgress).toBeLessThanOrEqual(25);
+      expect(transcriptionProgress).toBeLessThanOrEqual(15);
     });
 
-    it('concept extraction stage spans 25-50%', async () => {
+    it('concept extraction stage spans 22-35%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -857,12 +925,12 @@ describe('Content Analysis Pipeline', () => {
         },
       });
 
-      // Concept extraction progress should be in 25-50 range
-      expect(extractionProgress).toBeGreaterThanOrEqual(25);
-      expect(extractionProgress).toBeLessThanOrEqual(50);
+      // Concept extraction progress should be in 22-35 range
+      expect(extractionProgress).toBeGreaterThanOrEqual(22);
+      expect(extractionProgress).toBeLessThanOrEqual(35);
     });
 
-    it('graph building stage spans 50-75%', async () => {
+    it('graph building stage spans 50-58%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -885,12 +953,12 @@ describe('Content Analysis Pipeline', () => {
         },
       });
 
-      // Graph building progress should be in 50-75 range
+      // Graph building progress should be in 50-58 range
       expect(graphProgress).toBeGreaterThanOrEqual(50);
-      expect(graphProgress).toBeLessThanOrEqual(75);
+      expect(graphProgress).toBeLessThanOrEqual(58);
     });
 
-    it('roadmap generation stage spans 75-100%', async () => {
+    it('roadmap generation stage spans 58-72%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -907,15 +975,15 @@ describe('Content Analysis Pipeline', () => {
       let roadmapProgress = 0;
       await pipeline.analyzeSource(sourceId, {
         onStageChange: (stage, progress) => {
-          if (stage === 'generating_roadmap') {
+          if (stage === 'architecting_roadmap') {
             roadmapProgress = progress;
           }
         },
       });
 
-      // Roadmap generation progress should be in 75-100 range
-      expect(roadmapProgress).toBeGreaterThanOrEqual(75);
-      expect(roadmapProgress).toBeLessThanOrEqual(100);
+      // Roadmap architect progress should be in 58-72 range (three-pass architecture)
+      expect(roadmapProgress).toBeGreaterThanOrEqual(58);
+      expect(roadmapProgress).toBeLessThanOrEqual(72);
     });
   });
 
