@@ -339,6 +339,7 @@ function ProjectDetailContent({
   handleOpenAddSource,
   handleCloseAddSource,
 }: ProjectDetailContentProps): React.ReactElement {
+  const router = useRouter();
   const { sources, refreshSources } = useSources();
   const { concepts, relationships, roadmap, pipelineStage, progress, error, retryAnalysis, startAnalysis } = useAnalysis();
   const { showToast } = useToast();
@@ -505,6 +506,7 @@ function ProjectDetailContent({
         {learningAgenda && (
           <LearningAgendaCard
             agenda={learningAgenda}
+            onStartLearning={() => router.push(`/learning?projectId=${project.id}`)}
             testID="learning-agenda-card"
           />
         )}
