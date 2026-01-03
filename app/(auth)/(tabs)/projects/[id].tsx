@@ -511,6 +511,33 @@ function ProjectDetailContent({
           />
         )}
 
+        {/* Start Learning Button - show when analysis is complete and concepts exist */}
+        {pipelineStage === 'completed' && concepts.length > 0 && sources.length > 0 && (
+          <Card testID="start-learning-card" style={styles.startLearningCard}>
+            <View style={styles.startLearningContent}>
+              <View style={styles.startLearningInfo}>
+                <Text style={styles.startLearningTitle}>Ready to Learn!</Text>
+                <Text style={styles.startLearningSubtitle}>
+                  {concepts.length} concepts to explore
+                </Text>
+              </View>
+              <Pressable
+                testID="start-learning-button"
+                style={styles.startLearningButton}
+                onPress={() => router.push({
+                  pathname: '/(auth)/feed',
+                  params: { sourceId: sources[0].id }
+                })}
+                accessibilityLabel="Start Learning"
+                accessibilityRole="button"
+                accessibilityHint="Opens the learning feed with video chapters and quizzes"
+              >
+                <Text style={styles.startLearningButtonText}>Start Learning</Text>
+              </Pressable>
+            </View>
+          </Card>
+        )}
+
         {/* Concepts - show when concepts exist */}
         {concepts.length > 0 && (
           <Card testID="concepts-card" style={styles.conceptsCard}>
@@ -808,6 +835,53 @@ const styles = StyleSheet.create({
   roadmapCard: {
     marginBottom: spacing[4],
     padding: spacing[4],
+  },
+
+  // Start Learning Card
+  startLearningCard: {
+    marginBottom: spacing[4],
+    padding: spacing[4],
+    backgroundColor: colors.primary + '10',
+    borderWidth: 2,
+    borderColor: colors.primary,
+  },
+  startLearningContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  startLearningInfo: {
+    flex: 1,
+    marginRight: spacing[3],
+  },
+  startLearningTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: fontWeight.bold,
+    color: colors.text,
+    marginBottom: spacing[1],
+  },
+  startLearningSubtitle: {
+    fontSize: fontSize.sm,
+    color: colors.textSecondary,
+  },
+  startLearningButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing[5],
+    paddingVertical: spacing[3],
+    borderRadius: 12,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  startLearningButtonText: {
+    color: colors.white,
+    fontSize: fontSize.base,
+    fontWeight: fontWeight.bold,
   },
 
   // Actions

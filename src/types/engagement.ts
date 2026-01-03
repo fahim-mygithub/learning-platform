@@ -158,7 +158,7 @@ export interface TypographyPreferences {
 export const DEFAULT_TYPOGRAPHY_PREFERENCES: TypographyPreferences = {
   fontFamily: 'system',
   bionicReadingEnabled: false,
-  darkModeEnabled: false,
+  darkModeEnabled: true, // Dark mode enabled by default per spec
   fontScale: 1.0,
 };
 

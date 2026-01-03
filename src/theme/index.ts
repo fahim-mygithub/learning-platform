@@ -5,6 +5,7 @@
  * Import from '@/theme' for colors, spacing, and typography.
  */
 
-export { colors, palette } from './colors';
+export { colors, darkColors, palette, getThemeColors } from './colors';
+export type { ColorTheme, LightColorTheme, DarkColorTheme } from './colors';
 export { spacing, semanticSpacing } from './spacing';
 export { typography, fontSize, fontWeight, lineHeight } from './typography';

@@ -2,7 +2,7 @@
  * Design Tokens: Colors
  *
  * This module defines the color palette and semantic colors for the design system.
- * Use semantic colors (from `colors`) for component styling.
+ * Use semantic colors (from `colors` or `darkColors`) for component styling.
  * Only use palette colors directly when creating new semantic tokens.
  */
 
@@ -44,6 +44,18 @@ const palette = {
   masteryYellow: '#EAB308',
   masteryLime: '#84CC16',
   masteryEmerald: '#10B981',
+
+  // Dark mode specific
+  darkBackground: '#121212',
+  darkBackgroundSecondary: '#1E1E1E',
+  darkBackgroundTertiary: '#2D2D2D',
+  darkBorder: '#3D3D3D',
+  darkBorderLight: '#2D2D2D',
+
+  // Engagement gamification
+  xpGold: '#FFD700',
+  streakOrange: '#FF6B35',
+  captionHighlight: '#FFD700',
 
   // Common
   white: '#FFFFFF',
@@ -99,6 +111,90 @@ export const colors = {
   white: palette.white,
   black: palette.black,
   transparent: palette.transparent,
+
+  // Engagement gamification (consistent with dark mode)
+  captionHighlight: palette.captionHighlight,
+  xpGold: palette.xpGold,
+  streakOrange: palette.streakOrange,
 } as const;
+
+/**
+ * Dark mode semantic colors
+ * Optimized for OLED screens and reduced eye strain
+ * Maintains WCAG 2.1 AA contrast ratios (minimum 4.5:1 for text)
+ */
+export const darkColors = {
+  // Brand (same as light mode)
+  primary: palette.indigo500,
+  secondary: palette.emerald500,
+  accent: palette.amber500,
+
+  // Text (inverted from light mode)
+  text: palette.white,
+  textSecondary: '#B0B0B0', // Slightly off-white for reduced glare
+  textTertiary: palette.gray400,
+  textInverse: palette.gray900,
+
+  // Backgrounds (dark variants)
+  background: palette.darkBackground,
+  backgroundSecondary: palette.darkBackgroundSecondary,
+  backgroundTertiary: palette.darkBackgroundTertiary,
+
+  // Borders (dark variants)
+  border: palette.darkBorder,
+  borderLight: palette.darkBorderLight,
+
+  // Status (same as light mode - these are already accessible)
+  error: '#F44336', // Slightly adjusted red for dark mode
+  success: '#4CAF50', // Slightly adjusted green for dark mode
+  info: palette.blue500,
+  warning: palette.amber500,
+
+  // Interactive
+  disabled: palette.gray500,
+
+  // Mastery states (same as light mode)
+  mastery: {
+    unseen: palette.masteryGray,
+    exposed: palette.masteryBlue,
+    fragile: palette.masteryOrange,
+    developing: palette.masteryYellow,
+    solid: palette.masteryLime,
+    mastered: palette.masteryEmerald,
+  },
+
+  // Engagement gamification
+  captionHighlight: palette.captionHighlight,
+  xpGold: palette.xpGold,
+  streakOrange: palette.streakOrange,
+
+  // Common
+  white: palette.white,
+  black: palette.black,
+  transparent: palette.transparent,
+} as const;
+
+/**
+ * Light color theme type
+ */
+export type LightColorTheme = typeof colors;
+
+/**
+ * Dark color theme type
+ */
+export type DarkColorTheme = typeof darkColors;
+
+/**
+ * Color theme type - union of light and dark themes
+ * Use this type when you need to accept either theme
+ */
+export type ColorTheme = LightColorTheme | DarkColorTheme;
+
+/**
+ * Get colors for the specified mode
+ */
+export function getThemeColors(darkMode: boolean): LightColorTheme | DarkColorTheme {
+  return darkMode ? darkColors : colors;
+}
 
 export { palette };
