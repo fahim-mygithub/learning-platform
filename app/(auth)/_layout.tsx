@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator, Text } from 'react-native';
 
 import { useAuth } from '@/src/lib/auth-context';
 import { ReviewProvider } from '@/src/lib/review-context';
+import { SessionProvider } from '@/src/lib/session-context';
 
 /**
  * Auth Layout - Protected Route Guard
@@ -42,9 +43,11 @@ export default function AuthLayout() {
 
   return (
     <ReviewProvider>
-      <View style={styles.container}>
-        <Slot />
-      </View>
+      <SessionProvider>
+        <View style={styles.container}>
+          <Slot />
+        </View>
+      </SessionProvider>
     </ReviewProvider>
   );
 }
