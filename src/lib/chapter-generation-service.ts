@@ -377,7 +377,8 @@ export function createChapterGenerationService(
             if (Array.isArray(response.data)) {
               for (const item of response.data) {
                 if (item.concept_name && item.teaser) {
-                  teaserMap.set(item.concept_name, item.teaser.trim());
+                  // Normalize key to lowercase to handle case differences
+                  teaserMap.set(item.concept_name.toLowerCase(), item.teaser.trim());
                 }
               }
             }
@@ -392,7 +393,8 @@ export function createChapterGenerationService(
 
         for (const concept of concepts) {
           const chapterSequence = chapterSequenceMap.get(concept.id);
-          const teaser = teaserMap.get(concept.name);
+          // Use lowercase lookup to match normalized keys
+          const teaser = teaserMap.get(concept.name.toLowerCase());
 
           if (chapterSequence !== undefined || teaser) {
             const updateData: Partial<Concept> = {};

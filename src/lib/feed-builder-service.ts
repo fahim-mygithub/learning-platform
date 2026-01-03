@@ -207,7 +207,7 @@ function generateSynthesisPrompt(concepts: Concept[]): string {
   }
 
   if (concepts.length === 1) {
-    return `How does ${concepts[0].name} connect to what you already knew?`;
+    return 'Review this key concept before continuing.';
   }
 
   if (concepts.length === 2) {
@@ -273,6 +273,7 @@ export function createFeedBuilderService(): FeedBuilderService {
             recentConceptsForSynthesis.push(currentConcept);
             chapterIndex++;
             chaptersInCurrentCycle++;
+            patternIndex++;
             break;
           }
 
@@ -290,6 +291,10 @@ export function createFeedBuilderService(): FeedBuilderService {
 
             if (quizItem) {
               feedItems.push(quizItem);
+              patternIndex++;
+            } else {
+              // Skip this pattern slot if quiz couldn't be created
+              patternIndex++;
             }
             // Don't advance chapter index - quiz is interstitial
             break;
@@ -307,31 +312,20 @@ export function createFeedBuilderService(): FeedBuilderService {
               feedItemIndex++
             );
             feedItems.push(factItem);
+            patternIndex++;
             // Don't advance chapter index - fact is interstitial
             break;
           }
 
-          case 'synthesis': {
-            // This case handles explicit synthesis in pattern if needed
-            const synthesisItem = createSynthesisItem(
-              recentConceptsForSynthesis.slice(-3),
-              sourceId,
-              feedItemIndex++,
-              chapterIndex,
-              chapterConcepts.length
-            );
-            feedItems.push(synthesisItem);
-            break;
-          }
+          // Note: 'synthesis' is not in FEED_PATTERN - synthesis is triggered
+          // by chaptersInCurrentCycle >= SYNTHESIS_INTERVAL above
         }
-
-        patternIndex++;
       }
 
-      // Final synthesis if we have remaining concepts
+      // Final synthesis if we have enough chapters since last synthesis
       if (recentConceptsForSynthesis.length > 0 && chaptersInCurrentCycle >= 2) {
         const finalSynthesis = createSynthesisItem(
-          recentConceptsForSynthesis.slice(-SYNTHESIS_INTERVAL),
+          recentConceptsForSynthesis.slice(-chaptersInCurrentCycle),
           sourceId,
           feedItemIndex,
           chapterConcepts.length,
