@@ -165,3 +165,19 @@ export {
   getRoadmapByProject,
   getTranscriptionBySource,
 } from './analysis-queries';
+
+// Chapter Generation Service (TikTok-style learning chapters)
+export {
+  createChapterGenerationService,
+  ChapterGenerationError,
+  type ChapterGenerationService,
+  type ChapterGenerationErrorCode,
+} from './chapter-generation-service';
+
+// Feed Builder Service (Interleaved learning feed)
+export {
+  createFeedBuilderService,
+  FeedBuilderError,
+  type FeedBuilderService,
+  type FeedBuilderErrorCode,
+} from './feed-builder-service';

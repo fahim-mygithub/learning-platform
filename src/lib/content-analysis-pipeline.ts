@@ -101,6 +101,10 @@ import {
   PrerequisiteAssessmentService,
   PrerequisiteDetectionResult,
 } from './prerequisite-assessment-service';
+import {
+  createChapterGenerationService,
+  ChapterGenerationService,
+} from './chapter-generation-service';
 import { EnhancedExtractedConcept, Misconception, LearningAgenda } from '@/src/types/three-pass';
 
 /**
@@ -111,6 +115,7 @@ export type PipelineStage =
   | 'transcribing'
   | 'routing_content'            // Pass 1: Rhetorical Router
   | 'extracting_concepts'        // Pass 2: Enhanced Concept Extraction
+  | 'generating_chapters'        // Chapter generation (after concept extraction)
   | 'detecting_prerequisites'    // Prerequisite detection (after concept extraction)
   | 'generating_agenda'          // Learning Agenda generation (after Pass 2)
   | 'generating_misconceptions'  // Misconception generation (after agenda)
@@ -129,6 +134,7 @@ export const PIPELINE_STAGES: PipelineStage[] = [
   'transcribing',
   'routing_content',
   'extracting_concepts',
+  'generating_chapters',
   'detecting_prerequisites',
   'generating_agenda',
   'generating_misconceptions',
@@ -146,15 +152,16 @@ export const PIPELINE_STAGES: PipelineStage[] = [
 const STAGE_PROGRESS: Record<PipelineStage, { start: number; end: number }> = {
   pending: { start: 0, end: 0 },
   transcribing: { start: 0, end: 15 },
-  routing_content: { start: 15, end: 22 },
-  extracting_concepts: { start: 22, end: 32 },
-  detecting_prerequisites: { start: 32, end: 38 },
-  generating_agenda: { start: 38, end: 44 },
-  generating_misconceptions: { start: 44, end: 50 },
-  building_graph: { start: 50, end: 58 },
-  architecting_roadmap: { start: 58, end: 72 },
-  generating_summary: { start: 72, end: 82 },
-  validating: { start: 82, end: 100 },
+  routing_content: { start: 15, end: 20 },
+  extracting_concepts: { start: 20, end: 28 },
+  generating_chapters: { start: 28, end: 34 },
+  detecting_prerequisites: { start: 34, end: 40 },
+  generating_agenda: { start: 40, end: 46 },
+  generating_misconceptions: { start: 46, end: 52 },
+  building_graph: { start: 52, end: 60 },
+  architecting_roadmap: { start: 60, end: 74 },
+  generating_summary: { start: 74, end: 84 },
+  validating: { start: 84, end: 100 },
   completed: { start: 100, end: 100 },
   failed: { start: 0, end: 0 },
 };
@@ -355,11 +362,12 @@ export function createContentAnalysisPipeline(
 
   const analysisValidatorService: AnalysisValidatorService = createAnalysisValidatorService();
 
-  // New services for misconception, learning agenda, module summary, and prerequisite assessment
+  // New services for misconception, learning agenda, module summary, prerequisite assessment, and chapter generation
   const misconceptionService: MisconceptionService = createMisconceptionService(aiService, supabase);
   const learningAgendaService: LearningAgendaService = createLearningAgendaService(aiService);
   const moduleSummaryService: ModuleSummaryService = createModuleSummaryService(aiService, supabase);
   const prerequisiteAssessmentService: PrerequisiteAssessmentService = createPrerequisiteAssessmentService(supabase, aiService);
+  const chapterGenerationService: ChapterGenerationService = createChapterGenerationService(aiService, supabase);
 
   // Legacy services (kept for backward compatibility)
   let conceptExtractionService: ConceptExtractionService;
@@ -1137,11 +1145,12 @@ export function createContentAnalysisPipeline(
     startFromStage?: PipelineStage
   ): Promise<void> {
     try {
-      // Determine where to start - new three-pass stages with agenda, misconception, and summary generation
+      // Determine where to start - new three-pass stages with agenda, misconception, chapter, and summary generation
       const stages: PipelineStage[] = [
         'transcribing',
         'routing_content',            // Pass 1
         'extracting_concepts',        // Pass 2
+        'generating_chapters',        // Chapter generation (after concept extraction)
         'detecting_prerequisites',    // Prerequisite detection (after concept extraction)
         'generating_agenda',          // Learning Agenda generation (after Pass 2)
         'generating_misconceptions',  // Misconception generation (after agenda)
@@ -1222,6 +1231,45 @@ export function createContentAnalysisPipeline(
                 options
               );
             }
+            break;
+
+          case 'generating_chapters':
+            // Generate chapters for video content
+            // This stage assigns chapter_sequence and generates open_loop_teaser
+            updateStatus(
+              status,
+              'generating_chapters',
+              STAGE_PROGRESS.generating_chapters.start,
+              options
+            );
+
+            if (isCancelled(status.sourceId)) {
+              throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+            }
+
+            if (concepts.length > 0) {
+              try {
+                concepts = await chapterGenerationService.generateChapters(
+                  source.project_id,
+                  source.id,
+                  concepts,
+                  transcription
+                );
+              } catch (error) {
+                // Non-blocking: log the error but continue the pipeline
+                console.warn(
+                  'Chapter generation failed (non-blocking):',
+                  (error as Error).message
+                );
+              }
+            }
+
+            updateStatus(
+              status,
+              'generating_chapters',
+              STAGE_PROGRESS.generating_chapters.end,
+              options
+            );
             break;
 
           case 'detecting_prerequisites':

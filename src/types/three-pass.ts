@@ -296,6 +296,106 @@ export interface Misconception {
 // ============================================================================
 
 /**
+ * Key concept entry in Learning Agenda
+ * Summarizes tier 2-3 concepts for the agenda overview
+ */
+export interface AgendaKeyConcept {
+  /** Concept name */
+  name: string;
+
+  /** Concept tier (2 or 3 for key concepts) */
+  tier: 2 | 3;
+
+  /** Single sentence explanation */
+  one_liner: string;
+
+  /** Why this concept matters to the module */
+  why_included: string;
+}
+
+/**
+ * Learning path phase in the agenda
+ * Represents a logical grouping of concepts
+ */
+export interface AgendaLearningPhase {
+  /** Phase number (1, 2, 3...) */
+  phase: number;
+
+  /** Phase title (e.g., "Foundations", "Core Concepts", "Integration") */
+  phase_title: string;
+
+  /** What learner achieves in this phase */
+  description: string;
+
+  /** Concepts covered in this phase */
+  concept_names: string[];
+
+  /** Estimated time for this phase in minutes */
+  estimated_minutes: number;
+}
+
+/**
+ * Learning Agenda - The "learning contract" between platform and learner
+ * Synthesizes Pass 1 and Pass 2 data into a learner-facing overview
+ * Answers: "What will I learn and how will I get there?"
+ */
+export interface LearningAgenda {
+  // Module Identity
+  /** Compelling, learnable title (5-10 words) */
+  module_title: string;
+
+  /** The question this content answers */
+  central_question: string;
+
+  /** From Pass 1 if available */
+  thesis_statement: string | null;
+
+  // Learning Contract
+  /** "After this module, you will be able to..." */
+  learning_promise: string;
+
+  /** 3-5 aggregated learning objectives with Bloom verbs */
+  module_objectives: string[];
+
+  // Content Overview
+  /** 2-3 sentence synopsis (what the source covers) */
+  content_summary: string;
+
+  /** "This is an introductory overview..." or "This is a deep dive..." */
+  content_type_explanation: string;
+
+  // Concept Architecture
+  /** Tier 3 + key Tier 2 concepts */
+  key_concepts: AgendaKeyConcept[];
+
+  // Learning Path Preview
+  /** Phases showing logical progression */
+  learning_path: AgendaLearningPhase[];
+
+  // Investment & Prerequisites
+  /** Total learning time in minutes */
+  total_time_minutes: number;
+
+  /** Based on concept count and cognitive load */
+  recommended_session_length: number;
+
+  /** Prerequisite knowledge */
+  prerequisites: {
+    /** Must know before starting */
+    required: string[];
+    /** Helps but not required */
+    helpful: string[];
+  };
+
+  // Success Criteria
+  /** "You'll have mastered this when..." */
+  mastery_definition: string;
+
+  /** "You'll be tested through..." */
+  assessment_preview: string;
+}
+
+/**
  * User-facing module summary
  * Provides overview for content preview and navigation
  */
@@ -575,7 +675,9 @@ export type ThreePassPipelineStage =
   | 'transcribing'
   | 'routing_content'            // Pass 1
   | 'extracting_concepts'        // Pass 2 (enhanced)
-  | 'generating_misconceptions'  // Misconception generation (after Pass 2)
+  | 'generating_chapters'        // Chapter generation (after concept extraction)
+  | 'generating_agenda'          // Learning Agenda generation (after Pass 2)
+  | 'generating_misconceptions'  // Misconception generation (after agenda)
   | 'building_graph'
   | 'architecting_roadmap'       // Pass 3 (enhanced)
   | 'generating_summary'         // Module summary generation (after Pass 3)
@@ -592,13 +694,15 @@ export const THREE_PASS_STAGE_PROGRESS: Record<
 > = {
   pending: { start: 0, end: 0 },
   transcribing: { start: 0, end: 15 },
-  routing_content: { start: 15, end: 25 },
-  extracting_concepts: { start: 25, end: 40 },
-  generating_misconceptions: { start: 40, end: 50 },
-  building_graph: { start: 50, end: 60 },
-  architecting_roadmap: { start: 60, end: 75 },
-  generating_summary: { start: 75, end: 85 },
-  validating: { start: 85, end: 100 },
+  routing_content: { start: 15, end: 20 },
+  extracting_concepts: { start: 20, end: 28 },
+  generating_chapters: { start: 28, end: 34 },
+  generating_agenda: { start: 34, end: 40 },
+  generating_misconceptions: { start: 40, end: 48 },
+  building_graph: { start: 48, end: 56 },
+  architecting_roadmap: { start: 56, end: 70 },
+  generating_summary: { start: 70, end: 80 },
+  validating: { start: 80, end: 100 },
   completed: { start: 100, end: 100 },
   failed: { start: 0, end: 0 },
 };
@@ -614,6 +718,8 @@ export const THREE_PASS_STAGE_DESCRIPTIONS: Record<
   transcribing: 'Transcribing audio',
   routing_content: 'Analyzing content type',
   extracting_concepts: 'Extracting concepts',
+  generating_chapters: 'Generating video chapters',
+  generating_agenda: 'Creating learning agenda',
   generating_misconceptions: 'Generating misconceptions',
   building_graph: 'Building knowledge graph',
   architecting_roadmap: 'Creating learning roadmap',

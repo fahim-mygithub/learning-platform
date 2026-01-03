@@ -833,20 +833,30 @@ describe('Content Analysis Pipeline', () => {
     it('has correct stage definitions', () => {
       expect(PIPELINE_STAGES).toContain('pending');
       expect(PIPELINE_STAGES).toContain('transcribing');
+      expect(PIPELINE_STAGES).toContain('routing_content');
       expect(PIPELINE_STAGES).toContain('extracting_concepts');
+      expect(PIPELINE_STAGES).toContain('generating_chapters');
       expect(PIPELINE_STAGES).toContain('detecting_prerequisites');
+      expect(PIPELINE_STAGES).toContain('generating_agenda');
+      expect(PIPELINE_STAGES).toContain('generating_misconceptions');
       expect(PIPELINE_STAGES).toContain('building_graph');
       expect(PIPELINE_STAGES).toContain('architecting_roadmap');
+      expect(PIPELINE_STAGES).toContain('generating_summary');
       expect(PIPELINE_STAGES).toContain('validating');
-      expect(PIPELINE_STAGES).toContain('routing_content');
       expect(PIPELINE_STAGES).toContain('completed');
       expect(PIPELINE_STAGES).toContain('failed');
     });
 
-    it('has detecting_prerequisites after extracting_concepts', () => {
+    it('has generating_chapters after extracting_concepts', () => {
       const extractIndex = PIPELINE_STAGES.indexOf('extracting_concepts');
+      const chapterIndex = PIPELINE_STAGES.indexOf('generating_chapters');
+      expect(chapterIndex).toBe(extractIndex + 1);
+    });
+
+    it('has detecting_prerequisites after generating_chapters', () => {
+      const chapterIndex = PIPELINE_STAGES.indexOf('generating_chapters');
       const detectIndex = PIPELINE_STAGES.indexOf('detecting_prerequisites');
-      expect(detectIndex).toBe(extractIndex + 1);
+      expect(detectIndex).toBe(chapterIndex + 1);
     });
   });
 
@@ -902,7 +912,7 @@ describe('Content Analysis Pipeline', () => {
       expect(transcriptionProgress).toBeLessThanOrEqual(15);
     });
 
-    it('concept extraction stage spans 22-35%', async () => {
+    it('concept extraction stage spans 20-28%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -925,12 +935,12 @@ describe('Content Analysis Pipeline', () => {
         },
       });
 
-      // Concept extraction progress should be in 22-35 range
-      expect(extractionProgress).toBeGreaterThanOrEqual(22);
-      expect(extractionProgress).toBeLessThanOrEqual(35);
+      // Concept extraction progress should be in 20-28 range
+      expect(extractionProgress).toBeGreaterThanOrEqual(20);
+      expect(extractionProgress).toBeLessThanOrEqual(28);
     });
 
-    it('graph building stage spans 50-58%', async () => {
+    it('graph building stage spans 52-60%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -953,12 +963,12 @@ describe('Content Analysis Pipeline', () => {
         },
       });
 
-      // Graph building progress should be in 50-58 range
-      expect(graphProgress).toBeGreaterThanOrEqual(50);
-      expect(graphProgress).toBeLessThanOrEqual(58);
+      // Graph building progress should be in 52-60 range
+      expect(graphProgress).toBeGreaterThanOrEqual(52);
+      expect(graphProgress).toBeLessThanOrEqual(60);
     });
 
-    it('roadmap generation stage spans 58-72%', async () => {
+    it('roadmap generation stage spans 60-74%', async () => {
       const pipeline = createContentAnalysisPipeline(mockSupabase);
 
       mockFrom.mockReturnValueOnce({
@@ -981,9 +991,9 @@ describe('Content Analysis Pipeline', () => {
         },
       });
 
-      // Roadmap architect progress should be in 58-72 range (three-pass architecture)
-      expect(roadmapProgress).toBeGreaterThanOrEqual(58);
-      expect(roadmapProgress).toBeLessThanOrEqual(72);
+      // Roadmap architect progress should be in 60-74 range (three-pass architecture)
+      expect(roadmapProgress).toBeGreaterThanOrEqual(60);
+      expect(roadmapProgress).toBeLessThanOrEqual(74);
     });
   });
 
