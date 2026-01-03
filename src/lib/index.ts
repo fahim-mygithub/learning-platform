@@ -232,3 +232,15 @@ export {
   NotificationFeedbackType,
   type HapticFeedback,
 } from './haptic-feedback';
+
+// Semantic Boundary Service (Topic shift detection using embeddings)
+export {
+  createSemanticBoundaryService,
+  getDefaultSemanticBoundaryService,
+  SemanticBoundaryError,
+  cosineSimilarity,
+  type SemanticBoundaryService,
+  type SemanticBoundaryConfig,
+  type SemanticBoundaryErrorCode,
+  type BoundaryResult,
+} from './semantic-boundary-service';

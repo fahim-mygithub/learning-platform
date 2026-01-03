@@ -69,8 +69,19 @@ export interface SemanticBoundaryConfig {
   apiKey?: string;
 
   /**
-   * Threshold for detecting boundaries as standard deviations below mean
-   * Default: 1.0 (boundaries where similarity < mean - 1 std dev)
+   * Threshold for detecting boundaries as standard deviations below mean.
+   *
+   * A boundary is detected when the cosine similarity between consecutive
+   * propositions falls below: `mean - (thresholdStdDevs * standardDeviation)`
+   *
+   * **Higher values = more sensitive detection (more boundaries detected)**
+   * - `thresholdStdDevs: 0.5` - Less sensitive, only major topic shifts detected
+   * - `thresholdStdDevs: 1.0` - Default, balanced detection
+   * - `thresholdStdDevs: 1.5` - More sensitive, finer-grained topic boundaries
+   * - `thresholdStdDevs: 2.0` - Very sensitive, may detect subtle topic changes
+   *
+   * Must be non-negative.
+   * @default 1.0
    */
   thresholdStdDevs?: number;
 
@@ -243,6 +254,29 @@ export function createSemanticBoundaryService(
     ...config,
     apiKey,
   };
+
+  // Validate configuration
+  if (finalConfig.batchSize <= 0) {
+    throw new SemanticBoundaryError(
+      'batchSize must be positive',
+      'VALIDATION_ERROR',
+      { batchSize: finalConfig.batchSize }
+    );
+  }
+  if (finalConfig.thresholdStdDevs < 0) {
+    throw new SemanticBoundaryError(
+      'thresholdStdDevs must be non-negative',
+      'VALIDATION_ERROR',
+      { thresholdStdDevs: finalConfig.thresholdStdDevs }
+    );
+  }
+  if (finalConfig.minSimilarityDrop < 0 || finalConfig.minSimilarityDrop > 1) {
+    throw new SemanticBoundaryError(
+      'minSimilarityDrop must be between 0 and 1',
+      'VALIDATION_ERROR',
+      { minSimilarityDrop: finalConfig.minSimilarityDrop }
+    );
+  }
 
   // Create OpenAI client
   const openai = new OpenAI({ apiKey: finalConfig.apiKey });
