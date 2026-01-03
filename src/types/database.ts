@@ -14,6 +14,7 @@ import type {
   SourceMapping as SourceMappingType,
   Misconception as MisconceptionType,
   ModuleSummary as ModuleSummaryImport,
+  LearningAgenda as LearningAgendaImport,
 } from './three-pass';
 
 // Re-export three-pass types for convenience
@@ -33,6 +34,9 @@ export type {
   ModuleSummary,
   QuestionType,
   DifficultyLevel,
+  LearningAgenda,
+  AgendaKeyConcept,
+  AgendaLearningPhase,
 } from './three-pass';
 
 // Type aliases for internal use
@@ -45,6 +49,7 @@ type AssessmentSpec = AssessmentSpecType;
 type SourceMapping = SourceMappingType;
 type Misconception = MisconceptionType;
 type ModuleSummary = ModuleSummaryImport;
+type LearningAgenda = LearningAgendaImport;
 
 /**
  * Project status enum
@@ -121,6 +126,8 @@ export interface Source {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
+  /** Learning Agenda generated after Pass 2 (concept extraction) */
+  learning_agenda?: LearningAgenda;
 }
 
 /**
@@ -149,6 +156,8 @@ export interface SourceUpdate {
   status?: SourceStatus;
   error_message?: string | null;
   metadata?: Record<string, unknown>;
+  /** Learning Agenda generated after Pass 2 (concept extraction) */
+  learning_agenda?: LearningAgenda;
 }
 
 // ============================================================================
@@ -271,6 +280,12 @@ export interface Concept {
   source_mapping?: SourceMapping;
   /** Common misconceptions for targeted tutoring */
   common_misconceptions?: Misconception[];
+
+  // Engagement engineering fields (migration 011)
+  /** Order of this concept in the video chapter sequence for feed generation */
+  chapter_sequence?: number | null;
+  /** Hook text to drive curiosity and engagement */
+  open_loop_teaser?: string | null;
 }
 
 /**
@@ -300,6 +315,9 @@ export interface ConceptInsert {
   assessment_spec?: AssessmentSpec;
   source_mapping?: SourceMapping;
   common_misconceptions?: Misconception[];
+  // Engagement engineering fields (migration 011)
+  chapter_sequence?: number | null;
+  open_loop_teaser?: string | null;
 }
 
 /**
@@ -327,6 +345,9 @@ export interface ConceptUpdate {
   assessment_spec?: AssessmentSpec;
   source_mapping?: SourceMapping;
   common_misconceptions?: Misconception[];
+  // Engagement engineering fields (migration 011)
+  chapter_sequence?: number | null;
+  open_loop_teaser?: string | null;
 }
 
 // ============================================================================
@@ -655,4 +676,235 @@ export interface DueReview {
   cognitive_type: CognitiveType;
   concept_difficulty: number | null;
   days_overdue: number;
+}
+
+// ============================================================================
+// User Streaks Types (Engagement Engineering)
+// ============================================================================
+
+/**
+ * User streak record from database (snake_case fields)
+ * Note: Use UserStreak from engagement.ts for camelCase API/UI types
+ */
+export interface UserStreakDB {
+  user_id: string;
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
+  streak_freeze_available: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Data for inserting a new user streak
+ */
+export interface UserStreakDBInsert {
+  user_id: string;
+  current_streak?: number;
+  longest_streak?: number;
+  last_activity_date?: string | null;
+  streak_freeze_available?: boolean;
+}
+
+/**
+ * Data for updating a user streak
+ */
+export interface UserStreakDBUpdate {
+  current_streak?: number;
+  longest_streak?: number;
+  last_activity_date?: string | null;
+  streak_freeze_available?: boolean;
+}
+
+// ============================================================================
+// XP Ledger Types (Engagement Engineering)
+// ============================================================================
+
+// Import and re-export XPReason from engagement.ts to avoid duplication
+import { XPReason } from './engagement';
+export { XPReason };
+
+/**
+ * XP ledger record from database
+ */
+export interface XPLedger {
+  id: string;
+  user_id: string;
+  amount: number;
+  reason: XPReason;
+  concept_id: string | null;
+  source_id: string | null;
+  created_at: string;
+}
+
+/**
+ * Data for inserting a new XP ledger entry
+ */
+export interface XPLedgerInsert {
+  user_id: string;
+  amount: number;
+  reason: XPReason;
+  concept_id?: string | null;
+  source_id?: string | null;
+}
+
+// Note: XP ledger is immutable - no update interface
+
+// ============================================================================
+// User XP Types (Engagement Engineering)
+// ============================================================================
+
+/**
+ * User XP record from database
+ */
+export interface UserXP {
+  user_id: string;
+  total_xp: number;
+  weekly_xp: number;
+  level: number;
+  week_start_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Data for inserting a new user XP record
+ */
+export interface UserXPInsert {
+  user_id: string;
+  total_xp?: number;
+  weekly_xp?: number;
+  level?: number;
+  week_start_date?: string;
+}
+
+/**
+ * Data for updating a user XP record
+ */
+export interface UserXPUpdate {
+  total_xp?: number;
+  weekly_xp?: number;
+  level?: number;
+  week_start_date?: string;
+}
+
+// ============================================================================
+// Feed Progress Types (Engagement Engineering)
+// ============================================================================
+
+/**
+ * Feed progress record from database
+ */
+export interface FeedProgress {
+  id: string;
+  user_id: string;
+  source_id: string;
+  current_index: number;
+  completed_items: string[];
+  synthesis_count: number;
+  last_session_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Data for inserting a new feed progress record
+ */
+export interface FeedProgressInsert {
+  user_id: string;
+  source_id: string;
+  current_index?: number;
+  completed_items?: string[];
+  synthesis_count?: number;
+  last_session_at?: string | null;
+}
+
+/**
+ * Data for updating a feed progress record
+ */
+export interface FeedProgressUpdate {
+  current_index?: number;
+  completed_items?: string[];
+  synthesis_count?: number;
+  last_session_at?: string | null;
+}
+
+// ============================================================================
+// User Typography Preferences Types (Engagement Engineering)
+// ============================================================================
+
+/**
+ * Font family options
+ */
+export type FontFamilyDB = 'system' | 'lexend';
+
+/**
+ * User typography preferences record from database
+ */
+export interface UserTypographyPreferences {
+  user_id: string;
+  font_family: FontFamilyDB;
+  bionic_reading_enabled: boolean;
+  dark_mode_enabled: boolean;
+  font_scale: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Data for inserting user typography preferences
+ */
+export interface UserTypographyPreferencesInsert {
+  user_id: string;
+  font_family?: FontFamilyDB;
+  bionic_reading_enabled?: boolean;
+  dark_mode_enabled?: boolean;
+  font_scale?: number;
+}
+
+/**
+ * Data for updating user typography preferences
+ */
+export interface UserTypographyPreferencesUpdate {
+  font_family?: FontFamilyDB;
+  bionic_reading_enabled?: boolean;
+  dark_mode_enabled?: boolean;
+  font_scale?: number;
+}
+
+// ============================================================================
+// Engagement Views Types
+// ============================================================================
+
+/**
+ * XP leaderboard view record
+ */
+export interface XPLeaderboardEntry {
+  user_id: string;
+  total_xp: number;
+  weekly_xp: number;
+  level: number;
+  current_streak: number | null;
+  longest_streak: number | null;
+  all_time_rank: number;
+  weekly_rank: number;
+}
+
+/**
+ * User engagement summary view record
+ */
+export interface UserEngagementSummaryDB {
+  user_id: string;
+  total_xp: number | null;
+  weekly_xp: number | null;
+  level: number | null;
+  current_streak: number | null;
+  longest_streak: number | null;
+  last_activity_date: string | null;
+  streak_freeze_available: boolean | null;
+  font_family: FontFamilyDB | null;
+  bionic_reading_enabled: boolean | null;
+  dark_mode_enabled: boolean | null;
+  font_scale: number | null;
 }
