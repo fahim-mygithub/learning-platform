@@ -20,6 +20,8 @@ import {
 export interface MockAIServiceConfig {
   /** Default response content when no custom response is set */
   defaultResponse?: string;
+  /** Default structured response when no pattern matches */
+  defaultStructuredResponse?: unknown;
   /** Whether to simulate errors */
   shouldError?: boolean;
   /** Error to throw when shouldError is true */
@@ -216,21 +218,30 @@ export async function sendStructuredMessage<T>(
   }
 
   // Check for custom structured response
-  let data: T = {} as T;
-  let content: string = '{}';
+  let data: T;
+  let content: string;
+  let foundMatch = false;
 
   if (mockConfig.customStructuredResponses) {
     for (const [pattern, response] of mockConfig.customStructuredResponses) {
       if (message.userMessage.includes(pattern)) {
         data = response as T;
         content = JSON.stringify(data);
+        foundMatch = true;
         break;
       }
     }
-  } else {
-    // Default structured response if no custom responses configured
-    data = {} as T;
-    content = JSON.stringify(data);
+  }
+
+  // Use default structured response if no pattern matched
+  if (!foundMatch) {
+    if (mockConfig.defaultStructuredResponse !== undefined) {
+      data = mockConfig.defaultStructuredResponse as T;
+      content = JSON.stringify(data);
+    } else {
+      data = {} as T;
+      content = '{}';
+    }
   }
 
   return {

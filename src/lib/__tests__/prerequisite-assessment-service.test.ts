@@ -12,7 +12,12 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Concept } from '@/src/types/database';
-import { Prerequisite, PrerequisiteInsert } from '@/src/types/prerequisite';
+import {
+  Prerequisite,
+  PrerequisiteInsert,
+  PretestQuestion,
+  MiniLesson,
+} from '@/src/types/prerequisite';
 import { AIError } from '@/src/types/ai';
 
 // Import the mock functions - Jest will use __mocks__/ai-service.ts automatically
@@ -33,6 +38,9 @@ import {
   PrerequisiteAssessmentError,
   InferredPrerequisite,
   deduplicatePrerequisites,
+  GeneratedPretestQuestion,
+  GeneratedMiniLesson,
+  PretestResponseInput,
 } from '../prerequisite-assessment-service';
 
 describe('Prerequisite Assessment Service', () => {
@@ -102,6 +110,85 @@ describe('Prerequisite Assessment Service', () => {
       confidence: 0.8,
     },
   ];
+
+  // Sample prerequisites for pretest generation tests
+  const samplePrerequisites: Prerequisite[] = [
+    {
+      id: 'prereq-1',
+      project_id: projectId,
+      name: 'React Basics',
+      description: 'Understanding of React fundamentals',
+      source: 'mentioned_only',
+      confidence: 1.0,
+      domain: 'web development',
+      created_at: '2024-01-01T00:00:00Z',
+    },
+    {
+      id: 'prereq-2',
+      project_id: projectId,
+      name: 'JavaScript ES6',
+      description: 'Modern JavaScript features',
+      source: 'ai_inferred',
+      confidence: 0.9,
+      domain: 'programming',
+      created_at: '2024-01-01T00:00:00Z',
+    },
+  ];
+
+  // Sample AI-generated question
+  const sampleGeneratedQuestion: GeneratedPretestQuestion = {
+    question: 'What is the purpose of the useState hook in React?',
+    correct_answer: 'To manage component state in functional components',
+    distractors: [
+      'To define CSS styles',
+      'To make HTTP requests',
+      'To navigate between pages',
+    ],
+    explanation: 'useState is a React hook that allows functional components to maintain state.',
+  };
+
+  // Sample stored pretest question
+  const sampleStoredQuestion: PretestQuestion = {
+    id: 'question-1',
+    prerequisite_id: 'prereq-1',
+    question_text: 'What is the purpose of the useState hook in React?',
+    options: [
+      'To manage component state in functional components',
+      'To define CSS styles',
+      'To make HTTP requests',
+      'To navigate between pages',
+    ],
+    correct_index: 0,
+    explanation: 'useState is a React hook that allows functional components to maintain state.',
+    difficulty: 'basic',
+    created_at: '2024-01-01T00:00:00Z',
+  };
+
+  // Sample AI-generated mini-lesson
+  const sampleGeneratedMiniLesson: GeneratedMiniLesson = {
+    title: 'Understanding React Basics',
+    content: 'React is a JavaScript library for building user interfaces.\n\nIt uses a component-based architecture where you build encapsulated components that manage their own state.\n\nKey concepts include JSX, components, props, and state.',
+    key_points: [
+      'React uses a component-based architecture',
+      'JSX allows you to write HTML-like syntax in JavaScript',
+      'State and props are used for data management',
+    ],
+  };
+
+  // Sample stored mini-lesson
+  const sampleStoredMiniLesson: MiniLesson = {
+    id: 'lesson-1',
+    prerequisite_id: 'prereq-1',
+    title: 'Understanding React Basics',
+    content_markdown: 'React is a JavaScript library for building user interfaces.\n\nIt uses a component-based architecture where you build encapsulated components that manage their own state.\n\nKey concepts include JSX, components, props, and state.',
+    key_points: [
+      'React uses a component-based architecture',
+      'JSX allows you to write HTML-like syntax in JavaScript',
+      'State and props are used for data management',
+    ],
+    estimated_minutes: 2,
+    created_at: '2024-01-01T00:00:00Z',
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -935,6 +1022,812 @@ describe('Prerequisite Assessment Service', () => {
       );
 
       expect(error.details).toEqual({ projectId: 'project-123' });
+    });
+  });
+
+  // ============================================================================
+  // TASK 6B.1: generatePretestQuestions Tests
+  // ============================================================================
+  describe('generatePretestQuestions', () => {
+    let service: PrerequisiteAssessmentService;
+
+    beforeEach(() => {
+      service = createPrerequisiteAssessmentService(mockSupabase);
+    });
+
+    it('generates one MC question per prerequisite', async () => {
+      // Mock getPrerequisites to return sample prerequisites
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: samplePrerequisites,
+                    error: null,
+                  }),
+                }),
+              }),
+              single: jest.fn().mockResolvedValue({
+                data: null,
+                error: { code: 'PGRST116' }, // No existing question
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredQuestion,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'pretest_questions') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' }, // No existing question
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredQuestion,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      // Configure AI mock to return generated question for any content
+      // Using default response since we call for each prerequisite
+      configureMock({
+        defaultStructuredResponse: sampleGeneratedQuestion,
+      });
+
+      const questions = await service.generatePretestQuestions(projectId);
+
+      expect(questions).toHaveLength(2);
+    });
+
+    it('includes correct answer and 3 distractors', async () => {
+      // Mock a single prerequisite
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: [samplePrerequisites[0]],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'pretest_questions') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredQuestion,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedQuestion],
+        ]),
+      });
+
+      const questions = await service.generatePretestQuestions(projectId);
+
+      expect(questions).toHaveLength(1);
+      expect(questions[0].options).toHaveLength(4);
+      expect(questions[0].correct_index).toBeGreaterThanOrEqual(0);
+      expect(questions[0].correct_index).toBeLessThanOrEqual(3);
+    });
+
+    it('stores questions in pretest_questions table', async () => {
+      const mockInsertFn = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: sampleStoredQuestion,
+            error: null,
+          }),
+        }),
+      });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: [samplePrerequisites[0]],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'pretest_questions') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: mockInsertFn,
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedQuestion],
+        ]),
+      });
+
+      await service.generatePretestQuestions(projectId);
+
+      expect(mockInsertFn).toHaveBeenCalled();
+    });
+
+    it('throws error when no prerequisites found', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: [],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      await expect(service.generatePretestQuestions(projectId)).rejects.toThrow(
+        PrerequisiteAssessmentError
+      );
+      await expect(service.generatePretestQuestions(projectId)).rejects.toThrow(
+        'No prerequisites found'
+      );
+    });
+
+    it('returns existing question if already generated', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: [samplePrerequisites[0]],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'pretest_questions') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredQuestion, // Existing question found
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      const questions = await service.generatePretestQuestions(projectId);
+
+      expect(questions).toHaveLength(1);
+      expect(questions[0].id).toBe('question-1');
+    });
+
+    it('handles AI generation failure gracefully', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                order: jest.fn().mockReturnValue({
+                  order: jest.fn().mockResolvedValue({
+                    data: [samplePrerequisites[0]],
+                    error: null,
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'pretest_questions') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        shouldError: true,
+        errorToThrow: new AIError('AI service failed', 'SERVER_ERROR'),
+      });
+
+      await expect(service.generatePretestQuestions(projectId)).rejects.toThrow(
+        PrerequisiteAssessmentError
+      );
+    });
+  });
+
+  // ============================================================================
+  // TASK 6B.2: analyzeGaps Tests
+  // ============================================================================
+  describe('analyzeGaps', () => {
+    let service: PrerequisiteAssessmentService;
+    const sessionId = 'session-123';
+
+    beforeEach(() => {
+      service = createPrerequisiteAssessmentService(mockSupabase);
+    });
+
+    it('calculates correct/total ratio', async () => {
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 0, correct_index: 0, is_correct: true },
+        { question_id: 'q2', prerequisite_id: 'prereq-2', selected_index: 1, correct_index: 0, is_correct: false },
+      ];
+
+      mockFrom.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({
+            data: [samplePrerequisites[1]],
+            error: null,
+          }),
+        }),
+      });
+
+      const result = await service.analyzeGaps(sessionId, responses);
+
+      expect(result.totalPrerequisites).toBe(2);
+      expect(result.correct).toBe(1);
+      expect(result.percentage).toBe(50);
+    });
+
+    it('returns proceed recommendation for 100% score', async () => {
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 0, correct_index: 0, is_correct: true },
+        { question_id: 'q2', prerequisite_id: 'prereq-2', selected_index: 0, correct_index: 0, is_correct: true },
+      ];
+
+      const result = await service.analyzeGaps(sessionId, responses);
+
+      expect(result.percentage).toBe(100);
+      expect(result.recommendation).toBe('proceed');
+      expect(result.gaps).toHaveLength(0);
+    });
+
+    it('returns review_suggested recommendation for 50-99% score', async () => {
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 0, correct_index: 0, is_correct: true },
+        { question_id: 'q2', prerequisite_id: 'prereq-2', selected_index: 1, correct_index: 0, is_correct: false },
+      ];
+
+      mockFrom.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({
+            data: [samplePrerequisites[1]],
+            error: null,
+          }),
+        }),
+      });
+
+      const result = await service.analyzeGaps(sessionId, responses);
+
+      expect(result.percentage).toBe(50);
+      expect(result.recommendation).toBe('review_suggested');
+    });
+
+    it('returns review_required recommendation for below 50% score', async () => {
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 1, correct_index: 0, is_correct: false },
+        { question_id: 'q2', prerequisite_id: 'prereq-2', selected_index: 1, correct_index: 0, is_correct: false },
+        { question_id: 'q3', prerequisite_id: 'prereq-3', selected_index: 1, correct_index: 0, is_correct: false },
+      ];
+
+      mockFrom.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({
+            data: samplePrerequisites,
+            error: null,
+          }),
+        }),
+      });
+
+      const result = await service.analyzeGaps(sessionId, responses);
+
+      expect(result.percentage).toBe(0);
+      expect(result.recommendation).toBe('review_required');
+    });
+
+    it('identifies specific prerequisites answered incorrectly', async () => {
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 0, correct_index: 0, is_correct: true },
+        { question_id: 'q2', prerequisite_id: 'prereq-2', selected_index: 1, correct_index: 0, is_correct: false },
+      ];
+
+      mockFrom.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({
+            data: [samplePrerequisites[1]],
+            error: null,
+          }),
+        }),
+      });
+
+      const result = await service.analyzeGaps(sessionId, responses);
+
+      expect(result.gaps).toHaveLength(1);
+      expect(result.gaps[0].id).toBe('prereq-2');
+    });
+
+    it('handles empty responses', async () => {
+      const result = await service.analyzeGaps(sessionId, []);
+
+      expect(result.totalPrerequisites).toBe(0);
+      expect(result.correct).toBe(0);
+      expect(result.percentage).toBe(100);
+      expect(result.recommendation).toBe('proceed');
+      expect(result.gaps).toHaveLength(0);
+    });
+
+    it('groups multiple questions per prerequisite', async () => {
+      // Two questions for same prerequisite, one correct one wrong = gap
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 0, correct_index: 0, is_correct: true },
+        { question_id: 'q2', prerequisite_id: 'prereq-1', selected_index: 1, correct_index: 0, is_correct: false },
+      ];
+
+      mockFrom.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({
+            data: [samplePrerequisites[0]],
+            error: null,
+          }),
+        }),
+      });
+
+      const result = await service.analyzeGaps(sessionId, responses);
+
+      // Only one prerequisite, and it has a gap (not all correct)
+      expect(result.totalPrerequisites).toBe(1);
+      expect(result.correct).toBe(0);
+      expect(result.gaps).toHaveLength(1);
+    });
+
+    it('handles database errors when fetching gaps', async () => {
+      const responses: PretestResponseInput[] = [
+        { question_id: 'q1', prerequisite_id: 'prereq-1', selected_index: 1, correct_index: 0, is_correct: false },
+      ];
+
+      mockFrom.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Database error' },
+          }),
+        }),
+      });
+
+      await expect(service.analyzeGaps(sessionId, responses)).rejects.toThrow(
+        PrerequisiteAssessmentError
+      );
+    });
+  });
+
+  // ============================================================================
+  // TASK 6B.3: generateMiniLesson Tests
+  // ============================================================================
+  describe('generateMiniLesson', () => {
+    let service: PrerequisiteAssessmentService;
+
+    beforeEach(() => {
+      service = createPrerequisiteAssessmentService(mockSupabase);
+    });
+
+    it('generates AI explanation for gaps', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null, // No existing lesson
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredMiniLesson,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: samplePrerequisites[0],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedMiniLesson],
+        ]),
+      });
+
+      const lesson = await service.generateMiniLesson('prereq-1');
+
+      expect(lesson).toBeDefined();
+      expect(lesson.title).toBe('Understanding React Basics');
+      expect(lesson.content_markdown).toContain('React is a JavaScript library');
+    });
+
+    it('generates 2-3 paragraph explanation', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredMiniLesson,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: samplePrerequisites[0],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedMiniLesson],
+        ]),
+      });
+
+      const lesson = await service.generateMiniLesson('prereq-1');
+
+      // Check that content has multiple paragraphs
+      const paragraphs = lesson.content_markdown.split('\n\n').filter(p => p.trim());
+      expect(paragraphs.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('stores lesson in mini_lessons table', async () => {
+      const mockInsertFn = jest.fn().mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          single: jest.fn().mockResolvedValue({
+            data: sampleStoredMiniLesson,
+            error: null,
+          }),
+        }),
+      });
+
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: mockInsertFn,
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: samplePrerequisites[0],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedMiniLesson],
+        ]),
+      });
+
+      await service.generateMiniLesson('prereq-1');
+
+      expect(mockInsertFn).toHaveBeenCalled();
+    });
+
+    it('returns existing mini-lesson if already generated', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredMiniLesson, // Existing lesson found
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      const lesson = await service.generateMiniLesson('prereq-1');
+
+      expect(lesson.id).toBe('lesson-1');
+    });
+
+    it('throws error when prerequisite not found', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      await expect(service.generateMiniLesson('nonexistent')).rejects.toThrow(
+        PrerequisiteAssessmentError
+      );
+      await expect(service.generateMiniLesson('nonexistent')).rejects.toThrow(
+        'Prerequisite not found'
+      );
+    });
+
+    it('includes key points in the lesson', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredMiniLesson,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: samplePrerequisites[0],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedMiniLesson],
+        ]),
+      });
+
+      const lesson = await service.generateMiniLesson('prereq-1');
+
+      expect(lesson.key_points).toBeDefined();
+      expect(lesson.key_points.length).toBeGreaterThan(0);
+    });
+
+    it('handles AI generation failure gracefully', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: samplePrerequisites[0],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        shouldError: true,
+        errorToThrow: new AIError('AI service failed', 'SERVER_ERROR'),
+      });
+
+      await expect(service.generateMiniLesson('prereq-1')).rejects.toThrow(
+        PrerequisiteAssessmentError
+      );
+    });
+
+    it('calculates estimated reading time', async () => {
+      mockFrom.mockImplementation((table: string) => {
+        if (table === 'mini_lessons') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: null,
+                  error: { code: 'PGRST116' },
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              select: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: sampleStoredMiniLesson,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'prerequisites') {
+          return {
+            select: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                single: jest.fn().mockResolvedValue({
+                  data: samplePrerequisites[0],
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        return { select: jest.fn() };
+      });
+
+      configureMock({
+        customStructuredResponses: new Map([
+          ['React', sampleGeneratedMiniLesson],
+        ]),
+      });
+
+      const lesson = await service.generateMiniLesson('prereq-1');
+
+      expect(lesson.estimated_minutes).toBeDefined();
+      expect(lesson.estimated_minutes).toBeGreaterThanOrEqual(1);
     });
   });
 });

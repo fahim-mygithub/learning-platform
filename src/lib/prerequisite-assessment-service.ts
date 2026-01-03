@@ -28,6 +28,10 @@ import {
   Prerequisite,
   PrerequisiteInsert,
   PrerequisiteSource,
+  PretestQuestion,
+  PretestQuestionInsert,
+  MiniLesson,
+  MiniLessonInsert,
 } from '@/src/types/prerequisite';
 import {
   createAIService,
@@ -43,7 +47,11 @@ export type PrerequisiteAssessmentErrorCode =
   | 'DETECTION_FAILED'
   | 'DATABASE_ERROR'
   | 'VALIDATION_ERROR'
-  | 'NO_CONTENT_AVAILABLE';
+  | 'NO_CONTENT_AVAILABLE'
+  | 'QUESTION_GENERATION_FAILED'
+  | 'MINI_LESSON_GENERATION_FAILED'
+  | 'NO_PREREQUISITES_FOUND'
+  | 'PREREQUISITE_NOT_FOUND';
 
 /**
  * Custom error class for prerequisite assessment operations
@@ -72,6 +80,52 @@ export interface InferredPrerequisite {
   description: string;
   domain?: string;
   confidence: number;
+}
+
+/**
+ * AI-generated pretest question response
+ */
+export interface GeneratedPretestQuestion {
+  question: string;
+  correct_answer: string;
+  distractors: string[];
+  explanation: string;
+}
+
+/**
+ * AI-generated mini-lesson response
+ */
+export interface GeneratedMiniLesson {
+  title: string;
+  content: string;
+  key_points: string[];
+}
+
+/**
+ * Recommendation based on gap analysis
+ */
+export type GapRecommendation = 'proceed' | 'review_suggested' | 'review_required';
+
+/**
+ * Response input for gap analysis
+ */
+export interface PretestResponseInput {
+  question_id: string;
+  prerequisite_id: string;
+  selected_index: number;
+  correct_index: number;
+  is_correct: boolean;
+}
+
+/**
+ * Result of gap analysis
+ */
+export interface GapAnalysisResult {
+  totalPrerequisites: number;
+  correct: number;
+  percentage: number;
+  gaps: Prerequisite[];
+  recommendation: GapRecommendation;
 }
 
 /**
@@ -135,6 +189,31 @@ export interface PrerequisiteAssessmentService {
    * @param projectId - ID of the project
    */
   clearPrerequisites(projectId: string): Promise<void>;
+
+  /**
+   * Generate pretest questions for all prerequisites in a project
+   * @param projectId - ID of the project
+   * @returns Array of generated and stored pretest questions
+   */
+  generatePretestQuestions(projectId: string): Promise<PretestQuestion[]>;
+
+  /**
+   * Analyze gaps from pretest responses
+   * @param pretestSessionId - ID of the pretest session
+   * @param responses - Array of pretest responses
+   * @returns Gap analysis result with recommendation
+   */
+  analyzeGaps(
+    pretestSessionId: string,
+    responses: PretestResponseInput[]
+  ): Promise<GapAnalysisResult>;
+
+  /**
+   * Generate a mini-lesson for a specific prerequisite
+   * @param prerequisiteId - ID of the prerequisite
+   * @returns Generated and stored mini-lesson
+   */
+  generateMiniLesson(prerequisiteId: string): Promise<MiniLesson>;
 }
 
 /**
@@ -175,6 +254,88 @@ Guidelines:
 - Avoid trivial prerequisites (e.g., "knowing how to read")
 - Be specific and actionable
 - Higher confidence for clearly assumed knowledge`;
+
+/**
+ * System prompt for pretest question generation
+ */
+const PRETEST_QUESTION_SYSTEM_PROMPT = `You are an expert at creating assessment questions for educational content. Your task is to generate a multiple choice question that tests understanding of a specific prerequisite concept.
+
+Create a question that:
+- Tests understanding, not just recall
+- Has exactly 4 options (1 correct, 3 distractors)
+- Has plausible distractors (wrong but believable)
+- Includes a clear explanation of the correct answer
+
+Return a JSON object with this exact format:
+{
+  "question": "The question text",
+  "correct_answer": "The correct answer",
+  "distractors": ["Distractor 1", "Distractor 2", "Distractor 3"],
+  "explanation": "Why the correct answer is right and why the distractors are wrong"
+}
+
+Guidelines:
+- Keep the question clear and unambiguous
+- Avoid trick questions
+- Make distractors plausible but clearly incorrect to someone who understands the concept
+- The explanation should be educational`;
+
+/**
+ * System prompt for mini-lesson generation
+ */
+const MINI_LESSON_SYSTEM_PROMPT = `You are an expert educational content creator. Your task is to create a brief mini-lesson that teaches a prerequisite concept to someone who missed it on a pretest.
+
+Create a lesson that:
+- Is 2-3 paragraphs long
+- Explains what the concept is
+- Explains why it matters
+- Provides key points to remember
+- Uses clear, accessible language
+
+Return a JSON object with this exact format:
+{
+  "title": "Title for the mini-lesson",
+  "content": "The 2-3 paragraph explanation in markdown format",
+  "key_points": ["Key point 1", "Key point 2", "Key point 3"]
+}
+
+Guidelines:
+- Keep it concise and focused
+- Use examples where helpful
+- Build from foundational understanding
+- Make it accessible to beginners`;
+
+/**
+ * Build user message for pretest question generation
+ */
+function buildQuestionUserMessage(prerequisite: Prerequisite): string {
+  return `Generate a multiple choice question to test if someone understands:
+"${prerequisite.name}: ${prerequisite.description || 'A foundational concept'}"
+
+${prerequisite.domain ? `Domain: ${prerequisite.domain}` : ''}
+
+Return a JSON object with question, correct_answer, distractors (array of 3), and explanation.`;
+}
+
+/**
+ * Build user message for mini-lesson generation
+ */
+function buildMiniLessonUserMessage(prerequisite: Prerequisite): string {
+  return `Create a brief (2-3 paragraph) explanation of:
+"${prerequisite.name}"
+
+${prerequisite.description ? `Context: ${prerequisite.description}` : ''}
+${prerequisite.domain ? `Domain: ${prerequisite.domain}` : ''}
+
+The learner got this wrong on a pretest, so explain clearly:
+1. What it is
+2. Why it matters
+3. Key points to remember
+
+Keep it concise and accessible.
+
+Return a JSON object with title, content (markdown string), and key_points (array of strings).`;
+}
 
 /**
  * Build user message for AI prerequisite inference
@@ -496,6 +657,275 @@ export function createPrerequisiteAssessmentService(
           `Failed to clear prerequisites: ${error.message}`,
           'DATABASE_ERROR',
           { projectId }
+        );
+      }
+    },
+
+    async generatePretestQuestions(projectId: string): Promise<PretestQuestion[]> {
+      // Get all prerequisites for the project
+      const prerequisites = await this.getPrerequisites(projectId);
+
+      if (prerequisites.length === 0) {
+        throw new PrerequisiteAssessmentError(
+          'No prerequisites found for project',
+          'NO_PREREQUISITES_FOUND',
+          { projectId }
+        );
+      }
+
+      // Generate a question for each prerequisite
+      const generatedQuestions: PretestQuestion[] = [];
+
+      for (const prereq of prerequisites) {
+        try {
+          // Check if a question already exists for this prerequisite
+          const { data: existingQuestion } = await supabase
+            .from('pretest_questions')
+            .select('*')
+            .eq('prerequisite_id', prereq.id)
+            .single();
+
+          if (existingQuestion) {
+            generatedQuestions.push(existingQuestion as PretestQuestion);
+            continue;
+          }
+
+          // Generate question using AI
+          const response = await sendStructuredMessage<GeneratedPretestQuestion>(
+            service,
+            {
+              systemPrompt: PRETEST_QUESTION_SYSTEM_PROMPT,
+              userMessage: buildQuestionUserMessage(prereq),
+              options: {
+                model: 'claude-sonnet',
+                temperature: 0.7, // Slightly higher for variety in questions
+              },
+            }
+          );
+
+          // Validate AI response
+          const generated = response.data;
+          if (
+            !generated.question ||
+            !generated.correct_answer ||
+            !Array.isArray(generated.distractors) ||
+            generated.distractors.length !== 3
+          ) {
+            throw new Error('Invalid question format from AI');
+          }
+
+          // Build options array with correct answer at random position
+          const correctIndex = Math.floor(Math.random() * 4);
+          const options: string[] = [...generated.distractors];
+          options.splice(correctIndex, 0, generated.correct_answer);
+
+          // Store question in database
+          const questionInsert: PretestQuestionInsert = {
+            prerequisite_id: prereq.id,
+            question_text: generated.question,
+            options,
+            correct_index: correctIndex,
+            explanation: generated.explanation || null,
+            difficulty: 'basic', // Default to basic for now
+          };
+
+          const { data: storedQuestion, error: insertError } = await supabase
+            .from('pretest_questions')
+            .insert(questionInsert)
+            .select()
+            .single();
+
+          if (insertError) {
+            throw new PrerequisiteAssessmentError(
+              `Failed to store question: ${insertError.message}`,
+              'DATABASE_ERROR',
+              { prerequisiteId: prereq.id }
+            );
+          }
+
+          generatedQuestions.push(storedQuestion as PretestQuestion);
+        } catch (error) {
+          // If it's already a PrerequisiteAssessmentError, rethrow
+          if (error instanceof PrerequisiteAssessmentError) {
+            throw error;
+          }
+          // Wrap other errors
+          throw new PrerequisiteAssessmentError(
+            `Failed to generate question for prerequisite "${prereq.name}": ${(error as Error).message}`,
+            'QUESTION_GENERATION_FAILED',
+            { prerequisiteId: prereq.id, cause: error }
+          );
+        }
+      }
+
+      return generatedQuestions;
+    },
+
+    async analyzeGaps(
+      pretestSessionId: string,
+      responses: PretestResponseInput[]
+    ): Promise<GapAnalysisResult> {
+      if (responses.length === 0) {
+        return {
+          totalPrerequisites: 0,
+          correct: 0,
+          percentage: 100,
+          gaps: [],
+          recommendation: 'proceed',
+        };
+      }
+
+      // Group responses by prerequisite
+      const responsesByPrereq = new Map<string, PretestResponseInput[]>();
+      for (const response of responses) {
+        const existing = responsesByPrereq.get(response.prerequisite_id) || [];
+        existing.push(response);
+        responsesByPrereq.set(response.prerequisite_id, existing);
+      }
+
+      // Calculate per-prerequisite scores
+      const prerequisiteIds = Array.from(responsesByPrereq.keys());
+      const totalPrerequisites = prerequisiteIds.length;
+      let correctPrerequisites = 0;
+      const gapPrerequisiteIds: string[] = [];
+
+      for (const [prereqId, prereqResponses] of responsesByPrereq.entries()) {
+        // A prerequisite is "correct" if all its questions were answered correctly
+        const allCorrect = prereqResponses.every((r) => r.is_correct);
+        if (allCorrect) {
+          correctPrerequisites++;
+        } else {
+          gapPrerequisiteIds.push(prereqId);
+        }
+      }
+
+      // Calculate percentage
+      const percentage =
+        totalPrerequisites > 0
+          ? Math.round((correctPrerequisites / totalPrerequisites) * 100)
+          : 100;
+
+      // Determine recommendation based on percentage
+      let recommendation: GapRecommendation;
+      if (percentage === 100) {
+        recommendation = 'proceed';
+      } else if (percentage >= 50) {
+        recommendation = 'review_suggested';
+      } else {
+        recommendation = 'review_required';
+      }
+
+      // Fetch the gap prerequisites
+      let gaps: Prerequisite[] = [];
+      if (gapPrerequisiteIds.length > 0) {
+        const { data: gapData, error: gapError } = await supabase
+          .from('prerequisites')
+          .select('*')
+          .in('id', gapPrerequisiteIds);
+
+        if (gapError) {
+          throw new PrerequisiteAssessmentError(
+            `Failed to fetch gap prerequisites: ${gapError.message}`,
+            'DATABASE_ERROR',
+            { pretestSessionId }
+          );
+        }
+
+        gaps = (gapData as Prerequisite[]) || [];
+      }
+
+      return {
+        totalPrerequisites,
+        correct: correctPrerequisites,
+        percentage,
+        gaps,
+        recommendation,
+      };
+    },
+
+    async generateMiniLesson(prerequisiteId: string): Promise<MiniLesson> {
+      // Check if a mini-lesson already exists
+      const { data: existingLesson } = await supabase
+        .from('mini_lessons')
+        .select('*')
+        .eq('prerequisite_id', prerequisiteId)
+        .single();
+
+      if (existingLesson) {
+        return existingLesson as MiniLesson;
+      }
+
+      // Fetch the prerequisite
+      const { data: prereq, error: prereqError } = await supabase
+        .from('prerequisites')
+        .select('*')
+        .eq('id', prerequisiteId)
+        .single();
+
+      if (prereqError || !prereq) {
+        throw new PrerequisiteAssessmentError(
+          `Prerequisite not found: ${prerequisiteId}`,
+          'PREREQUISITE_NOT_FOUND',
+          { prerequisiteId }
+        );
+      }
+
+      try {
+        // Generate mini-lesson using AI
+        const response = await sendStructuredMessage<GeneratedMiniLesson>(
+          service,
+          {
+            systemPrompt: MINI_LESSON_SYSTEM_PROMPT,
+            userMessage: buildMiniLessonUserMessage(prereq as Prerequisite),
+            options: {
+              model: 'claude-sonnet',
+              temperature: 0.5,
+            },
+          }
+        );
+
+        // Validate AI response
+        const generated = response.data;
+        if (!generated.title || !generated.content) {
+          throw new Error('Invalid mini-lesson format from AI');
+        }
+
+        // Estimate reading time (roughly 200 words per minute)
+        const wordCount = generated.content.split(/\s+/).length;
+        const estimatedMinutes = Math.max(1, Math.ceil(wordCount / 200));
+
+        // Store mini-lesson in database
+        const lessonInsert: MiniLessonInsert = {
+          prerequisite_id: prerequisiteId,
+          title: generated.title,
+          content_markdown: generated.content,
+          key_points: generated.key_points || [],
+          estimated_minutes: estimatedMinutes,
+        };
+
+        const { data: storedLesson, error: insertError } = await supabase
+          .from('mini_lessons')
+          .insert(lessonInsert)
+          .select()
+          .single();
+
+        if (insertError) {
+          throw new PrerequisiteAssessmentError(
+            `Failed to store mini-lesson: ${insertError.message}`,
+            'DATABASE_ERROR',
+            { prerequisiteId }
+          );
+        }
+
+        return storedLesson as MiniLesson;
+      } catch (error) {
+        if (error instanceof PrerequisiteAssessmentError) {
+          throw error;
+        }
+        throw new PrerequisiteAssessmentError(
+          `Failed to generate mini-lesson: ${(error as Error).message}`,
+          'MINI_LESSON_GENERATION_FAILED',
+          { prerequisiteId, cause: error }
         );
       }
     },
