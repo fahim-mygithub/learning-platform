@@ -214,6 +214,19 @@ export {
   type SynthesisPromptResult,
 } from './synthesis-detector-service';
 
+// Synthesis Phase Service (Synthesis assessment orchestration)
+export {
+  createSynthesisPhaseService,
+  SynthesisPhaseError,
+  type SynthesisPhaseService,
+  type SynthesisPhaseConfig,
+  type SynthesisPhaseErrorCode,
+  type SynthesisConcept as SynthesisPhaseConcept, // Alias to avoid conflict
+  type SynthesisInteraction,
+  type InteractionType,
+  type ConceptType,
+} from './synthesis-phase-service';
+
 // Session Timer Service (Break suggestions)
 export {
   createSessionTimerService,
@@ -265,3 +278,16 @@ export {
   type VideoSegmentationConfig,
   type VideoSegmentationErrorCode,
 } from './video-segmentation-service';
+
+// Mastery Evaluation Service (Synthesis phase scoring)
+export {
+  createMasteryEvaluationService,
+  MasteryEvaluationError,
+  type MasteryEvaluationService,
+  type MasteryEvaluationConfig,
+  type MasteryEvaluationErrorCode,
+  type CompletedInteraction,
+  type ConceptMastery,
+  type MasterySummary,
+  type MasteryStatus,
+} from './mastery-evaluation-service';
