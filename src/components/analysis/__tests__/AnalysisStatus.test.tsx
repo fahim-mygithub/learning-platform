@@ -59,8 +59,13 @@ describe('AnalysisStatus Component', () => {
     const stageDescriptions: Record<PipelineStage, string> = {
       pending: 'Preparing analysis...',
       transcribing: 'Transcribing audio...',
+      segmenting_video: 'Segmenting video into topics...',
       routing_content: 'Classifying content type...',
       extracting_concepts: 'Extracting concepts...',
+      chunking_text: 'Chunking text content...',
+      generating_chapters: 'Generating video chapters...',
+      detecting_prerequisites: 'Detecting prerequisites...',
+      generating_agenda: 'Creating learning agenda...',
       generating_misconceptions: 'Generating misconceptions...',
       building_graph: 'Building knowledge graph...',
       architecting_roadmap: 'Architecting learning roadmap...',

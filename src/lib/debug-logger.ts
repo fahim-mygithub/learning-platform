@@ -30,6 +30,10 @@ export type PipelineStage =
   // Three-pass pedagogical analysis stages
   | 'rhetorical_router'
   | 'enhanced_concept_extraction'
+  | 'chapter_generation'
+  | 'chunking_text'
+  | 'segmenting_video'
+  | 'learning_agenda_generation'
   | 'misconception_generation'
   | 'roadmap_architect'
   | 'module_summary_generation';
@@ -91,6 +95,10 @@ function getStageColor(stage: PipelineStage): string {
     // Three-pass pedagogical analysis stages
     rhetorical_router: '#EC4899',           // Pink (Pass 1)
     enhanced_concept_extraction: '#14B8A6', // Teal (Pass 2)
+    chapter_generation: '#84CC16',          // Lime (Post Pass 2)
+    chunking_text: '#64748B',               // Slate (Text chunking)
+    segmenting_video: '#0EA5E9',            // Sky blue (Video segmentation)
+    learning_agenda_generation: '#22D3EE',  // Cyan bright (Post Pass 2)
     misconception_generation: '#A855F7',    // Purple bright (Post Pass 2)
     roadmap_architect: '#F97316',           // Orange bright (Pass 3)
     module_summary_generation: '#06B6D4',   // Cyan (Post Pass 3)

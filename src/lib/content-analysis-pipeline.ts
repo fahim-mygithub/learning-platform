@@ -105,6 +105,16 @@ import {
   createChapterGenerationService,
   ChapterGenerationService,
 } from './chapter-generation-service';
+import {
+  createTextChunkingPipeline,
+  TextChunkingPipeline,
+  TextChunk,
+} from './text-chunking-pipeline';
+import {
+  createVideoSegmentationService,
+  VideoSegmentationService,
+  VideoSegment,
+} from './video-segmentation-service';
 import { EnhancedExtractedConcept, Misconception, LearningAgenda } from '@/src/types/three-pass';
 
 /**
@@ -113,6 +123,8 @@ import { EnhancedExtractedConcept, Misconception, LearningAgenda } from '@/src/t
 export type PipelineStage =
   | 'pending'
   | 'transcribing'
+  | 'segmenting_video'           // Video segmentation for YouTube
+  | 'chunking_text'              // Text chunking for PDF/URL sources
   | 'routing_content'            // Pass 1: Rhetorical Router
   | 'extracting_concepts'        // Pass 2: Enhanced Concept Extraction
   | 'generating_chapters'        // Chapter generation (after concept extraction)
@@ -132,6 +144,8 @@ export type PipelineStage =
 export const PIPELINE_STAGES: PipelineStage[] = [
   'pending',
   'transcribing',
+  'segmenting_video',
+  'chunking_text',
   'routing_content',
   'extracting_concepts',
   'generating_chapters',
@@ -151,17 +165,19 @@ export const PIPELINE_STAGES: PipelineStage[] = [
  */
 const STAGE_PROGRESS: Record<PipelineStage, { start: number; end: number }> = {
   pending: { start: 0, end: 0 },
-  transcribing: { start: 0, end: 15 },
-  routing_content: { start: 15, end: 20 },
-  extracting_concepts: { start: 20, end: 28 },
-  generating_chapters: { start: 28, end: 34 },
-  detecting_prerequisites: { start: 34, end: 40 },
-  generating_agenda: { start: 40, end: 46 },
-  generating_misconceptions: { start: 46, end: 52 },
-  building_graph: { start: 52, end: 60 },
-  architecting_roadmap: { start: 60, end: 74 },
-  generating_summary: { start: 74, end: 84 },
-  validating: { start: 84, end: 100 },
+  transcribing: { start: 0, end: 10 },
+  segmenting_video: { start: 10, end: 15 },
+  chunking_text: { start: 15, end: 20 },
+  routing_content: { start: 20, end: 25 },
+  extracting_concepts: { start: 25, end: 32 },
+  generating_chapters: { start: 32, end: 38 },
+  detecting_prerequisites: { start: 38, end: 44 },
+  generating_agenda: { start: 44, end: 50 },
+  generating_misconceptions: { start: 50, end: 56 },
+  building_graph: { start: 56, end: 64 },
+  architecting_roadmap: { start: 64, end: 78 },
+  generating_summary: { start: 78, end: 88 },
+  validating: { start: 88, end: 100 },
   completed: { start: 100, end: 100 },
   failed: { start: 0, end: 0 },
 };
@@ -284,6 +300,21 @@ function isYouTubeSource(source: Source): boolean {
 }
 
 /**
+ * Check if source needs text chunking (PDF or non-YouTube URL sources)
+ */
+function needsTextChunking(source: Source): boolean {
+  return source.type === 'pdf' ||
+    (source.type === 'url' && !isYouTubeSource(source));
+}
+
+/**
+ * Check if source needs video segmentation (YouTube URLs only)
+ */
+function needsVideoSegmentation(source: Source): boolean {
+  return source.type === 'url' && !!source.url && isYouTubeUrl(source.url);
+}
+
+/**
  * Create a content analysis pipeline instance
  *
  * @param supabase - Supabase client instance
@@ -368,6 +399,24 @@ export function createContentAnalysisPipeline(
   const moduleSummaryService: ModuleSummaryService = createModuleSummaryService(aiService, supabase);
   const prerequisiteAssessmentService: PrerequisiteAssessmentService = createPrerequisiteAssessmentService(supabase, aiService);
   const chapterGenerationService: ChapterGenerationService = createChapterGenerationService(aiService, supabase);
+
+  // Text chunking pipeline for PDF and URL sources
+  let textChunkingPipeline: TextChunkingPipeline | null = null;
+  try {
+    textChunkingPipeline = createTextChunkingPipeline();
+  } catch {
+    // Text chunking is optional - some deployments may not have the required API keys
+    console.warn('Text chunking pipeline not available - skipping text chunking');
+  }
+
+  // Video segmentation service for YouTube sources
+  let videoSegmentationService: VideoSegmentationService | null = null;
+  try {
+    videoSegmentationService = createVideoSegmentationService();
+  } catch {
+    // Video segmentation is optional - requires OpenAI API key for embeddings
+    console.warn('Video segmentation service not available - skipping video segmentation');
+  }
 
   // Legacy services (kept for backward compatibility)
   let conceptExtractionService: ConceptExtractionService;
@@ -567,6 +616,149 @@ export function createContentAnalysisPipeline(
 
     // Get the completed transcription
     return transcriptionService.getTranscription(source.id);
+  }
+
+  /**
+   * Run video segmentation stage for YouTube sources
+   * Creates intelligent video segments at semantic topic boundaries
+   * This stage is non-blocking - the pipeline continues even if it fails
+   */
+  async function runVideoSegmentationStage(
+    source: Source,
+    transcription: Transcription | null,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<VideoSegment[]> {
+    updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.start, options);
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    // Only segment YouTube sources
+    if (!needsVideoSegmentation(source)) {
+      updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.end, options);
+      return [];
+    }
+
+    // Need transcript to segment
+    if (!transcription || !transcription.segments || transcription.segments.length === 0) {
+      console.warn('[Pipeline] No transcript segments available for video segmentation');
+      updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.end, options);
+      return [];
+    }
+
+    // Need video segmentation service
+    if (!videoSegmentationService) {
+      console.warn('[Pipeline] Video segmentation service not available');
+      updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.end, options);
+      return [];
+    }
+
+    try {
+      // Get video duration from transcription segments
+      const lastSegment = transcription.segments[transcription.segments.length - 1];
+      const videoDuration = Math.ceil(lastSegment.end);
+
+      // Run segmentation
+      const segments = await videoSegmentationService.segmentTranscript(
+        transcription.segments,
+        videoDuration
+      );
+
+      // Store segments in source metadata
+      const { error } = await supabase
+        .from('sources')
+        .update({
+          metadata: {
+            ...source.metadata,
+            video_segments: segments,
+          },
+        })
+        .eq('id', source.id);
+
+      if (error) {
+        console.warn('[Pipeline] Failed to store video segments:', error.message);
+      }
+
+      updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.end, options);
+
+      return segments;
+    } catch (error) {
+      // Non-blocking: log the error but continue the pipeline
+      console.warn(
+        '[Pipeline] Video segmentation failed (non-blocking):',
+        (error as Error).message
+      );
+
+      updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.end, options);
+
+      return [];
+    }
+  }
+
+  /**
+   * Run text chunking stage for PDF and non-YouTube URL sources
+   * This stage is non-blocking - the pipeline continues even if it fails
+   */
+  async function runTextChunkingStage(
+    source: Source,
+    status: PipelineStatus,
+    options?: AnalyzeOptions
+  ): Promise<TextChunk[]> {
+    updateStatus(status, 'chunking_text', STAGE_PROGRESS.chunking_text.start, options);
+
+    if (isCancelled(status.sourceId)) {
+      throw new ContentAnalysisPipelineError('Analysis cancelled', 'CANCELLED');
+    }
+
+    const textContent = (source.metadata?.text_content as string) || '';
+
+    if (!textContent || textContent.trim() === '') {
+      updateStatus(status, 'chunking_text', STAGE_PROGRESS.chunking_text.end, options);
+      return [];
+    }
+
+    if (!textChunkingPipeline) {
+      // Text chunking not available, skip gracefully
+      console.warn('Text chunking pipeline not available, skipping chunking stage');
+      updateStatus(status, 'chunking_text', STAGE_PROGRESS.chunking_text.end, options);
+      return [];
+    }
+
+    try {
+      // Run text through chunking pipeline
+      const chunks = await textChunkingPipeline.chunkText(textContent);
+
+      // Store chunks in database (source metadata)
+      const { error } = await supabase
+        .from('sources')
+        .update({
+          metadata: {
+            ...source.metadata,
+            text_chunks: chunks,
+          },
+        })
+        .eq('id', source.id);
+
+      if (error) {
+        console.warn('Failed to store text chunks:', error.message);
+      }
+
+      updateStatus(status, 'chunking_text', STAGE_PROGRESS.chunking_text.end, options);
+
+      return chunks;
+    } catch (error) {
+      // Non-blocking: log the error but continue the pipeline
+      console.warn(
+        'Text chunking failed (non-blocking):',
+        (error as Error).message
+      );
+
+      updateStatus(status, 'chunking_text', STAGE_PROGRESS.chunking_text.end, options);
+
+      return [];
+    }
   }
 
   /**
@@ -1148,6 +1340,8 @@ export function createContentAnalysisPipeline(
       // Determine where to start - new three-pass stages with agenda, misconception, chapter, and summary generation
       const stages: PipelineStage[] = [
         'transcribing',
+        'segmenting_video',           // Video segmentation for YouTube
+        'chunking_text',              // Text chunking for PDF/URL sources
         'routing_content',            // Pass 1
         'extracting_concepts',        // Pass 2
         'generating_chapters',        // Chapter generation (after concept extraction)
@@ -1168,6 +1362,8 @@ export function createContentAnalysisPipeline(
 
       let transcription: Transcription | null = null;
       let pass1Result: Pass1Result | null = null;
+      let textChunks: TextChunk[] = [];
+      let videoSegments: VideoSegment[] = [];
 
       // If starting from a stage after transcribing, fetch existing transcription
       if (startIndex > 0) {
@@ -1200,6 +1396,31 @@ export function createContentAnalysisPipeline(
         switch (currentStage) {
           case 'transcribing':
             transcription = await runTranscriptionStage(source, status, options);
+            break;
+
+          case 'segmenting_video':
+            // Only run for YouTube sources
+            if (needsVideoSegmentation(source)) {
+              videoSegments = await runVideoSegmentationStage(
+                source,
+                transcription,
+                status,
+                options
+              );
+            } else {
+              // Skip this stage for non-YouTube sources
+              updateStatus(status, 'segmenting_video', STAGE_PROGRESS.segmenting_video.end, options);
+            }
+            break;
+
+          case 'chunking_text':
+            // Only run for text-based sources (PDF, non-YouTube URL)
+            if (needsTextChunking(source)) {
+              textChunks = await runTextChunkingStage(source, status, options);
+            } else {
+              // Skip this stage for video/YouTube sources
+              updateStatus(status, 'chunking_text', STAGE_PROGRESS.chunking_text.end, options);
+            }
             break;
 
           case 'routing_content':

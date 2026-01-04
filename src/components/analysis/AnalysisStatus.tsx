@@ -29,7 +29,7 @@
  * ```
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -37,7 +37,9 @@ import {
   StyleSheet,
   type ViewStyle,
 } from 'react-native';
-import { colors, spacing } from '@/src/theme';
+import { spacing } from '@/src/theme';
+import { useTypography } from '@/src/lib/typography-context';
+import { type ColorTheme } from '@/src/theme/colors';
 import type { PipelineStage } from '@/src/lib';
 import { AnalysisStatusBar } from './AnalysisStatusBar';
 
@@ -63,9 +65,14 @@ export interface AnalysisStatusProps {
 const STAGE_DESCRIPTIONS: Record<PipelineStage, string> = {
   pending: 'Preparing analysis...',
   transcribing: 'Transcribing audio...',
+  segmenting_video: 'Segmenting video into topics...',      // Video segmentation for YouTube
   routing_content: 'Classifying content type...',           // Pass 1
   extracting_concepts: 'Extracting concepts...',            // Pass 2
-  generating_misconceptions: 'Generating misconceptions...', // After Pass 2
+  chunking_text: 'Chunking text content...',               // For text sources (PDF, URL)
+  generating_chapters: 'Generating video chapters...',     // After concept extraction
+  detecting_prerequisites: 'Detecting prerequisites...',   // After chapters
+  generating_agenda: 'Creating learning agenda...',         // After Pass 2
+  generating_misconceptions: 'Generating misconceptions...', // After agenda
   building_graph: 'Building knowledge graph...',
   architecting_roadmap: 'Architecting learning roadmap...', // Pass 3
   generating_summary: 'Generating module summary...',       // After Pass 3
@@ -91,6 +98,11 @@ export function AnalysisStatus({
   onRetry,
   testID,
 }: AnalysisStatusProps): React.ReactElement {
+  // Get dynamic colors from typography context
+  const { getColors } = useTypography();
+  const colors = getColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   const description = STAGE_DESCRIPTIONS[stage];
   const isCompleted = stage === 'completed';
   const isFailed = stage === 'failed';
@@ -164,83 +176,88 @@ export function AnalysisStatus({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    padding: spacing[4],
-    backgroundColor: colors.backgroundSecondary,
-    borderRadius: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing[3],
-  },
-  checkmarkContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.success,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing[2],
-  },
-  checkmark: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  errorIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.error,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing[2],
-  },
-  errorIcon: {
-    color: colors.white,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  description: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    flex: 1,
-  },
-  descriptionCompleted: {
-    color: colors.success,
-  },
-  descriptionFailed: {
-    color: colors.error,
-  },
-  errorMessage: {
-    marginTop: spacing[3],
-    fontSize: 14,
-    color: colors.error,
-    lineHeight: 20,
-  },
-  retryButton: {
-    marginTop: spacing[3],
-    minHeight: MIN_TOUCH_TARGET_SIZE,
-    minWidth: MIN_TOUCH_TARGET_SIZE,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    alignSelf: 'flex-start',
-  },
-  retryButtonPressed: {
-    opacity: 0.8,
-  },
-  retryButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+/**
+ * Create dynamic styles based on theme colors
+ */
+function createStyles(colors: ColorTheme) {
+  return StyleSheet.create({
+    container: {
+      padding: spacing[4],
+      backgroundColor: colors.backgroundSecondary,
+      borderRadius: 8,
+    },
+    header: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+    },
+    checkmarkContainer: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: colors.success,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing[2],
+    },
+    checkmark: {
+      color: colors.white,
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    errorIconContainer: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: colors.error,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: spacing[2],
+    },
+    errorIcon: {
+      color: colors.white,
+      fontSize: 14,
+      fontWeight: '700',
+    },
+    description: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+      flex: 1,
+    },
+    descriptionCompleted: {
+      color: colors.success,
+    },
+    descriptionFailed: {
+      color: colors.error,
+    },
+    errorMessage: {
+      marginTop: spacing[3],
+      fontSize: 14,
+      color: colors.error,
+      lineHeight: 20,
+    },
+    retryButton: {
+      marginTop: spacing[3],
+      minHeight: MIN_TOUCH_TARGET_SIZE,
+      minWidth: MIN_TOUCH_TARGET_SIZE,
+      paddingHorizontal: spacing[4],
+      paddingVertical: spacing[2],
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'flex-start',
+    },
+    retryButtonPressed: {
+      opacity: 0.8,
+    },
+    retryButtonText: {
+      color: colors.white,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
+}
 
 export default AnalysisStatus;
