@@ -168,10 +168,73 @@ const mockFeedItems = [
   },
 ];
 
+// Mock feed items with pretest phase
+const mockPretestFeedItems = [
+  {
+    id: 'pretest-1',
+    type: 'pretest',
+    prerequisiteId: 'prereq-1',
+    prerequisiteName: 'Basic Algebra',
+    questionText: 'What is 2 + 2?',
+    options: ['3', '4', '5', '6'],
+    correctIndex: 1,
+    explanation: 'Simple addition',
+    questionNumber: 1,
+    totalQuestions: 2,
+  },
+  {
+    id: 'pretest-2',
+    type: 'pretest',
+    prerequisiteId: 'prereq-2',
+    prerequisiteName: 'Fractions',
+    questionText: 'What is 1/2 + 1/2?',
+    options: ['0', '1/2', '1', '2'],
+    correctIndex: 2,
+    explanation: 'Adding fractions',
+    questionNumber: 2,
+    totalQuestions: 2,
+  },
+  {
+    id: 'pretest-results-1',
+    type: 'pretest_results',
+    totalPrerequisites: 2,
+    correctCount: 0,
+    percentage: 0,
+    recommendation: 'review_required',
+    gapPrerequisiteIds: ['prereq-1', 'prereq-2'],
+  },
+  {
+    id: 'video-1',
+    type: 'video_chunk',
+    conceptId: 'concept-1',
+    startSec: 0,
+    endSec: 60,
+    title: 'Test Concept 1',
+  },
+];
+
+// Mock insertMiniLessons function
+const mockInsertMiniLessons = jest.fn().mockImplementation((feed, gaps, insertAfterIndex) => {
+  if (gaps.length === 0) return feed;
+  const miniLessonItems = gaps.map((gap: { prerequisiteId: string; title: string; contentMarkdown: string; keyPoints: string[]; estimatedMinutes: number }, index: number) => ({
+    id: `mini-lesson-${index}`,
+    type: 'mini_lesson',
+    prerequisiteId: gap.prerequisiteId,
+    title: gap.title,
+    contentMarkdown: gap.contentMarkdown,
+    keyPoints: gap.keyPoints,
+    estimatedMinutes: gap.estimatedMinutes,
+  }));
+  const beforeInsert = feed.slice(0, insertAfterIndex + 1);
+  const afterInsert = feed.slice(insertAfterIndex + 1);
+  return [...beforeInsert, ...miniLessonItems, ...afterInsert];
+});
+
 jest.mock('../feed-builder-service', () => ({
   createFeedBuilderService: jest.fn(() => ({
     buildFeed: jest.fn().mockReturnValue(mockFeedItems),
     buildTextFeed: jest.fn().mockReturnValue([]),
+    insertMiniLessons: mockInsertMiniLessons,
   })),
 }));
 
@@ -451,6 +514,369 @@ describe('feed-context', () => {
 
       // Should still award XP
       expect(mockAwardXP).toHaveBeenCalled();
+    });
+  });
+
+  describe('pretest state management', () => {
+    it('exposes pretestState in context', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // pretestState should be defined with initial values
+      expect(result.current.pretestState).toBeDefined();
+      expect(result.current.pretestState.answers).toBeDefined();
+      expect(result.current.pretestState.completed).toBe(false);
+      expect(result.current.pretestState.gapPrerequisiteIds).toEqual([]);
+    });
+
+    it('exposes answerPretest action in context', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(typeof result.current.answerPretest).toBe('function');
+    });
+
+    it('exposes completePretest action in context', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(typeof result.current.completePretest).toBe('function');
+    });
+  });
+
+  describe('answerPretest action', () => {
+    it('records pretest answer in state', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1);
+        jest.advanceTimersByTime(100);
+      });
+
+      // Answer should be recorded
+      expect(result.current.pretestState.answers.get('prereq-1')).toBe(1);
+    });
+
+    it('can record multiple pretest answers', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1);
+        result.current.answerPretest('prereq-2', 2);
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(result.current.pretestState.answers.get('prereq-1')).toBe(1);
+      expect(result.current.pretestState.answers.get('prereq-2')).toBe(2);
+    });
+
+    it('overwrites previous answer for same prerequisite', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 0);
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1);
+        jest.advanceTimersByTime(100);
+      });
+
+      // Should have the new answer
+      expect(result.current.pretestState.answers.get('prereq-1')).toBe(1);
+    });
+  });
+
+  describe('completePretest action', () => {
+    it('sets completed to true', async () => {
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(result.current.pretestState.completed).toBe(true);
+    });
+
+    it('calculates gaps from wrong answers when feed has pretest items', async () => {
+      // Need to use a feed with pretest items to test gap calculation
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Answer first question wrong (correct is index 1, answer 0)
+      // Answer second question correct (correct is index 2)
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 0); // Wrong
+        result.current.answerPretest('prereq-2', 2); // Correct
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      // Only prereq-1 should be in gaps (answered incorrectly)
+      expect(result.current.pretestState.gapPrerequisiteIds).toContain('prereq-1');
+      expect(result.current.pretestState.gapPrerequisiteIds).not.toContain('prereq-2');
+    });
+
+    it('returns empty gaps when all answers are correct', async () => {
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Answer both correctly
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1); // Correct
+        result.current.answerPretest('prereq-2', 2); // Correct
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(result.current.pretestState.gapPrerequisiteIds).toEqual([]);
+    });
+
+    it('treats unanswered questions as incorrect', async () => {
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Only answer first question (correctly)
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1); // Correct
+        // prereq-2 left unanswered
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      // Unanswered prereq-2 should be in gaps
+      expect(result.current.pretestState.gapPrerequisiteIds).toContain('prereq-2');
+      expect(result.current.pretestState.gapPrerequisiteIds).not.toContain('prereq-1');
+    });
+  });
+
+  describe('pretest results update', () => {
+    it('updates PretestResultsItem with actual scores after completePretest', async () => {
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Answer one correctly, one incorrectly
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1); // Correct
+        result.current.answerPretest('prereq-2', 0); // Wrong
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      // Find the pretest_results item in feedItems
+      const resultsItem = result.current.feedItems.find(
+        (item) => item.type === 'pretest_results'
+      );
+
+      expect(resultsItem).toBeDefined();
+      if (resultsItem && resultsItem.type === 'pretest_results') {
+        expect(resultsItem.correctCount).toBe(1);
+        expect(resultsItem.percentage).toBe(50);
+        expect(resultsItem.gapPrerequisiteIds).toContain('prereq-2');
+      }
+    });
+  });
+
+  describe('mini-lesson insertion', () => {
+    it('inserts mini-lessons for gaps after pretest completion', async () => {
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Answer incorrectly to create a gap
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 0); // Wrong
+        result.current.answerPretest('prereq-2', 2); // Correct
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      // insertMiniLessons should have been called
+      expect(mockInsertMiniLessons).toHaveBeenCalled();
+    });
+
+    it('does not insert mini-lessons when there are no gaps', async () => {
+      mockInsertMiniLessons.mockClear();
+
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Answer all correctly
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1); // Correct
+        result.current.answerPretest('prereq-2', 2); // Correct
+        jest.advanceTimersByTime(100);
+      });
+
+      await act(async () => {
+        result.current.completePretest();
+        jest.advanceTimersByTime(100);
+      });
+
+      // insertMiniLessons should be called with empty gaps
+      const insertCall = mockInsertMiniLessons.mock.calls.find(
+        (call: unknown[]) => call[1].length === 0
+      );
+      // Either not called or called with empty gaps array
+      if (mockInsertMiniLessons.mock.calls.length > 0) {
+        expect(insertCall || mockInsertMiniLessons.mock.calls[0][1]).toEqual([]);
+      }
+    });
+  });
+
+  describe('pretest progress tracking', () => {
+    it('tracks percentage of pretests answered', async () => {
+      const { createFeedBuilderService } = require('../feed-builder-service');
+      createFeedBuilderService.mockReturnValueOnce({
+        buildFeed: jest.fn().mockReturnValue(mockPretestFeedItems),
+        buildTextFeed: jest.fn().mockReturnValue([]),
+        insertMiniLessons: mockInsertMiniLessons,
+      });
+
+      const wrapper = createWrapper('source-1');
+      const { result } = renderHook(() => useFeed(), { wrapper });
+
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+      });
+
+      // Initially no answers
+      expect(result.current.pretestProgress).toBe(0);
+
+      // Answer one of two
+      await act(async () => {
+        result.current.answerPretest('prereq-1', 1);
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(result.current.pretestProgress).toBe(50);
+
+      // Answer second
+      await act(async () => {
+        result.current.answerPretest('prereq-2', 2);
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(result.current.pretestProgress).toBe(100);
     });
   });
 });

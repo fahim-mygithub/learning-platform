@@ -43,6 +43,12 @@ import type {
   UserXP,
   XPReason,
   XPAwardResult,
+  PretestItem,
+  PretestResultsItem,
+} from '../types/engagement';
+import {
+  isPretestItem,
+  isPretestResultsItem,
 } from '../types/engagement';
 import type { SessionStats } from '../components/feed/SessionBreakModal';
 
@@ -54,6 +60,18 @@ export interface QuizResult {
   xpAwarded: number;
   levelUp: boolean;
   newLevel: number;
+}
+
+/**
+ * Pretest state tracking for prerequisite assessment
+ */
+export interface PretestState {
+  /** Map of prerequisiteId to user's answer index */
+  answers: Map<string, number>;
+  /** Whether pretest phase is completed */
+  completed: boolean;
+  /** IDs of prerequisites with knowledge gaps (incorrect answers) */
+  gapPrerequisiteIds: string[];
 }
 
 /**
@@ -116,6 +134,14 @@ export interface FeedContextValue {
   sourceId: string;
   /** Source URL (video URL) */
   sourceUrl: string | null;
+  /** Current pretest state */
+  pretestState: PretestState;
+  /** Answer a pretest question */
+  answerPretest: (prerequisiteId: string, answerIndex: number) => void;
+  /** Complete pretest phase and calculate gaps */
+  completePretest: () => void;
+  /** Pretest progress percentage (0-100) */
+  pretestProgress: number;
 }
 
 /**
@@ -299,6 +325,11 @@ export function FeedProvider({
 
   // Source state
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
+
+  // Pretest state
+  const [pretestAnswers, setPretestAnswers] = useState<Map<string, number>>(new Map());
+  const [pretestCompleted, setPretestCompleted] = useState(false);
+  const [gapPrerequisiteIds, setGapPrerequisiteIds] = useState<string[]>([]);
 
   // Services
   const sessionTimerRef = useRef<SessionTimerService | null>(null);
@@ -740,6 +771,135 @@ export function FeedProvider({
   }, [sessionStats.correctAnswers, sessionStats.totalAnswers]);
 
   /**
+   * Memoized pretest state
+   */
+  const pretestState = useMemo<PretestState>(() => ({
+    answers: pretestAnswers,
+    completed: pretestCompleted,
+    gapPrerequisiteIds,
+  }), [pretestAnswers, pretestCompleted, gapPrerequisiteIds]);
+
+  /**
+   * Get pretest items from the feed
+   */
+  const pretestItems = useMemo(() => {
+    return feedItems.filter(isPretestItem) as PretestItem[];
+  }, [feedItems]);
+
+  /**
+   * Calculate pretest progress percentage
+   * Based on how many unique prerequisites have been answered
+   */
+  const pretestProgress = useMemo(() => {
+    if (pretestItems.length === 0) return 0;
+    // Get unique prerequisite IDs from pretest items
+    const uniquePrereqIds = new Set(pretestItems.map((item) => item.prerequisiteId));
+    const totalPrerequisites = uniquePrereqIds.size;
+    if (totalPrerequisites === 0) return 0;
+    const answeredCount = pretestAnswers.size;
+    return Math.round((answeredCount / totalPrerequisites) * 100);
+  }, [pretestItems, pretestAnswers]);
+
+  /**
+   * Answer a pretest question
+   * Records the user's answer for a specific prerequisite
+   */
+  const answerPretest = useCallback((prerequisiteId: string, answerIndex: number) => {
+    setPretestAnswers((prev) => {
+      const newAnswers = new Map(prev);
+      newAnswers.set(prerequisiteId, answerIndex);
+      return newAnswers;
+    });
+  }, []);
+
+  /**
+   * Complete pretest phase and calculate gaps
+   * - Determines which prerequisites were answered incorrectly
+   * - Updates PretestResultsItem with actual scores
+   * - Inserts mini-lessons for gaps
+   */
+  const completePretest = useCallback(() => {
+    setPretestCompleted(true);
+
+    // Calculate gaps from pretest items in the feed
+    const gaps: string[] = [];
+    let correctCount = 0;
+
+    for (const pretestItem of pretestItems) {
+      const userAnswer = pretestAnswers.get(pretestItem.prerequisiteId);
+
+      // If not answered or answered incorrectly, it's a gap
+      if (userAnswer === undefined || userAnswer !== pretestItem.correctIndex) {
+        if (!gaps.includes(pretestItem.prerequisiteId)) {
+          gaps.push(pretestItem.prerequisiteId);
+        }
+      } else {
+        correctCount++;
+      }
+    }
+
+    setGapPrerequisiteIds(gaps);
+
+    // Update PretestResultsItem in feedItems with actual scores
+    const uniquePrereqIds = new Set(pretestItems.map((item) => item.prerequisiteId));
+    const totalPrerequisites = uniquePrereqIds.size;
+    const percentage = totalPrerequisites > 0
+      ? Math.round((correctCount / totalPrerequisites) * 100)
+      : 0;
+
+    // Determine recommendation based on percentage
+    let recommendation: 'proceed' | 'review_suggested' | 'review_required';
+    if (percentage >= 80) {
+      recommendation = 'proceed';
+    } else if (percentage >= 50) {
+      recommendation = 'review_suggested';
+    } else {
+      recommendation = 'review_required';
+    }
+
+    // Update feedItems with actual pretest results
+    setFeedItems((prev) => {
+      const updated = prev.map((item) => {
+        if (isPretestResultsItem(item)) {
+          return {
+            ...item,
+            correctCount,
+            percentage,
+            recommendation,
+            gapPrerequisiteIds: gaps,
+          };
+        }
+        return item;
+      });
+
+      // Insert mini-lessons for gaps if there are any
+      if (gaps.length > 0) {
+        // Find the index of PretestResultsItem
+        const resultsIndex = updated.findIndex(isPretestResultsItem);
+        if (resultsIndex !== -1) {
+          // Create mini-lesson data for gaps
+          const miniLessonData = gaps.map((prereqId) => {
+            // Find the pretest item for this prerequisite to get the name
+            const pretestItem = pretestItems.find((p) => p.prerequisiteId === prereqId);
+            return {
+              prerequisiteId: prereqId,
+              title: `Review: ${pretestItem?.prerequisiteName || prereqId}`,
+              contentMarkdown: `Let's review the key concepts for ${pretestItem?.prerequisiteName || prereqId}.`,
+              keyPoints: ['Key point 1', 'Key point 2'],
+              estimatedMinutes: 3,
+            };
+          });
+
+          // Use feed builder service to insert mini-lessons
+          return feedBuilderRef.current.insertMiniLessons(updated, miniLessonData, resultsIndex);
+        }
+      }
+
+      return updated;
+    });
+  }, [pretestItems, pretestAnswers]);
+
+  /**
    * Memoized context value
    */
   const contextValue = useMemo<FeedContextValue>(
@@ -768,6 +928,10 @@ export function FeedProvider({
       completedItemIds,
       sourceId,
       sourceUrl,
+      pretestState,
+      answerPretest,
+      completePretest,
+      pretestProgress,
     }),
     [
       feedItems,
@@ -794,6 +958,10 @@ export function FeedProvider({
       completedItemIds,
       sourceId,
       sourceUrl,
+      pretestState,
+      answerPretest,
+      completePretest,
+      pretestProgress,
     ]
   );
 
