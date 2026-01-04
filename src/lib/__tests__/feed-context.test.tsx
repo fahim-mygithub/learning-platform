@@ -341,8 +341,8 @@ describe('feed-context', () => {
         jest.advanceTimersByTime(100);
       });
 
-      // Verify XP service was called with synthesis_complete reason
-      expect(mockAwardXP).toHaveBeenCalledWith('user-123', 'synthesis_complete');
+      // Verify XP service was called with synthesis_complete reason and xpRecommendation from mastery summary
+      expect(mockAwardXP).toHaveBeenCalledWith('user-123', 'synthesis_complete', undefined, 125);
     });
 
     it('updates session stats with XP earned', async () => {

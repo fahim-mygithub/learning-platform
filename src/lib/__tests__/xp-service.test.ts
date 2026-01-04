@@ -300,6 +300,48 @@ describe('xp-service', () => {
       expect(result.newTotalXp).toBe(525);
       expect(result.amountAwarded).toBe(25);
     });
+
+    it('uses customAmount when provided instead of random selection', async () => {
+      const currentXPRow = { ...mockXPRow, total_xp: 500, level: 3 };
+      const mockChain = createMockChain({ data: currentXPRow, error: null });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      const selectRandomSpy = jest.spyOn(service, 'selectRandomXP');
+      (supabase.rpc as jest.Mock).mockResolvedValue({
+        data: { new_total_xp: 625, new_level: 3 },
+        error: null,
+      });
+
+      const customXP = 125; // From mastery evaluation xpRecommendation
+      const result = await service.awardXP('user-123', 'synthesis_complete', undefined, customXP);
+
+      expect(selectRandomSpy).not.toHaveBeenCalled();
+      expect(supabase.rpc).toHaveBeenCalledWith('award_xp', {
+        p_user_id: 'user-123',
+        p_amount: 125,
+        p_reason: 'synthesis_complete',
+        p_concept_id: null,
+      });
+      expect(result.amountAwarded).toBe(125);
+      expect(result.newTotalXp).toBe(625);
+    });
+
+    it('falls back to random selection when customAmount is not provided', async () => {
+      const currentXPRow = { ...mockXPRow, total_xp: 500, level: 3 };
+      const mockChain = createMockChain({ data: currentXPRow, error: null });
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
+
+      jest.spyOn(service, 'selectRandomXP').mockReturnValue(75);
+      (supabase.rpc as jest.Mock).mockResolvedValue({
+        data: { new_total_xp: 575, new_level: 3 },
+        error: null,
+      });
+
+      const result = await service.awardXP('user-123', 'synthesis_complete');
+
+      expect(service.selectRandomXP).toHaveBeenCalledWith('synthesis_complete');
+      expect(result.amountAwarded).toBe(75);
+    });
   });
 
   describe('calculateLevel', () => {

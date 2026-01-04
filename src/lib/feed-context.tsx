@@ -657,8 +657,13 @@ export function FeedProvider({
       // Evaluate mastery
       const summary = masteryEvaluationRef.current.evaluate(interactions);
 
-      // Award XP for synthesis completion
-      const xpResult = await xpServiceRef.current.awardXP(user.id, 'synthesis_complete');
+      // Award XP for synthesis completion using mastery-based recommendation
+      const xpResult = await xpServiceRef.current.awardXP(
+        user.id,
+        'synthesis_complete',
+        undefined,
+        summary.xpRecommendation
+      );
 
       // Update session stats
       setSessionStats((prev) => ({

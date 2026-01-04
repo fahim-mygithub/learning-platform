@@ -67,8 +67,9 @@ export interface XPService {
   /**
    * Award XP to a user for a specific reason
    * Calls the award_xp RPC function
+   * @param customAmount Optional custom XP amount to award (overrides random selection)
    */
-  awardXP(userId: string, reason: XPReason, conceptId?: string): Promise<XPAwardResult>;
+  awardXP(userId: string, reason: XPReason, conceptId?: string, customAmount?: number): Promise<XPAwardResult>;
 
   /**
    * Get current XP data for a user
@@ -128,10 +129,11 @@ export function createXPService(): XPService {
     async awardXP(
       userId: string,
       reason: XPReason,
-      conceptId?: string
+      conceptId?: string,
+      customAmount?: number
     ): Promise<XPAwardResult> {
-      // Select random XP amount based on reason
-      const amount = this.selectRandomXP(reason);
+      // Use custom amount if provided, otherwise select random XP amount based on reason
+      const amount = customAmount ?? this.selectRandomXP(reason);
 
       // Get current XP before awarding (for level up detection)
       const currentXP = await this.getUserXP(userId);
