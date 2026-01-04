@@ -244,3 +244,14 @@ export {
   type SemanticBoundaryErrorCode,
   type BoundaryResult,
 } from './semantic-boundary-service';
+
+// Text Chunking Pipeline (Proposition + Boundary Orchestration)
+export {
+  createTextChunkingPipeline,
+  getDefaultTextChunkingPipeline,
+  TextChunkingPipelineError,
+  type TextChunkingPipeline,
+  type TextChunk,
+  type TextChunkingPipelineConfig,
+  type TextChunkingErrorCode,
+} from './text-chunking-pipeline';
