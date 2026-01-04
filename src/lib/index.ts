@@ -255,3 +255,13 @@ export {
   type TextChunkingPipelineConfig,
   type TextChunkingErrorCode,
 } from './text-chunking-pipeline';
+
+// Video Segmentation Service (Intelligent video chunk boundaries)
+export {
+  createVideoSegmentationService,
+  VideoSegmentationError,
+  type VideoSegmentationService,
+  type VideoSegment,
+  type VideoSegmentationConfig,
+  type VideoSegmentationErrorCode,
+} from './video-segmentation-service';
