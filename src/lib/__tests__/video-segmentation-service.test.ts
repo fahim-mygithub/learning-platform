@@ -144,5 +144,27 @@ describe('VideoSegmentationService', () => {
       const allDurations = result.map(s => s.durationSec);
       expect(allDurations.every(d => d <= 900)).toBe(true);
     });
+
+    it('merges first segment if too short with next segment', async () => {
+      const segments: TranscriptSegment[] = [
+        { text: 'Short intro.', start: 0, end: 60 }, // Too short - first segment
+        { text: 'Main topic part 1.', start: 60, end: 300 },
+        { text: 'Main topic part 2.', start: 300, end: 600 },
+      ];
+
+      // Boundary at 1 would make first segment only 60 seconds
+      mockBoundaryService.findBoundaries.mockResolvedValue([1]);
+
+      const service = createVideoSegmentationService({
+        minDurationSec: 180, // 3 minutes minimum
+      });
+
+      const result = await service.segmentTranscript(segments, 600);
+
+      // First segment should be merged with next
+      expect(result.length).toBeLessThanOrEqual(2);
+      expect(result[0].startSec).toBe(0);
+      expect(result[0].durationSec).toBeGreaterThanOrEqual(180);
+    });
   });
 });

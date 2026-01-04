@@ -188,10 +188,12 @@ export function createVideoSegmentationService(
   ): VideoSegment[] {
     if (videoSegments.length <= 1) return videoSegments;
 
+    // Make a copy to avoid mutating input
+    const segments = [...videoSegments];
     const result: VideoSegment[] = [];
 
-    for (let i = 0; i < videoSegments.length; i++) {
-      const current = videoSegments[i];
+    for (let i = 0; i < segments.length; i++) {
+      const current = segments[i];
 
       if (current.durationSec < minDurationSec && result.length > 0) {
         // Merge with previous segment
@@ -204,10 +206,10 @@ export function createVideoSegmentationService(
           sentences: [...prev.sentences, ...current.sentences],
           endIndex: current.endIndex,
         };
-      } else if (current.durationSec < minDurationSec && i < videoSegments.length - 1) {
-        // Merge with next segment (modify next in place)
-        const next = videoSegments[i + 1];
-        videoSegments[i + 1] = {
+      } else if (current.durationSec < minDurationSec && i < segments.length - 1) {
+        // Merge with next segment (modify next in the copy)
+        const next = segments[i + 1];
+        segments[i + 1] = {
           ...next,
           startSec: current.startSec,
           durationSec: next.endSec - current.startSec,
@@ -251,11 +253,11 @@ export function createVideoSegmentationService(
 
         const splitSentences = segment.sentences.slice(startSentenceIdx, endSentenceIdx);
 
-        // Calculate time based on proportion
-        const proportion = splitSentences.length / segment.sentences.length;
-        const splitDuration = segment.durationSec * proportion;
-        const splitStart = segment.startSec + (i * segment.durationSec / numSplits);
-        const splitEnd = splitStart + splitDuration;
+        // Calculate times based on equal time intervals
+        const intervalDuration = segment.durationSec / numSplits;
+        const splitStart = segment.startSec + (i * intervalDuration);
+        const splitEnd = Math.min(splitStart + intervalDuration, segment.endSec);
+        const splitDuration = splitEnd - splitStart;
 
         result.push({
           id: `${prefix}-${result.length}`,
