@@ -88,3 +88,8 @@ export {
   type SessionBreakModalProps,
   type SessionStats,
 } from './SessionBreakModal';
+
+export {
+  SessionCompleteCard,
+  type SessionCompleteCardProps,
+} from './SessionCompleteCard';
