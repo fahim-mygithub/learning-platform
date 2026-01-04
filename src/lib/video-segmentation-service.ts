@@ -115,8 +115,32 @@ export function createVideoSegmentationService(
       segments: TranscriptSegment[],
       videoDuration: number
     ): Promise<VideoSegment[]> {
-      // TODO: Implement
-      throw new Error('Not implemented');
+      // Handle empty input
+      if (!segments || segments.length === 0) {
+        return [];
+      }
+
+      // For very short transcripts (under minDuration), return as single segment
+      const totalDuration = videoDuration || segments[segments.length - 1].end;
+
+      if (totalDuration <= finalConfig.minDurationSec || segments.length === 1) {
+        const allText = segments.map((s) => s.text).join(' ');
+        return [
+          {
+            id: `${finalConfig.segmentIdPrefix}-0`,
+            startSec: segments[0].start,
+            endSec: segments[segments.length - 1].end,
+            durationSec: segments[segments.length - 1].end - segments[0].start,
+            text: allText,
+            sentences: segments.map((s) => s.text),
+            startIndex: 0,
+            endIndex: segments.length,
+          },
+        ];
+      }
+
+      // TODO: Implement semantic boundary detection
+      throw new Error('Not implemented: semantic segmentation');
     },
   };
 }
