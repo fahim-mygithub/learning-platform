@@ -179,6 +179,100 @@ export function createVideoSegmentationService(
     return videoSegments;
   }
 
+  /**
+   * Merge segments that are too short with adjacent segments
+   */
+  function optimizeShortSegments(
+    videoSegments: VideoSegment[],
+    minDurationSec: number
+  ): VideoSegment[] {
+    if (videoSegments.length <= 1) return videoSegments;
+
+    const result: VideoSegment[] = [];
+
+    for (let i = 0; i < videoSegments.length; i++) {
+      const current = videoSegments[i];
+
+      if (current.durationSec < minDurationSec && result.length > 0) {
+        // Merge with previous segment
+        const prev = result[result.length - 1];
+        result[result.length - 1] = {
+          ...prev,
+          endSec: current.endSec,
+          durationSec: current.endSec - prev.startSec,
+          text: prev.text + ' ' + current.text,
+          sentences: [...prev.sentences, ...current.sentences],
+          endIndex: current.endIndex,
+        };
+      } else if (current.durationSec < minDurationSec && i < videoSegments.length - 1) {
+        // Merge with next segment (modify next in place)
+        const next = videoSegments[i + 1];
+        videoSegments[i + 1] = {
+          ...next,
+          startSec: current.startSec,
+          durationSec: next.endSec - current.startSec,
+          text: current.text + ' ' + next.text,
+          sentences: [...current.sentences, ...next.sentences],
+          startIndex: current.startIndex,
+        };
+      } else {
+        result.push(current);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Split segments that exceed maxDuration at roughly equal intervals
+   */
+  function splitLongSegments(
+    videoSegments: VideoSegment[],
+    maxDurationSec: number,
+    prefix: string
+  ): VideoSegment[] {
+    const result: VideoSegment[] = [];
+
+    for (const segment of videoSegments) {
+      if (segment.durationSec <= maxDurationSec) {
+        result.push({ ...segment, id: `${prefix}-${result.length}` });
+        continue;
+      }
+
+      // Split at roughly equal intervals
+      const numSplits = Math.ceil(segment.durationSec / maxDurationSec);
+      const sentencesPerSplit = Math.ceil(segment.sentences.length / numSplits);
+
+      for (let i = 0; i < numSplits; i++) {
+        const startSentenceIdx = i * sentencesPerSplit;
+        const endSentenceIdx = Math.min((i + 1) * sentencesPerSplit, segment.sentences.length);
+
+        if (startSentenceIdx >= segment.sentences.length) break;
+
+        const splitSentences = segment.sentences.slice(startSentenceIdx, endSentenceIdx);
+
+        // Calculate time based on proportion
+        const proportion = splitSentences.length / segment.sentences.length;
+        const splitDuration = segment.durationSec * proportion;
+        const splitStart = segment.startSec + (i * segment.durationSec / numSplits);
+        const splitEnd = splitStart + splitDuration;
+
+        result.push({
+          id: `${prefix}-${result.length}`,
+          startSec: Math.round(splitStart),
+          endSec: Math.round(splitEnd),
+          durationSec: Math.round(splitDuration),
+          text: splitSentences.join(' '),
+          sentences: splitSentences,
+          startIndex: segment.startIndex + startSentenceIdx,
+          endIndex: segment.startIndex + endSentenceIdx,
+        });
+      }
+    }
+
+    return result;
+  }
+
   return {
     async segmentTranscript(
       segments: TranscriptSegment[],
@@ -224,11 +318,29 @@ export function createVideoSegmentationService(
       }
 
       // Map boundaries to video segments
-      return mapBoundariesToSegments(
+      let videoSegments = mapBoundariesToSegments(
         segments,
         boundaries,
         finalConfig.segmentIdPrefix
       );
+
+      // Optimize: merge short segments
+      videoSegments = optimizeShortSegments(videoSegments, finalConfig.minDurationSec);
+
+      // Optimize: split long segments
+      videoSegments = splitLongSegments(
+        videoSegments,
+        finalConfig.maxDurationSec,
+        finalConfig.segmentIdPrefix
+      );
+
+      // Re-number IDs sequentially
+      videoSegments = videoSegments.map((seg, idx) => ({
+        ...seg,
+        id: `${finalConfig.segmentIdPrefix}-${idx}`,
+      }));
+
+      return videoSegments;
     },
   };
 }

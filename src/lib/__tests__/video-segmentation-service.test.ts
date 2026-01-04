@@ -79,7 +79,8 @@ describe('VideoSegmentationService', () => {
       // Boundary at index 2 (topic shift from ML to history)
       mockBoundaryService.findBoundaries.mockResolvedValue([2]);
 
-      const service = createVideoSegmentationService();
+      // Use minDurationSec: 100 to prevent merging (each segment is 200 sec)
+      const service = createVideoSegmentationService({ minDurationSec: 100 });
       const result = await service.segmentTranscript(segments, 400);
 
       expect(mockBoundaryService.findBoundaries).toHaveBeenCalledWith([
@@ -92,6 +93,56 @@ describe('VideoSegmentationService', () => {
       expect(result).toHaveLength(2);
       expect(result[0].endSec).toBe(200); // First segment ends at boundary
       expect(result[1].startSec).toBe(200); // Second segment starts at boundary
+    });
+  });
+
+  describe('duration optimization', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('merges segments shorter than minDuration', async () => {
+      const segments: TranscriptSegment[] = [
+        { text: 'Topic A part 1.', start: 0, end: 60 },
+        { text: 'Topic A part 2.', start: 60, end: 120 },
+        { text: 'Topic B.', start: 120, end: 180 }, // Too short alone
+        { text: 'Topic C part 1.', start: 180, end: 420 },
+        { text: 'Topic C part 2.', start: 420, end: 600 },
+      ];
+
+      // Boundaries at 2 and 3 would create a 60-second segment
+      mockBoundaryService.findBoundaries.mockResolvedValue([2, 3]);
+
+      const service = createVideoSegmentationService({
+        minDurationSec: 180, // 3 minutes minimum
+      });
+
+      const result = await service.segmentTranscript(segments, 600);
+
+      // Short segment should be merged with adjacent
+      const allDurations = result.map(s => s.durationSec);
+      expect(allDurations.every(d => d >= 180)).toBe(true);
+    });
+
+    it('respects maxDuration ceiling', async () => {
+      const segments: TranscriptSegment[] = Array.from({ length: 20 }, (_, i) => ({
+        text: `Sentence ${i}.`,
+        start: i * 60,
+        end: (i + 1) * 60,
+      }));
+
+      // No boundaries = 20 minute single segment
+      mockBoundaryService.findBoundaries.mockResolvedValue([]);
+
+      const service = createVideoSegmentationService({
+        maxDurationSec: 900, // 15 minutes max
+      });
+
+      const result = await service.segmentTranscript(segments, 1200);
+
+      // Should split to respect max duration
+      const allDurations = result.map(s => s.durationSec);
+      expect(allDurations.every(d => d <= 900)).toBe(true);
     });
   });
 });
