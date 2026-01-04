@@ -21,7 +21,16 @@ export type SynthesisInteractionRef = SynthesisInteraction;
 /**
  * Types of items that can appear in the learning feed
  */
-export type FeedItemType = 'video_chunk' | 'text_chunk' | 'quiz' | 'fact' | 'synthesis' | 'synthesis_phase';
+export type FeedItemType =
+  | 'video_chunk'
+  | 'text_chunk'
+  | 'quiz'
+  | 'fact'
+  | 'synthesis'
+  | 'synthesis_phase'
+  | 'pretest'
+  | 'mini_lesson'
+  | 'pretest_results';
 
 /**
  * Video chunk item - a segment of video content
@@ -106,9 +115,81 @@ export interface SynthesisPhaseItem {
 }
 
 /**
+ * Pretest item - assesses prerequisite knowledge before learning begins
+ * Appears at the START of the feed to identify knowledge gaps
+ */
+export interface PretestItem {
+  id: string;
+  type: 'pretest';
+  /** ID of the prerequisite being assessed */
+  prerequisiteId: string;
+  /** Human-readable name of the prerequisite */
+  prerequisiteName: string;
+  /** The question text to display */
+  questionText: string;
+  /** Answer options for multiple choice */
+  options: string[];
+  /** Index of the correct answer in options array */
+  correctIndex: number;
+  /** Optional explanation shown after answering */
+  explanation: string | null;
+  /** Current question number (1-indexed) */
+  questionNumber: number;
+  /** Total number of pretest questions */
+  totalQuestions: number;
+}
+
+/**
+ * Mini lesson item - provides remediation for knowledge gaps
+ * Shown when a user fails a pretest question to fill the gap
+ */
+export interface MiniLessonItem {
+  id: string;
+  type: 'mini_lesson';
+  /** ID of the prerequisite this lesson addresses */
+  prerequisiteId: string;
+  /** Title of the mini lesson */
+  title: string;
+  /** Markdown content for the lesson */
+  contentMarkdown: string;
+  /** Key takeaways from the lesson */
+  keyPoints: string[];
+  /** Estimated time to complete in minutes */
+  estimatedMinutes: number;
+}
+
+/**
+ * Pretest results item - summarizes pretest performance
+ * Shows after all pretest questions are answered
+ */
+export interface PretestResultsItem {
+  id: string;
+  type: 'pretest_results';
+  /** Total number of prerequisites tested */
+  totalPrerequisites: number;
+  /** Number of prerequisites answered correctly */
+  correctCount: number;
+  /** Percentage score (0-100) */
+  percentage: number;
+  /** Recommendation based on performance */
+  recommendation: 'proceed' | 'review_suggested' | 'review_required';
+  /** IDs of prerequisites where gaps were identified */
+  gapPrerequisiteIds: string[];
+}
+
+/**
  * Union type for all feed items
  */
-export type FeedItem = VideoChunkItem | TextChunkItem | QuizItem | FactItem | SynthesisItem | SynthesisPhaseItem;
+export type FeedItem =
+  | VideoChunkItem
+  | TextChunkItem
+  | QuizItem
+  | FactItem
+  | SynthesisItem
+  | SynthesisPhaseItem
+  | PretestItem
+  | MiniLessonItem
+  | PretestResultsItem;
 
 // ============================================================================
 // Streak Types
@@ -377,4 +458,25 @@ export function isSynthesisItem(item: FeedItem): item is SynthesisItem {
  */
 export function isSynthesisPhaseItem(item: FeedItem): item is SynthesisPhaseItem {
   return item.type === 'synthesis_phase';
+}
+
+/**
+ * Type guard for PretestItem
+ */
+export function isPretestItem(item: FeedItem): item is PretestItem {
+  return item.type === 'pretest';
+}
+
+/**
+ * Type guard for MiniLessonItem
+ */
+export function isMiniLessonItem(item: FeedItem): item is MiniLessonItem {
+  return item.type === 'mini_lesson';
+}
+
+/**
+ * Type guard for PretestResultsItem
+ */
+export function isPretestResultsItem(item: FeedItem): item is PretestResultsItem {
+  return item.type === 'pretest_results';
 }
