@@ -217,6 +217,8 @@ export {
 // Synthesis Phase Service (Synthesis assessment orchestration)
 export {
   createSynthesisPhaseService,
+  createRetryInteraction,
+  canRetry,
   SynthesisPhaseError,
   type SynthesisPhaseService,
   type SynthesisPhaseConfig,

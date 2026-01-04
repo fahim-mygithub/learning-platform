@@ -30,7 +30,8 @@
  */
 export type SynthesisPhaseErrorCode =
   | 'INSUFFICIENT_CONCEPTS'
-  | 'INVALID_PERFORMANCE';
+  | 'INVALID_PERFORMANCE'
+  | 'MAX_ATTEMPTS_EXCEEDED';
 
 /**
  * Custom error class for synthesis phase operations
@@ -77,6 +78,11 @@ export interface SynthesisConcept {
 
 /**
  * A single interaction in the synthesis phase
+ *
+ * Implements productive failure pattern (d=0.36, up to 3x teacher effect):
+ * - showHint defaults to false (no pre-teaching)
+ * - Hints only shown after first incorrect attempt
+ * - Feedback shown AFTER testing amplifies learning by ~2x
  */
 export interface SynthesisInteraction {
   /** Unique identifier for this interaction */
@@ -95,6 +101,12 @@ export interface SynthesisInteraction {
   attemptCount: number;
   /** Explanation shown after failed attempt */
   feedbackOnIncorrect?: string;
+  /** Whether to show hint (false on first attempt, true on retry) */
+  showHint: boolean;
+  /** Hint text to show when showHint is true */
+  hintText?: string;
+  /** Maximum attempts allowed (default: 2) */
+  maxAttempts: number;
 }
 
 /**
@@ -221,6 +233,28 @@ const FEEDBACK_TEMPLATES: Record<InteractionType, string> = {
   mcq: 'Review the key points about {conceptName}. What distinguishes it from similar concepts?',
 };
 
+/**
+ * Hint templates for productive failure pattern
+ * Only shown after first incorrect attempt (showHint = true)
+ */
+const HINT_TEMPLATES: Record<InteractionType, string> = {
+  free_recall:
+    'Focus on the main purpose of {conceptName} and one key detail you remember.',
+  fill_in_blank:
+    'Think about the most important characteristic of {conceptName}.',
+  sequence:
+    'Start with the first step. What must happen before anything else?',
+  connect_dots:
+    'Consider: what does {conceptName} depend on or enable?',
+  mcq: 'Eliminate options that clearly do not fit {conceptName}.',
+};
+
+/**
+ * Default maximum attempts for productive failure pattern
+ * Research shows allowing one retry with hints doubles learning effect
+ */
+const DEFAULT_MAX_ATTEMPTS = 2;
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -304,6 +338,67 @@ function generatePrompt(conceptName: string, conceptType: ConceptType, interacti
 function generateFeedback(conceptName: string, interactionType: InteractionType): string {
   const template = FEEDBACK_TEMPLATES[interactionType];
   return template.replace('{conceptName}', conceptName);
+}
+
+/**
+ * Generate hint text for productive failure pattern
+ * Only shown after first incorrect attempt
+ */
+function generateHint(conceptName: string, interactionType: InteractionType): string {
+  const template = HINT_TEMPLATES[interactionType];
+  return template.replace('{conceptName}', conceptName);
+}
+
+/**
+ * Check if an interaction can be retried
+ *
+ * @param interaction - The interaction to check
+ * @returns true if attemptCount < maxAttempts, false otherwise
+ *
+ * @example
+ * ```ts
+ * if (canRetry(interaction)) {
+ *   const retry = createRetryInteraction(interaction);
+ * }
+ * ```
+ */
+export function canRetry(interaction: SynthesisInteraction): boolean {
+  return interaction.attemptCount < interaction.maxAttempts;
+}
+
+/**
+ * Create a retry interaction from an original interaction
+ *
+ * Implements the productive failure pattern by:
+ * - Incrementing attemptCount
+ * - Setting showHint = true (now allowed after first attempt)
+ * - Preserving all other fields immutably
+ *
+ * @param original - The original interaction to retry
+ * @returns A new SynthesisInteraction with updated retry state
+ * @throws {SynthesisPhaseError} If max attempts already reached
+ *
+ * @example
+ * ```ts
+ * const retry = createRetryInteraction(original);
+ * // retry.attemptCount === 1
+ * // retry.showHint === true
+ * ```
+ */
+export function createRetryInteraction(
+  original: SynthesisInteraction
+): SynthesisInteraction {
+  if (!canRetry(original)) {
+    throw new SynthesisPhaseError(
+      `Cannot create retry: max attempts (${original.maxAttempts}) reached`,
+      'MAX_ATTEMPTS_EXCEEDED'
+    );
+  }
+  return {
+    ...original,
+    attemptCount: original.attemptCount + 1,
+    showHint: true, // Now allowed to show hint after first attempt
+  };
 }
 
 /**
@@ -405,7 +500,9 @@ export function createSynthesisPhaseService(
       // Interleave concepts to avoid consecutive same-concept
       const interleavedConcepts = interleaveInteractions(concepts, interactionCount);
 
-      // Generate interactions
+      // Generate interactions with productive failure pattern
+      // All interactions start with showHint: false (no pre-teaching)
+      // Hints are only revealed after first incorrect attempt
       const interactions: SynthesisInteraction[] = interleavedConcepts.map(
         (concept, index) => {
           const interactionType = selectInteractionType(concept.type);
@@ -419,6 +516,10 @@ export function createSynthesisPhaseService(
             expectedAnswer: undefined, // Would be generated by AI in production
             attemptCount: 0,
             feedbackOnIncorrect: generateFeedback(concept.name, interactionType),
+            // Productive failure pattern fields
+            showHint: false, // No pre-teaching - let user attempt first
+            hintText: generateHint(concept.name, interactionType),
+            maxAttempts: DEFAULT_MAX_ATTEMPTS, // Allow one retry with hints
           };
         }
       );
