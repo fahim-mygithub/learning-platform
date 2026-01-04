@@ -58,6 +58,13 @@ export {
   type FactCardProps,
 } from './FactCard';
 
+// Text Chunk Components
+export {
+  TextChunkCard,
+  createTextChunkCardProps,
+  type TextChunkCardProps,
+} from './TextChunkCard';
+
 // Synthesis Components
 export {
   SynthesisCard,
