@@ -30,6 +30,11 @@ import {
 } from './session-timer-service';
 import { createXPService } from './xp-service';
 import { createStreakService } from './streak-service';
+import {
+  createMasteryEvaluationService,
+  type CompletedInteraction,
+  type MasterySummary,
+} from './mastery-evaluation-service';
 import type { Concept } from '../types';
 import type {
   FeedItem,
@@ -75,8 +80,20 @@ export interface FeedContextValue {
   addToReviewQueue: (conceptId: string) => Promise<void>;
   /** Submit a quiz answer */
   submitQuizAnswer: (itemId: string, answer: string) => Promise<QuizResult>;
-  /** Complete a synthesis activity */
-  completeSynthesis: (itemId: string, response: string) => Promise<void>;
+  /**
+   * Complete a synthesis activity
+   * Accepts either:
+   * - CompletedInteraction[] for new mastery evaluation flow
+   * - (itemId: string, response: string) for legacy compatibility
+   */
+  completeSynthesis: {
+    (interactions: CompletedInteraction[]): Promise<void>;
+    (itemId: string, response: string): Promise<void>;
+  };
+  /** Whether the session is complete (synthesis phase finished) */
+  sessionComplete: boolean;
+  /** Mastery summary from synthesis phase evaluation */
+  masterySummary: MasterySummary | null;
   /** Current session statistics */
   sessionStats: SessionStats;
   /** Whether break modal should be shown */
@@ -91,6 +108,8 @@ export interface FeedContextValue {
   userXP: UserXP | null;
   /** Feed completion percentage (0-100) */
   completionPercentage: number;
+  /** Session performance percentage (0-100) for synthesis phase decisions */
+  sessionPerformance: number;
   /** IDs of completed items */
   completedItemIds: Set<string>;
   /** Source ID being fed */
@@ -115,23 +134,58 @@ export interface FeedProviderProps {
 }
 
 /**
- * Get concepts for a source by first getting the source's project_id
+ * Check if a URL is a YouTube URL
  */
-async function getConceptsBySource(sourceId: string): Promise<{
-  data: Concept[] | null;
+function isYouTubeUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.includes('youtube.com') || url.includes('youtu.be');
+}
+
+/**
+ * Source data returned from getSourceData
+ */
+interface SourceData {
+  concepts: Concept[] | null;
   sourceUrl: string | null;
+  sourceType: string | null;
+  textChunks: TextChunk[] | null;
   error: Error | null;
-}> {
-  // First get the source to find its project_id and url
+}
+
+/**
+ * TextChunk type from text-chunking-pipeline
+ */
+interface TextChunk {
+  id: string;
+  text: string;
+  propositions: string[];
+  startIndex: number;
+  endIndex: number;
+}
+
+/**
+ * Get source data including concepts, URL, type, and text chunks
+ */
+async function getSourceData(sourceId: string): Promise<SourceData> {
+  // First get the source to find its project_id, url, type, and metadata
   const { data: source, error: sourceError } = await supabase
     .from('sources')
-    .select('project_id, url')
+    .select('project_id, url, type, metadata')
     .eq('id', sourceId)
     .single();
 
   if (sourceError || !source) {
-    return { data: null, sourceUrl: null, error: sourceError || new Error('Source not found') };
+    return {
+      concepts: null,
+      sourceUrl: null,
+      sourceType: null,
+      textChunks: null,
+      error: sourceError || new Error('Source not found')
+    };
   }
+
+  // Extract text chunks from metadata if present
+  const textChunks = (source.metadata as Record<string, unknown>)?.text_chunks as TextChunk[] | undefined;
 
   // Then get concepts for that project
   const { data: concepts, error: conceptsError } = await supabase
@@ -140,7 +194,13 @@ async function getConceptsBySource(sourceId: string): Promise<{
     .eq('project_id', source.project_id)
     .order('chapter_sequence', { ascending: true });
 
-  return { data: concepts, sourceUrl: source.url || null, error: conceptsError };
+  return {
+    concepts,
+    sourceUrl: source.url || null,
+    sourceType: source.type || null,
+    textChunks: textChunks || null,
+    error: conceptsError
+  };
 }
 
 /**
@@ -230,6 +290,8 @@ export function FeedProvider({
     currentStreak: 0,
   });
   const [showBreakModal, setShowBreakModal] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(false);
+  const [masterySummary, setMasterySummary] = useState<MasterySummary | null>(null);
 
   // User engagement state
   const [streak, setStreak] = useState<UserStreak | null>(null);
@@ -243,6 +305,7 @@ export function FeedProvider({
   const xpServiceRef = useRef(createXPService());
   const streakServiceRef = useRef(createStreakService());
   const feedBuilderRef = useRef(createFeedBuilderService());
+  const masteryEvaluationRef = useRef(createMasteryEvaluationService());
 
   // Timer interval ref
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -319,20 +382,42 @@ export function FeedProvider({
       setError(null);
 
       try {
-        // Load concepts and source URL
-        const { data: concepts, sourceUrl: url, error: conceptsError } = await getConceptsBySource(sourceId);
+        // Load source data including concepts, URL, type, and text chunks
+        const sourceData = await getSourceData(sourceId);
 
-        if (conceptsError || !concepts) {
-          setError(conceptsError || new Error('Failed to load concepts'));
+        if (sourceData.error) {
+          setError(sourceData.error);
           setIsLoading(false);
           return;
         }
 
         // Store source URL for video playback
-        setSourceUrl(url);
+        setSourceUrl(sourceData.sourceUrl);
 
-        // Build feed
-        const items = feedBuilderRef.current.buildFeed(sourceId, concepts);
+        // Determine if this is a text-based source with text chunks
+        const isTextSource = sourceData.sourceType === 'pdf' ||
+          (sourceData.sourceType === 'url' && !isYouTubeUrl(sourceData.sourceUrl));
+        const hasTextChunks = sourceData.textChunks && sourceData.textChunks.length > 0;
+
+        let items: FeedItem[];
+
+        if (isTextSource && hasTextChunks) {
+          // Build text-based feed from text chunks
+          items = feedBuilderRef.current.buildTextFeed(
+            sourceId,
+            sourceData.textChunks!,
+            sourceData.concepts || []
+          );
+        } else if (sourceData.concepts && sourceData.concepts.length > 0) {
+          // Build video-based feed from concepts (YouTube sources)
+          items = feedBuilderRef.current.buildFeed(sourceId, sourceData.concepts);
+        } else {
+          // No content to build feed from
+          setError(new Error('No content available for learning feed'));
+          setIsLoading(false);
+          return;
+        }
+
         setFeedItems(items);
 
         // Load saved progress
@@ -511,47 +596,106 @@ export function FeedProvider({
 
   /**
    * Complete synthesis activity
+   *
+   * Supports two signatures for backward compatibility:
+   * - completeSynthesis(interactions: CompletedInteraction[]) - new mastery evaluation flow
+   * - completeSynthesis(itemId: string, response: string) - legacy flow (detected by string first arg)
    */
   const completeSynthesis = useCallback(async (
-    itemId: string,
-    response: string
+    interactionsOrItemId: CompletedInteraction[] | string,
+    legacyResponse?: string
   ) => {
     if (!user) return;
 
-    // Award synthesis XP
+    // Detect legacy call: first argument is a string (itemId)
+    const isLegacyCall = typeof interactionsOrItemId === 'string';
+
+    if (isLegacyCall) {
+      // Legacy flow: just award XP and mark as completed
+      const itemId = interactionsOrItemId;
+      try {
+        const result = await xpServiceRef.current.awardXP(user.id, 'synthesis_complete');
+        setSessionStats((prev) => ({
+          ...prev,
+          synthesisCount: (prev.synthesisCount || 0) + 1,
+          xpEarned: prev.xpEarned + result.amountAwarded,
+        }));
+        setUserXP((prev) => prev ? {
+          ...prev,
+          totalXp: result.newTotalXp,
+          level: result.newLevel,
+        } : null);
+      } catch (err) {
+        console.error('Failed to award synthesis XP:', err);
+      }
+
+      // Mark as completed
+      setCompletedItemIds((prev) => new Set(prev).add(itemId));
+
+      // Record activity for streak
+      try {
+        const streakResult = await streakServiceRef.current.recordActivity(user.id);
+        setStreak((prev) => prev ? {
+          ...prev,
+          currentStreak: streakResult.currentStreak,
+          longestStreak: streakResult.longestStreak,
+        } : null);
+        setSessionStats((prev) => ({
+          ...prev,
+          currentStreak: streakResult.currentStreak,
+        }));
+      } catch (err) {
+        console.error('Failed to update streak:', err);
+      }
+      return;
+    }
+
+    // New flow: evaluate interactions and award XP based on mastery
+    const interactions = interactionsOrItemId;
+
     try {
-      const result = await xpServiceRef.current.awardXP(user.id, 'synthesis_complete');
+      // Evaluate mastery
+      const summary = masteryEvaluationRef.current.evaluate(interactions);
+
+      // Award XP for synthesis completion
+      const xpResult = await xpServiceRef.current.awardXP(user.id, 'synthesis_complete');
+
+      // Update session stats
       setSessionStats((prev) => ({
         ...prev,
         synthesisCount: (prev.synthesisCount || 0) + 1,
-        xpEarned: prev.xpEarned + result.amountAwarded,
+        xpEarned: prev.xpEarned + xpResult.amountAwarded,
       }));
+
+      // Update user XP
       setUserXP((prev) => prev ? {
         ...prev,
-        totalXp: result.newTotalXp,
-        level: result.newLevel,
+        totalXp: xpResult.newTotalXp,
+        level: xpResult.newLevel,
       } : null);
-    } catch (err) {
-      console.error('Failed to award synthesis XP:', err);
-    }
 
-    // Mark as completed
-    setCompletedItemIds((prev) => new Set(prev).add(itemId));
+      // Set mastery summary and mark session complete
+      setMasterySummary(summary);
+      setSessionComplete(true);
 
-    // Record activity for streak
-    try {
-      const streakResult = await streakServiceRef.current.recordActivity(user.id);
-      setStreak((prev) => prev ? {
-        ...prev,
-        currentStreak: streakResult.currentStreak,
-        longestStreak: streakResult.longestStreak,
-      } : null);
-      setSessionStats((prev) => ({
-        ...prev,
-        currentStreak: streakResult.currentStreak,
-      }));
+      // Record activity for streak
+      try {
+        const streakResult = await streakServiceRef.current.recordActivity(user.id);
+        setStreak((prev) => prev ? {
+          ...prev,
+          currentStreak: streakResult.currentStreak,
+          longestStreak: streakResult.longestStreak,
+        } : null);
+        setSessionStats((prev) => ({
+          ...prev,
+          currentStreak: streakResult.currentStreak,
+        }));
+      } catch (err) {
+        console.error('Failed to update streak:', err);
+      }
     } catch (err) {
-      console.error('Failed to update streak:', err);
+      console.error('Failed to complete synthesis:', err);
+      // Don't set session complete on error
     }
   }, [user]);
 
@@ -582,6 +726,15 @@ export function FeedProvider({
   }, [feedItems.length, completedItemIds.size]);
 
   /**
+   * Calculate session performance percentage (correct answers / total answers)
+   * Used by synthesis phase to determine interaction count
+   */
+  const sessionPerformance = useMemo(() => {
+    if (sessionStats.totalAnswers === 0) return 100; // No quizzes yet, assume perfect
+    return Math.round((sessionStats.correctAnswers / sessionStats.totalAnswers) * 100);
+  }, [sessionStats.correctAnswers, sessionStats.totalAnswers]);
+
+  /**
    * Memoized context value
    */
   const contextValue = useMemo<FeedContextValue>(
@@ -597,6 +750,8 @@ export function FeedProvider({
       addToReviewQueue,
       submitQuizAnswer,
       completeSynthesis,
+      sessionComplete,
+      masterySummary,
       sessionStats,
       showBreakModal,
       dismissBreakModal,
@@ -604,6 +759,7 @@ export function FeedProvider({
       streak,
       userXP,
       completionPercentage,
+      sessionPerformance,
       completedItemIds,
       sourceId,
       sourceUrl,
@@ -620,6 +776,8 @@ export function FeedProvider({
       addToReviewQueue,
       submitQuizAnswer,
       completeSynthesis,
+      sessionComplete,
+      masterySummary,
       sessionStats,
       showBreakModal,
       dismissBreakModal,
@@ -627,6 +785,7 @@ export function FeedProvider({
       streak,
       userXP,
       completionPercentage,
+      sessionPerformance,
       completedItemIds,
       sourceId,
       sourceUrl,
@@ -659,3 +818,6 @@ export function useFeed(): FeedContextValue {
 }
 
 // Types FeedContextValue, FeedProviderProps, and QuizResult are exported above with their definitions
+
+// Re-export mastery evaluation types for convenience
+export type { CompletedInteraction, MasterySummary } from './mastery-evaluation-service';
