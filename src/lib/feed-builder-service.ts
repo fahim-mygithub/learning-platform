@@ -27,6 +27,9 @@ import {
   FactItem,
   SynthesisItem,
   SynthesisPhaseItem,
+  PretestItem,
+  MiniLessonItem,
+  PretestResultsItem,
 } from '@/src/types/engagement';
 import { TextChunk } from './text-chunking-pipeline';
 import {
@@ -61,6 +64,43 @@ export class FeedBuilderError extends Error {
     this.code = code;
     this.details = details;
   }
+}
+
+/**
+ * Data structure for pretest questions within a prerequisite
+ */
+export interface PretestQuestionData {
+  questionText: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string | null;
+}
+
+/**
+ * Data structure for a prerequisite with its pretest questions
+ */
+export interface PrerequisiteData {
+  id: string;
+  name: string;
+  questions: PretestQuestionData[];
+}
+
+/**
+ * Input data for building a feed with pretests
+ */
+export interface PretestFeedData {
+  prerequisites: PrerequisiteData[];
+}
+
+/**
+ * Data for inserting mini-lessons into the feed
+ */
+export interface MiniLessonInsertData {
+  prerequisiteId: string;
+  title: string;
+  contentMarkdown: string;
+  keyPoints: string[];
+  estimatedMinutes: number;
 }
 
 /**
@@ -146,6 +186,41 @@ export interface FeedBuilderService {
     textChunks: TextChunk[],
     relatedConcepts?: Concept[],
     performance?: number
+  ): FeedItem[];
+
+  /**
+   * Build a learning feed with pretest phase at the beginning
+   * Creates a feed starting with pretest questions, followed by results,
+   * then the regular synthesis-based learning feed.
+   *
+   * Feed order: [Pretest Items] -> [Pretest Results] -> [Synthesis Feed]
+   *
+   * @param sourceId - Source ID for the feed
+   * @param concepts - Concepts with chapter_sequence and assessment_spec
+   * @param pretestData - Prerequisite pretest data
+   * @param performance - User performance percentage (0-100), defaults to 85
+   * @returns Array of feed items starting with pretest phase
+   */
+  buildFeedWithPretests(
+    sourceId: string,
+    concepts: Concept[],
+    pretestData: PretestFeedData,
+    performance?: number
+  ): FeedItem[];
+
+  /**
+   * Insert mini-lessons into an existing feed at a specified position
+   * Used to add remediation content for knowledge gaps after pretest results
+   *
+   * @param feed - Existing feed items
+   * @param gaps - Mini-lesson data for prerequisites with knowledge gaps
+   * @param insertAfterIndex - Index after which to insert mini-lessons
+   * @returns New feed array with mini-lessons inserted
+   */
+  insertMiniLessons(
+    feed: FeedItem[],
+    gaps: MiniLessonInsertData[],
+    insertAfterIndex: number
   ): FeedItem[];
 }
 
@@ -386,6 +461,73 @@ function createTextFactItem(
     conceptId: chunk.id,
     factText,
     whyItMatters: 'This idea is central to understanding the content.',
+  };
+}
+
+/**
+ * Create a PretestItem from prerequisite data and question
+ */
+function createPretestItem(
+  prereq: PrerequisiteData,
+  question: PretestQuestionData,
+  sourceId: string,
+  questionIndex: number,
+  totalQuestions: number
+): PretestItem {
+  return {
+    id: generateFeedItemId('pretest', sourceId, questionIndex),
+    type: 'pretest',
+    prerequisiteId: prereq.id,
+    prerequisiteName: prereq.name,
+    questionText: question.questionText,
+    options: question.options,
+    correctIndex: question.correctIndex,
+    explanation: question.explanation,
+    questionNumber: questionIndex + 1,
+    totalQuestions,
+  };
+}
+
+/**
+ * Create a PretestResultsItem from pretest data
+ * Initially sets all prerequisites as gaps (user hasn't answered yet)
+ */
+function createPretestResultsItem(
+  sourceId: string,
+  pretestData: PretestFeedData,
+  index: number
+): PretestResultsItem {
+  const totalPrerequisites = pretestData.prerequisites.length;
+  const gapPrerequisiteIds = pretestData.prerequisites.map((p) => p.id);
+
+  // Initially all are gaps (0% correct)
+  return {
+    id: generateFeedItemId('pretest-results', sourceId, index),
+    type: 'pretest_results',
+    totalPrerequisites,
+    correctCount: 0,
+    percentage: 0,
+    recommendation: 'review_required',
+    gapPrerequisiteIds,
+  };
+}
+
+/**
+ * Create a MiniLessonItem from insert data
+ */
+function createMiniLessonItem(
+  data: MiniLessonInsertData,
+  sourceId: string,
+  index: number
+): MiniLessonItem {
+  return {
+    id: generateFeedItemId('mini-lesson', sourceId, index),
+    type: 'mini_lesson',
+    prerequisiteId: data.prerequisiteId,
+    title: data.title,
+    contentMarkdown: data.contentMarkdown,
+    keyPoints: data.keyPoints,
+    estimatedMinutes: data.estimatedMinutes,
   };
 }
 
@@ -1001,6 +1143,74 @@ export function createFeedBuilderService(): FeedBuilderService {
       }
 
       return feedItems;
+    },
+
+    buildFeedWithPretests(
+      sourceId: string,
+      concepts: Concept[],
+      pretestData: PretestFeedData,
+      performance: number = DEFAULT_PERFORMANCE
+    ): FeedItem[] {
+      // If no prerequisites, skip pretest phase entirely
+      if (pretestData.prerequisites.length === 0) {
+        return this.buildFeedWithSynthesis(sourceId, concepts, performance);
+      }
+
+      const feedItems: FeedItem[] = [];
+
+      // Count total questions across all prerequisites
+      let totalQuestions = 0;
+      for (const prereq of pretestData.prerequisites) {
+        totalQuestions += prereq.questions.length;
+      }
+
+      // 1. Add pretest items - one per question across all prerequisites
+      let questionIndex = 0;
+      for (const prereq of pretestData.prerequisites) {
+        for (const question of prereq.questions) {
+          const pretestItem = createPretestItem(
+            prereq,
+            question,
+            sourceId,
+            questionIndex,
+            totalQuestions
+          );
+          feedItems.push(pretestItem);
+          questionIndex++;
+        }
+      }
+
+      // 2. Add pretest results item
+      const resultsItem = createPretestResultsItem(sourceId, pretestData, 0);
+      feedItems.push(resultsItem);
+
+      // 3. Add the regular synthesis feed after pretest phase
+      const synthesisFeed = this.buildFeedWithSynthesis(sourceId, concepts, performance);
+      feedItems.push(...synthesisFeed);
+
+      return feedItems;
+    },
+
+    insertMiniLessons(
+      feed: FeedItem[],
+      gaps: MiniLessonInsertData[],
+      insertAfterIndex: number
+    ): FeedItem[] {
+      // If no gaps, return the original feed unchanged
+      if (gaps.length === 0) {
+        return feed;
+      }
+
+      // Create mini-lesson items
+      const miniLessonItems: MiniLessonItem[] = gaps.map((gap, index) =>
+        createMiniLessonItem(gap, 'mini-lesson', index)
+      );
+
+      // Split the feed at the insert point and combine with mini-lessons
+      const beforeInsert = feed.slice(0, insertAfterIndex + 1);
+      const afterInsert = feed.slice(insertAfterIndex + 1);
+
+      return [...beforeInsert, ...miniLessonItems, ...afterInsert];
     },
   };
 }
