@@ -12,6 +12,11 @@
  */
 
 import { TranscriptSegment } from './youtube-transcript-service';
+import {
+  createSemanticBoundaryService,
+  SemanticBoundaryService,
+  SemanticBoundaryError,
+} from './semantic-boundary-service';
 
 /**
  * Error codes for video segmentation operations
@@ -93,9 +98,11 @@ export interface VideoSegmentationConfig {
   maxDurationSec?: number;
   /** ID prefix for segments (default: "segment") */
   segmentIdPrefix?: string;
+  /** Semantic boundary service (default: creates new instance) */
+  boundaryService?: SemanticBoundaryService;
 }
 
-const DEFAULT_CONFIG: Required<VideoSegmentationConfig> = {
+const DEFAULT_CONFIG: Required<Omit<VideoSegmentationConfig, 'boundaryService'>> = {
   targetDurationSec: 360, // 6 minutes (middle of 5-7)
   minDurationSec: 240, // 4 minutes
   maxDurationSec: 900, // 15 minutes (hard ceiling)
@@ -109,6 +116,68 @@ export function createVideoSegmentationService(
   config: VideoSegmentationConfig = {}
 ): VideoSegmentationService {
   const finalConfig = { ...DEFAULT_CONFIG, ...config };
+
+  // Create or use provided boundary service
+  let boundaryService: SemanticBoundaryService;
+  try {
+    boundaryService = config.boundaryService ?? createSemanticBoundaryService();
+  } catch (error) {
+    if (error instanceof SemanticBoundaryError) {
+      throw new VideoSegmentationError(
+        `Failed to initialize boundary service: ${error.message}`,
+        'API_KEY_MISSING',
+        { cause: error }
+      );
+    }
+    throw error;
+  }
+
+  /**
+   * Map semantic boundaries to video segments
+   */
+  function mapBoundariesToSegments(
+    segments: TranscriptSegment[],
+    boundaries: number[],
+    prefix: string
+  ): VideoSegment[] {
+    if (segments.length === 0) return [];
+
+    // Create segment boundaries: [0, boundary1, boundary2, ..., segments.length]
+    const segmentBoundaries = [
+      0,
+      ...boundaries.filter((b) => b > 0 && b < segments.length),
+      segments.length,
+    ];
+    const uniqueBoundaries = [...new Set(segmentBoundaries)].sort(
+      (a, b) => a - b
+    );
+
+    const videoSegments: VideoSegment[] = [];
+
+    for (let i = 0; i < uniqueBoundaries.length - 1; i++) {
+      const startIdx = uniqueBoundaries[i];
+      const endIdx = uniqueBoundaries[i + 1];
+
+      if (startIdx >= endIdx) continue;
+
+      const chunkSegments = segments.slice(startIdx, endIdx);
+      const startSec = chunkSegments[0].start;
+      const endSec = chunkSegments[chunkSegments.length - 1].end;
+
+      videoSegments.push({
+        id: `${prefix}-${videoSegments.length}`,
+        startSec,
+        endSec,
+        durationSec: endSec - startSec,
+        text: chunkSegments.map((s) => s.text).join(' '),
+        sentences: chunkSegments.map((s) => s.text),
+        startIndex: startIdx,
+        endIndex: endIdx,
+      });
+    }
+
+    return videoSegments;
+  }
 
   return {
     async segmentTranscript(
@@ -139,8 +208,27 @@ export function createVideoSegmentationService(
         ];
       }
 
-      // TODO: Implement semantic boundary detection
-      throw new Error('Not implemented: semantic segmentation');
+      // Extract text from segments for boundary detection
+      const texts = segments.map((s) => s.text);
+
+      // Find semantic boundaries
+      let boundaries: number[];
+      try {
+        boundaries = await boundaryService.findBoundaries(texts);
+      } catch (error) {
+        throw new VideoSegmentationError(
+          `Boundary detection failed: ${(error as Error).message}`,
+          'BOUNDARY_DETECTION_FAILED',
+          { cause: error }
+        );
+      }
+
+      // Map boundaries to video segments
+      return mapBoundariesToSegments(
+        segments,
+        boundaries,
+        finalConfig.segmentIdPrefix
+      );
     },
   };
 }
