@@ -97,6 +97,12 @@ export interface SynthesisInteraction {
   prompt: string;
   /** Expected answer for validation (optional for open-ended) */
   expectedAnswer?: string;
+  /**
+   * Hints for AI rubric evaluator about what a correct answer should include.
+   * Used by the AI to assess user responses - not shown to the user.
+   * Contains guidance on key points, relationships, or criteria for evaluation.
+   */
+  expectedAnswerHints?: string;
   /** Number of attempts made (starts at 0) */
   attemptCount: number;
   /** Explanation shown after failed attempt */
@@ -250,6 +256,62 @@ const HINT_TEMPLATES: Record<InteractionType, string> = {
 };
 
 /**
+ * Expected answer hint templates for AI rubric evaluation
+ * These hints guide the AI evaluator on what constitutes a good answer
+ * Organized by concept type and interaction type for context-appropriate hints
+ */
+const EXPECTED_ANSWER_HINT_TEMPLATES: Record<ConceptType, Record<InteractionType, string>> = {
+  factual: {
+    free_recall:
+      'User should explain the definition and key points about {conceptName}. Look for accurate recall of main facts and their purpose.',
+    fill_in_blank:
+      'The correct answer should fill the blank with an accurate term or phrase related to {conceptName}. Accept synonyms that convey the same meaning.',
+    sequence:
+      'The correct order should reflect the logical sequence of {conceptName}. Steps should flow in proper dependency order.',
+    connect_dots:
+      'User should identify relationships between {conceptName} and related concepts. Look for accurate connections and dependencies.',
+    mcq:
+      'The correct option should accurately distinguish {conceptName} from similar concepts. User should recognize the defining characteristic.',
+  },
+  procedural: {
+    free_recall:
+      'User should describe the steps involved in {conceptName}. Look for correct sequence and explanation of each step\'s purpose.',
+    fill_in_blank:
+      'The correct answer should identify the key step or action in {conceptName}. Look for procedural accuracy.',
+    sequence:
+      'The correct order must follow the logical sequence of steps in {conceptName}. Each step should depend on the previous one.',
+    connect_dots:
+      'User should link {conceptName} to prerequisite or dependent procedures. Look for understanding of workflow relationships.',
+    mcq:
+      'The correct option identifies the proper sequence or key step in {conceptName}. User should understand the procedural logic.',
+  },
+  conceptual: {
+    free_recall:
+      'User should explain the underlying principle of {conceptName}. Look for understanding beyond surface facts to deeper meaning.',
+    fill_in_blank:
+      'The correct answer should capture the core principle of {conceptName}. Look for conceptual understanding, not just memorization.',
+    sequence:
+      'The correct order should build from foundational to advanced aspects of {conceptName}. Look for logical conceptual progression.',
+    connect_dots:
+      'User should relate {conceptName} to other concepts and explain the connections. Look for synthesis and integration of ideas.',
+    mcq:
+      'The correct option best captures the essence of {conceptName}. User should distinguish deep understanding from surface similarities.',
+  },
+  applied: {
+    free_recall:
+      'User should give a practical example of applying {conceptName}. Look for real-world context and proper application of principles.',
+    fill_in_blank:
+      'The correct answer should demonstrate practical application of {conceptName}. Look for context-appropriate responses.',
+    sequence:
+      'The correct order should reflect how to apply {conceptName} in a real scenario. Steps should be actionable and practical.',
+    connect_dots:
+      'User should connect {conceptName} to practical situations or other techniques. Look for integration of theory and practice.',
+    mcq:
+      'The correct option identifies the most appropriate application of {conceptName}. User should recognize practical use cases.',
+  },
+};
+
+/**
  * Default maximum attempts for productive failure pattern
  * Research shows allowing one retry with hints doubles learning effect
  */
@@ -346,6 +408,20 @@ function generateFeedback(conceptName: string, interactionType: InteractionType)
  */
 function generateHint(conceptName: string, interactionType: InteractionType): string {
   const template = HINT_TEMPLATES[interactionType];
+  return template.replace('{conceptName}', conceptName);
+}
+
+/**
+ * Generate expected answer hints for AI rubric evaluation
+ * These hints describe what a correct/complete answer should include
+ * Used by the AI evaluator to assess user responses - not shown to user
+ */
+function generateExpectedAnswerHints(
+  conceptName: string,
+  conceptType: ConceptType,
+  interactionType: InteractionType
+): string {
+  const template = EXPECTED_ANSWER_HINT_TEMPLATES[conceptType][interactionType];
   return template.replace('{conceptName}', conceptName);
 }
 
@@ -514,6 +590,12 @@ export function createSynthesisPhaseService(
             type: interactionType,
             prompt: generatePrompt(concept.name, concept.type, interactionType),
             expectedAnswer: undefined, // Would be generated by AI in production
+            // AI rubric evaluator hints for assessing user responses
+            expectedAnswerHints: generateExpectedAnswerHints(
+              concept.name,
+              concept.type,
+              interactionType
+            ),
             attemptCount: 0,
             feedbackOnIncorrect: generateFeedback(concept.name, interactionType),
             // Productive failure pattern fields

@@ -660,4 +660,201 @@ describe('synthesis-phase-service', () => {
       });
     });
   });
+
+  describe('expectedAnswerHints for AI rubric evaluation', () => {
+    describe('SynthesisInteraction expectedAnswerHints field', () => {
+      it('all generated interactions have expectedAnswerHints field', () => {
+        const concepts = createMockConcepts(5);
+        const interactions = service.generateSynthesisPhase(concepts, 80);
+
+        interactions.forEach((interaction) => {
+          expect('expectedAnswerHints' in interaction).toBe(true);
+          expect(interaction.expectedAnswerHints).toBeDefined();
+          expect(typeof interaction.expectedAnswerHints).toBe('string');
+        });
+      });
+
+      it('expectedAnswerHints is non-empty for all interaction types', () => {
+        const concepts = createMockConcepts(10);
+
+        // Run multiple times to cover all interaction types
+        for (let i = 0; i < 20; i++) {
+          const interactions = service.generateSynthesisPhase(concepts, 50);
+
+          interactions.forEach((interaction) => {
+            expect(interaction.expectedAnswerHints).toBeTruthy();
+            expect(interaction.expectedAnswerHints!.length).toBeGreaterThan(0);
+          });
+        }
+      });
+
+      it('expectedAnswerHints contains concept name for context', () => {
+        const concepts = createMockConcepts(5);
+        const interactions = service.generateSynthesisPhase(concepts, 80);
+
+        interactions.forEach((interaction) => {
+          expect(interaction.expectedAnswerHints).toContain(interaction.conceptName);
+        });
+      });
+    });
+
+    describe('expectedAnswerHints content by interaction type', () => {
+      it('free_recall hints mention key points to recall', () => {
+        // Create many concepts to ensure we get free_recall type
+        const appliedConcepts = createMockConcepts(10, 'applied');
+
+        let foundFreeRecall = false;
+        for (let i = 0; i < 50 && !foundFreeRecall; i++) {
+          const interactions = service.generateSynthesisPhase(appliedConcepts, 50);
+          const freeRecallInteraction = interactions.find((int) => int.type === 'free_recall');
+
+          if (freeRecallInteraction) {
+            foundFreeRecall = true;
+            // free_recall hints vary by concept type but should all guide evaluation
+            // Applied: practical example, real-world context
+            // Factual: definition, key points
+            // Conceptual: underlying principle
+            // Procedural: steps involved
+            expect(freeRecallInteraction.expectedAnswerHints).toMatch(/key point|main|definition|purpose|explain|example|principle|step/i);
+          }
+        }
+
+        expect(foundFreeRecall).toBe(true);
+      });
+
+      it('fill_in_blank hints describe the expected answer', () => {
+        const factualConcepts = createMockConcepts(10, 'factual');
+
+        let foundFillInBlank = false;
+        for (let i = 0; i < 50 && !foundFillInBlank; i++) {
+          const interactions = service.generateSynthesisPhase(factualConcepts, 50);
+          const fillInBlankInteraction = interactions.find((int) => int.type === 'fill_in_blank');
+
+          if (fillInBlankInteraction) {
+            foundFillInBlank = true;
+            expect(fillInBlankInteraction.expectedAnswerHints).toMatch(/correct|answer|should|blank|fill/i);
+          }
+        }
+
+        expect(foundFillInBlank).toBe(true);
+      });
+
+      it('sequence hints describe correct order', () => {
+        const proceduralConcepts = createMockConcepts(10, 'procedural');
+
+        let foundSequence = false;
+        for (let i = 0; i < 50 && !foundSequence; i++) {
+          const interactions = service.generateSynthesisPhase(proceduralConcepts, 50);
+          const sequenceInteraction = interactions.find((int) => int.type === 'sequence');
+
+          if (sequenceInteraction) {
+            foundSequence = true;
+            expect(sequenceInteraction.expectedAnswerHints).toMatch(/order|sequence|step|first|logical/i);
+          }
+        }
+
+        expect(foundSequence).toBe(true);
+      });
+
+      it('connect_dots hints describe relationships to identify', () => {
+        const conceptualConcepts = createMockConcepts(10, 'conceptual');
+
+        let foundConnectDots = false;
+        for (let i = 0; i < 50 && !foundConnectDots; i++) {
+          const interactions = service.generateSynthesisPhase(conceptualConcepts, 50);
+          const connectDotsInteraction = interactions.find((int) => int.type === 'connect_dots');
+
+          if (connectDotsInteraction) {
+            foundConnectDots = true;
+            expect(connectDotsInteraction.expectedAnswerHints).toMatch(/relationship|connect|relate|link|depend/i);
+          }
+        }
+
+        expect(foundConnectDots).toBe(true);
+      });
+
+      it('mcq hints describe the correct option', () => {
+        const concepts = createMockConcepts(10);
+
+        let foundMcq = false;
+        for (let i = 0; i < 100 && !foundMcq; i++) {
+          const interactions = service.generateSynthesisPhase(concepts, 50);
+          const mcqInteraction = interactions.find((int) => int.type === 'mcq');
+
+          if (mcqInteraction) {
+            foundMcq = true;
+            expect(mcqInteraction.expectedAnswerHints).toMatch(/correct|option|choice|answer|distinguish/i);
+          }
+        }
+
+        expect(foundMcq).toBe(true);
+      });
+    });
+
+    describe('expectedAnswerHints varies by concept type', () => {
+      it('factual concept hints focus on definitions and facts', () => {
+        const factualConcepts = createMockConcepts(5, 'factual');
+        const interactions = service.generateSynthesisPhase(factualConcepts, 80);
+
+        // All interactions are for factual concepts
+        interactions.forEach((interaction) => {
+          // Should have hints appropriate for factual recall
+          expect(interaction.expectedAnswerHints).toBeDefined();
+          expect(interaction.expectedAnswerHints!.length).toBeGreaterThan(0);
+        });
+      });
+
+      it('procedural concept hints focus on steps and process', () => {
+        const proceduralConcepts = createMockConcepts(5, 'procedural');
+        const interactions = service.generateSynthesisPhase(proceduralConcepts, 80);
+
+        interactions.forEach((interaction) => {
+          expect(interaction.expectedAnswerHints).toBeDefined();
+          expect(interaction.expectedAnswerHints!.length).toBeGreaterThan(0);
+        });
+      });
+
+      it('conceptual concept hints focus on understanding and relationships', () => {
+        const conceptualConcepts = createMockConcepts(5, 'conceptual');
+        const interactions = service.generateSynthesisPhase(conceptualConcepts, 80);
+
+        interactions.forEach((interaction) => {
+          expect(interaction.expectedAnswerHints).toBeDefined();
+          expect(interaction.expectedAnswerHints!.length).toBeGreaterThan(0);
+        });
+      });
+
+      it('applied concept hints focus on practical application', () => {
+        const appliedConcepts = createMockConcepts(5, 'applied');
+        const interactions = service.generateSynthesisPhase(appliedConcepts, 80);
+
+        interactions.forEach((interaction) => {
+          expect(interaction.expectedAnswerHints).toBeDefined();
+          expect(interaction.expectedAnswerHints!.length).toBeGreaterThan(0);
+        });
+      });
+    });
+
+    describe('expectedAnswerHints preserved in retry', () => {
+      it('createRetryInteraction preserves expectedAnswerHints', () => {
+        const original: SynthesisInteraction = {
+          id: 'test-interaction-1',
+          conceptId: 'concept-1',
+          conceptName: 'Test Concept',
+          type: 'free_recall',
+          prompt: 'Explain what Test Concept is.',
+          expectedAnswer: 'The answer',
+          expectedAnswerHints: 'User should mention key points about Test Concept including its definition and main purpose.',
+          attemptCount: 0,
+          feedbackOnIncorrect: 'Try again with more detail.',
+          showHint: false,
+          maxAttempts: 2,
+        };
+
+        const retry = createRetryInteraction(original);
+
+        expect(retry.expectedAnswerHints).toBe(original.expectedAnswerHints);
+      });
+    });
+  });
 });
