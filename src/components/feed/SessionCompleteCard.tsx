@@ -155,14 +155,22 @@ export function SessionCompleteCard({
       {/* XP and Streak Row */}
       <Animated.View entering={SlideInUp.delay(200)} style={styles.statsRow}>
         {/* XP Earned */}
-        <View style={styles.statCard}>
+        <View
+          style={styles.statCard}
+          accessible={true}
+          accessibilityLabel={`${xpEarned} XP earned`}
+        >
           <Text style={styles.statValue}>+{xpEarned} XP</Text>
           <Text style={styles.statLabel}>Earned</Text>
         </View>
 
         {/* Streak (if available) */}
         {streak !== undefined && (
-          <View style={styles.statCard}>
+          <View
+            style={styles.statCard}
+            accessible={true}
+            accessibilityLabel={`${streak} day streak`}
+          >
             <View style={styles.streakContainer}>
               <Text style={styles.streakIcon}>&#128293;</Text>
               <Text style={styles.statValue}>{streak}</Text>
@@ -283,33 +291,41 @@ interface ConceptChipProps {
   isDarkMode: boolean;
 }
 
-function ConceptChip({ concept, type, colors, isDarkMode }: ConceptChipProps): React.ReactElement {
-  const chipStyle: ViewStyle = {
-    backgroundColor:
-      type === 'mastered'
-        ? isDarkMode
-          ? colors.success + '30'
-          : colors.success + '15'
-        : isDarkMode
-          ? colors.warning + '30'
-          : colors.warning + '15',
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor:
-      type === 'mastered'
-        ? colors.success + '40'
-        : colors.warning + '40',
-    marginRight: spacing[2],
-    marginBottom: spacing[2],
-  };
+const ConceptChip = React.memo(function ConceptChip({
+  concept,
+  type,
+  colors,
+  isDarkMode,
+}: ConceptChipProps): React.ReactElement {
+  const chipStyle = useMemo<ViewStyle>(
+    () => ({
+      backgroundColor:
+        type === 'mastered'
+          ? isDarkMode
+            ? colors.success + '30'
+            : colors.success + '15'
+          : isDarkMode
+            ? colors.warning + '30'
+            : colors.warning + '15',
+      paddingHorizontal: spacing[3],
+      paddingVertical: spacing[2],
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: type === 'mastered' ? colors.success + '40' : colors.warning + '40',
+      marginRight: spacing[2],
+      marginBottom: spacing[2],
+    }),
+    [type, colors, isDarkMode]
+  );
 
-  const textStyle: TextStyle = {
-    fontSize: 13,
-    fontWeight: '500',
-    color: type === 'mastered' ? colors.success : colors.warning,
-  };
+  const textStyle = useMemo<TextStyle>(
+    () => ({
+      fontSize: 13,
+      fontWeight: '500',
+      color: type === 'mastered' ? colors.success : colors.warning,
+    }),
+    [type, colors]
+  );
 
   return (
     <View style={chipStyle}>
@@ -318,7 +334,7 @@ function ConceptChip({ concept, type, colors, isDarkMode }: ConceptChipProps): R
       </Text>
     </View>
   );
-}
+});
 
 /**
  * Create dynamic styles based on theme colors
