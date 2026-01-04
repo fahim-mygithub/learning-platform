@@ -22,10 +22,18 @@ import { Concept } from '@/src/types/database';
 import {
   FeedItem,
   VideoChunkItem,
+  TextChunkItem,
   QuizItem,
   FactItem,
   SynthesisItem,
+  SynthesisPhaseItem,
 } from '@/src/types/engagement';
+import { TextChunk } from './text-chunking-pipeline';
+import {
+  createSynthesisPhaseService,
+  SynthesisConcept,
+  ConceptType,
+} from './synthesis-phase-service';
 
 /**
  * Error codes for feed builder operations
@@ -33,6 +41,7 @@ import {
 export type FeedBuilderErrorCode =
   | 'BUILD_FAILED'
   | 'NO_CHAPTERS'
+  | 'NO_TEXT_CHUNKS'
   | 'INVALID_CONCEPTS';
 
 /**
@@ -56,17 +65,18 @@ export class FeedBuilderError extends Error {
 
 /**
  * Feed pattern configuration
- * Pattern repeats: Video -> Quiz -> Video -> Video -> Fact -> SYNTHESIS
+ * Pattern repeats: Content -> Quiz -> Content -> Content -> Fact -> SYNTHESIS
+ * 'content' can be either video_chunk or text_chunk depending on source type
  */
-type FeedPatternItem = 'video' | 'quiz' | 'fact' | 'synthesis';
+type FeedPatternItem = 'content' | 'quiz' | 'fact' | 'synthesis';
 
 const FEED_PATTERN: FeedPatternItem[] = [
-  'video',   // 1
+  'content', // 1 - video or text chunk
   'quiz',    // 2
-  'video',   // 3
-  'video',   // 4
+  'content', // 3
+  'content', // 4
   'fact',    // 5
-  'video',   // 6
+  'content', // 6
 ];
 
 /**
@@ -75,17 +85,68 @@ const FEED_PATTERN: FeedPatternItem[] = [
 const SYNTHESIS_INTERVAL = 5;
 
 /**
+ * Default performance percentage for synthesis phase generation
+ */
+const DEFAULT_PERFORMANCE = 85;
+
+/**
  * Feed builder service interface
  */
 export interface FeedBuilderService {
   /**
-   * Build a learning feed from concepts with chapters
+   * Build a learning feed from concepts with chapters (for video sources)
    *
    * @param sourceId - Source ID for the feed
    * @param concepts - Concepts with chapter_sequence and assessment_spec
    * @returns Array of feed items in interleaved order
    */
   buildFeed(sourceId: string, concepts: Concept[]): FeedItem[];
+
+  /**
+   * Build a learning feed from text chunks (for text/article sources)
+   *
+   * @param sourceId - Source ID for the feed
+   * @param textChunks - Text chunks from the text chunking pipeline
+   * @param relatedConcepts - Optional concepts for quiz generation
+   * @returns Array of feed items in interleaved order
+   */
+  buildTextFeed(
+    sourceId: string,
+    textChunks: TextChunk[],
+    relatedConcepts?: Concept[]
+  ): FeedItem[];
+
+  /**
+   * Build a learning feed with synthesis phase integration (for video sources)
+   * Uses SynthesisPhaseService to generate performance-based interactions
+   *
+   * @param sourceId - Source ID for the feed
+   * @param concepts - Concepts with chapter_sequence and assessment_spec
+   * @param performance - User performance percentage (0-100), defaults to 85
+   * @returns Array of feed items with synthesis phase items
+   */
+  buildFeedWithSynthesis(
+    sourceId: string,
+    concepts: Concept[],
+    performance?: number
+  ): FeedItem[];
+
+  /**
+   * Build a learning feed with synthesis phase integration (for text sources)
+   * Uses SynthesisPhaseService to generate performance-based interactions
+   *
+   * @param sourceId - Source ID for the feed
+   * @param textChunks - Text chunks from the text chunking pipeline
+   * @param relatedConcepts - Optional concepts for quiz generation
+   * @param performance - User performance percentage (0-100), defaults to 85
+   * @returns Array of feed items with synthesis phase items
+   */
+  buildTextFeedWithSynthesis(
+    sourceId: string,
+    textChunks: TextChunk[],
+    relatedConcepts?: Concept[],
+    performance?: number
+  ): FeedItem[];
 }
 
 /**
@@ -222,6 +283,251 @@ function generateSynthesisPrompt(concepts: Concept[]): string {
 }
 
 /**
+ * Create a TextChunkItem from a text chunk
+ *
+ * @param chunk - The text chunk from the chunking pipeline
+ * @param sourceId - Source ID for the feed
+ * @param index - Index in the feed for unique ID generation
+ * @param totalChunks - Total number of chunks in the source
+ * @returns TextChunkItem with preview text (max 200 chars for ~60 word limit)
+ */
+function createTextChunkItem(
+  chunk: TextChunk,
+  sourceId: string,
+  index: number,
+  totalChunks: number
+): TextChunkItem {
+  return {
+    id: generateFeedItemId('text', sourceId, index),
+    type: 'text_chunk',
+    // First 200 chars for preview (60 words ~= 300 chars, use 200 to be safe)
+    text: chunk.text.substring(0, 200),
+    propositions: chunk.propositions,
+    chunkIndex: chunk.startIndex,
+    totalChunks,
+  };
+}
+
+/**
+ * Generate a synthesis prompt for text chunks
+ *
+ * @param propositionSamples - Sample propositions from recent chunks
+ * @returns Synthesis prompt string
+ */
+function generateTextSynthesisPrompt(propositionSamples: string[]): string {
+  if (propositionSamples.length === 0) {
+    return 'Reflect on what you have read so far.';
+  }
+
+  if (propositionSamples.length === 1) {
+    return 'Review the key ideas from this section before continuing.';
+  }
+
+  if (propositionSamples.length === 2) {
+    return 'How do these two ideas connect and build on each other?';
+  }
+
+  return 'How do the concepts from these sections work together to form a complete understanding?';
+}
+
+/**
+ * Create a SynthesisItem for text feeds
+ *
+ * @param recentChunks - Recent text chunks to synthesize
+ * @param sourceId - Source ID for the feed
+ * @param index - Index in the feed
+ * @param chunksCompleted - Number of chunks processed so far
+ * @param totalChunks - Total number of chunks
+ * @returns SynthesisItem connecting recent chunk concepts
+ */
+function createTextSynthesisItem(
+  recentChunks: TextChunk[],
+  sourceId: string,
+  index: number,
+  chunksCompleted: number,
+  totalChunks: number
+): SynthesisItem {
+  // Extract first proposition from each chunk as representative concepts
+  const conceptsToConnect = recentChunks
+    .map((chunk) => chunk.propositions[0] || chunk.text.substring(0, 50))
+    .slice(0, 5); // Limit to 5 for readability
+
+  const synthesisPrompt = generateTextSynthesisPrompt(conceptsToConnect);
+
+  return {
+    id: generateFeedItemId('synthesis', sourceId, index),
+    type: 'synthesis',
+    conceptsToConnect,
+    synthesisPrompt,
+    chaptersCompleted: chunksCompleted,
+    totalChapters: totalChunks,
+  };
+}
+
+/**
+ * Create a FactItem from a text chunk
+ *
+ * @param chunk - The text chunk to extract fact from
+ * @param sourceId - Source ID for the feed
+ * @param index - Index in the feed
+ * @returns FactItem with key proposition and context
+ */
+function createTextFactItem(
+  chunk: TextChunk,
+  sourceId: string,
+  index: number
+): FactItem {
+  // Use first proposition as the key fact, or truncated text if no propositions
+  const factText = chunk.propositions[0] || chunk.text.substring(0, 150);
+
+  return {
+    id: generateFeedItemId('fact', sourceId, index),
+    type: 'fact',
+    conceptId: chunk.id,
+    factText,
+    whyItMatters: 'This idea is central to understanding the content.',
+  };
+}
+
+/**
+ * Map cognitive type from Concept to SynthesisConcept ConceptType
+ * Ensures compatibility between database concept types and synthesis service
+ */
+function mapCognitiveType(cognitiveType: string | null | undefined): ConceptType {
+  const typeMap: Record<string, ConceptType> = {
+    factual: 'factual',
+    procedural: 'procedural',
+    conceptual: 'conceptual',
+    applied: 'applied',
+  };
+
+  return typeMap[cognitiveType ?? ''] || 'conceptual';
+}
+
+/**
+ * Convert Concept to SynthesisConcept format for synthesis phase service
+ */
+function conceptToSynthesisConcept(concept: Concept): SynthesisConcept {
+  return {
+    id: concept.id,
+    name: concept.name,
+    type: mapCognitiveType(concept.cognitive_type),
+    description: concept.definition ?? undefined,
+  };
+}
+
+/**
+ * Create a SynthesisPhaseItem using the synthesis phase service
+ *
+ * @param concepts - Concepts to include in synthesis phase
+ * @param sourceId - Source ID for the feed
+ * @param index - Index in the feed for unique ID generation
+ * @param performance - User performance percentage (0-100)
+ * @param itemsCompleted - Number of learning items completed
+ * @param totalItems - Total number of items in the feed
+ * @returns SynthesisPhaseItem with generated interactions
+ */
+function createSynthesisPhaseItem(
+  concepts: Concept[],
+  sourceId: string,
+  index: number,
+  performance: number,
+  itemsCompleted: number,
+  totalItems: number
+): SynthesisPhaseItem {
+  // Clamp performance to valid range (0-100)
+  const clampedPerformance = Math.max(0, Math.min(100, performance));
+
+  // Need at least 3 concepts for synthesis phase service
+  // If less, we duplicate concepts to meet minimum
+  let synthesisConcepts = concepts.map(conceptToSynthesisConcept);
+
+  if (synthesisConcepts.length < 3) {
+    // Duplicate concepts to meet minimum of 3
+    while (synthesisConcepts.length < 3) {
+      synthesisConcepts = [
+        ...synthesisConcepts,
+        ...concepts.map(conceptToSynthesisConcept),
+      ];
+    }
+    synthesisConcepts = synthesisConcepts.slice(0, 3);
+  }
+
+  // Create synthesis phase service and generate interactions
+  const synthesisService = createSynthesisPhaseService();
+  const interactions = synthesisService.generateSynthesisPhase(
+    synthesisConcepts,
+    clampedPerformance
+  );
+
+  return {
+    id: generateFeedItemId('synthesis-phase', sourceId, index),
+    type: 'synthesis_phase',
+    conceptIds: concepts.map((c) => c.id),
+    interactions,
+    performance: clampedPerformance,
+    itemsCompleted,
+    totalItems,
+  };
+}
+
+/**
+ * Create a SynthesisPhaseItem for text feeds using propositions as concepts
+ *
+ * @param chunks - Text chunks to synthesize
+ * @param sourceId - Source ID for the feed
+ * @param index - Index in the feed
+ * @param performance - User performance percentage (0-100)
+ * @param itemsCompleted - Number of items completed
+ * @param totalItems - Total number of items
+ * @returns SynthesisPhaseItem with generated interactions
+ */
+function createTextSynthesisPhaseItem(
+  chunks: TextChunk[],
+  sourceId: string,
+  index: number,
+  performance: number,
+  itemsCompleted: number,
+  totalItems: number
+): SynthesisPhaseItem {
+  // Clamp performance to valid range (0-100)
+  const clampedPerformance = Math.max(0, Math.min(100, performance));
+
+  // Convert text chunks to synthesis concepts using propositions
+  let synthesisConcepts: SynthesisConcept[] = chunks.map((chunk, i) => ({
+    id: chunk.id,
+    name: chunk.propositions[0] || `Section ${i + 1}`,
+    type: 'conceptual' as ConceptType, // Text chunks default to conceptual
+    description: chunk.text.substring(0, 100),
+  }));
+
+  // Need at least 3 concepts for synthesis phase service
+  if (synthesisConcepts.length < 3) {
+    while (synthesisConcepts.length < 3) {
+      synthesisConcepts = [...synthesisConcepts, ...synthesisConcepts];
+    }
+    synthesisConcepts = synthesisConcepts.slice(0, 3);
+  }
+
+  // Create synthesis phase service and generate interactions
+  const synthesisService = createSynthesisPhaseService();
+  const interactions = synthesisService.generateSynthesisPhase(
+    synthesisConcepts,
+    clampedPerformance
+  );
+
+  return {
+    id: generateFeedItemId('synthesis-phase', sourceId, index),
+    type: 'synthesis_phase',
+    conceptIds: chunks.map((c) => c.id),
+    interactions,
+    performance: clampedPerformance,
+    itemsCompleted,
+    totalItems,
+  };
+}
+
+/**
  * Create a feed builder service instance
  *
  * @returns Feed builder service instance
@@ -263,7 +569,8 @@ export function createFeedBuilderService(): FeedBuilderService {
         }
 
         switch (patternItem) {
-          case 'video': {
+          case 'content': {
+            // For video feeds, content items are video chunks
             const videoItem = createVideoChunkItem(
               currentConcept,
               sourceId,
@@ -332,6 +639,365 @@ export function createFeedBuilderService(): FeedBuilderService {
           chapterConcepts.length
         );
         feedItems.push(finalSynthesis);
+      }
+
+      return feedItems;
+    },
+
+    buildTextFeed(
+      sourceId: string,
+      textChunks: TextChunk[],
+      relatedConcepts?: Concept[]
+    ): FeedItem[] {
+      if (textChunks.length === 0) {
+        return [];
+      }
+
+      const totalChunks = textChunks.length;
+      const feedItems: FeedItem[] = [];
+      let patternIndex = 0;
+      let chunkIndex = 0;
+      let feedItemIndex = 0;
+      let chunksInCurrentCycle = 0;
+      let recentChunksForSynthesis: TextChunk[] = [];
+
+      // Build a list of concepts with quiz questions for interleaving
+      const quizConcepts = (relatedConcepts || []).filter(
+        (c) => c.assessment_spec?.sample_questions?.length
+      );
+      let quizConceptIndex = 0;
+
+      while (chunkIndex < textChunks.length) {
+        const currentChunk = textChunks[chunkIndex];
+        const patternItem = FEED_PATTERN[patternIndex % FEED_PATTERN.length];
+
+        // Check if we need to insert a synthesis
+        if (chunksInCurrentCycle >= SYNTHESIS_INTERVAL) {
+          const synthesisItem = createTextSynthesisItem(
+            recentChunksForSynthesis.slice(-SYNTHESIS_INTERVAL),
+            sourceId,
+            feedItemIndex++,
+            chunkIndex,
+            totalChunks
+          );
+          feedItems.push(synthesisItem);
+          chunksInCurrentCycle = 0;
+          recentChunksForSynthesis = [];
+          continue; // Don't advance pattern, re-evaluate
+        }
+
+        switch (patternItem) {
+          case 'content': {
+            // For text feeds, content items are text chunks
+            const textItem = createTextChunkItem(
+              currentChunk,
+              sourceId,
+              feedItemIndex++,
+              totalChunks
+            );
+            feedItems.push(textItem);
+            recentChunksForSynthesis.push(currentChunk);
+            chunkIndex++;
+            chunksInCurrentCycle++;
+            patternIndex++;
+            break;
+          }
+
+          case 'quiz': {
+            // Use available quiz concepts, skip if none available
+            if (quizConcepts.length > 0) {
+              const quizConcept = quizConcepts[quizConceptIndex % quizConcepts.length];
+              const quizItem = createQuizItem(
+                quizConcept,
+                sourceId,
+                feedItemIndex++
+              );
+
+              if (quizItem) {
+                feedItems.push(quizItem);
+                quizConceptIndex++;
+              }
+            }
+            patternIndex++;
+            // Don't advance chunk index - quiz is interstitial
+            break;
+          }
+
+          case 'fact': {
+            // Use the most recent chunk for the fact
+            const factChunk = recentChunksForSynthesis[
+              recentChunksForSynthesis.length - 1
+            ] || currentChunk;
+
+            const factItem = createTextFactItem(
+              factChunk,
+              sourceId,
+              feedItemIndex++
+            );
+            feedItems.push(factItem);
+            patternIndex++;
+            // Don't advance chunk index - fact is interstitial
+            break;
+          }
+
+          // Note: 'synthesis' is not in FEED_PATTERN - synthesis is triggered
+          // by chunksInCurrentCycle >= SYNTHESIS_INTERVAL above
+        }
+      }
+
+      // Final synthesis if we have enough chunks since last synthesis
+      if (recentChunksForSynthesis.length > 0 && chunksInCurrentCycle >= 2) {
+        const finalSynthesis = createTextSynthesisItem(
+          recentChunksForSynthesis.slice(-chunksInCurrentCycle),
+          sourceId,
+          feedItemIndex,
+          totalChunks,
+          totalChunks
+        );
+        feedItems.push(finalSynthesis);
+      }
+
+      return feedItems;
+    },
+
+    buildFeedWithSynthesis(
+      sourceId: string,
+      concepts: Concept[],
+      performance: number = DEFAULT_PERFORMANCE
+    ): FeedItem[] {
+      // Get chapter concepts sorted by sequence
+      const chapterConcepts = getChapterConcepts(concepts);
+
+      if (chapterConcepts.length === 0) {
+        return [];
+      }
+
+      const feedItems: FeedItem[] = [];
+      let patternIndex = 0;
+      let chapterIndex = 0;
+      let feedItemIndex = 0;
+      let learningItemsInCurrentCycle = 0;
+      let recentConceptsForSynthesis: Concept[] = [];
+      let synthesisPhaseIndex = 0;
+
+      // Count total learning items for progress tracking
+      // Learning items are: video chunks (1 per chapter) + quizzes + facts
+      // Estimate based on pattern: each chapter produces ~1.5 items on average
+      const estimatedTotalItems = Math.ceil(chapterConcepts.length * 1.5);
+
+      while (chapterIndex < chapterConcepts.length) {
+        const currentConcept = chapterConcepts[chapterIndex];
+        const patternItem = FEED_PATTERN[patternIndex % FEED_PATTERN.length];
+
+        // Check if we need to insert a synthesis phase
+        if (learningItemsInCurrentCycle >= SYNTHESIS_INTERVAL) {
+          const synthesisPhaseItem = createSynthesisPhaseItem(
+            recentConceptsForSynthesis.slice(-SYNTHESIS_INTERVAL),
+            sourceId,
+            synthesisPhaseIndex++,
+            performance,
+            feedItems.length,
+            estimatedTotalItems
+          );
+          feedItems.push(synthesisPhaseItem);
+          learningItemsInCurrentCycle = 0;
+          recentConceptsForSynthesis = [];
+          continue; // Don't advance pattern, re-evaluate
+        }
+
+        switch (patternItem) {
+          case 'content': {
+            // For video feeds, content items are video chunks
+            const videoItem = createVideoChunkItem(
+              currentConcept,
+              sourceId,
+              feedItemIndex++
+            );
+            feedItems.push(videoItem);
+            recentConceptsForSynthesis.push(currentConcept);
+            chapterIndex++;
+            learningItemsInCurrentCycle++;
+            patternIndex++;
+            break;
+          }
+
+          case 'quiz': {
+            // Use the most recent concept for the quiz
+            const quizConcept = recentConceptsForSynthesis[
+              recentConceptsForSynthesis.length - 1
+            ] || currentConcept;
+
+            const quizItem = createQuizItem(
+              quizConcept,
+              sourceId,
+              feedItemIndex++
+            );
+
+            if (quizItem) {
+              feedItems.push(quizItem);
+              learningItemsInCurrentCycle++;
+              patternIndex++;
+            } else {
+              // Skip this pattern slot if quiz couldn't be created
+              patternIndex++;
+            }
+            // Don't advance chapter index - quiz is interstitial
+            break;
+          }
+
+          case 'fact': {
+            // Use the most recent concept for the fact
+            const factConcept = recentConceptsForSynthesis[
+              recentConceptsForSynthesis.length - 1
+            ] || currentConcept;
+
+            const factItem = createFactItem(
+              factConcept,
+              sourceId,
+              feedItemIndex++
+            );
+            feedItems.push(factItem);
+            learningItemsInCurrentCycle++;
+            patternIndex++;
+            // Don't advance chapter index - fact is interstitial
+            break;
+          }
+        }
+      }
+
+      // Final synthesis phase if we have enough items since last synthesis
+      if (recentConceptsForSynthesis.length > 0 && learningItemsInCurrentCycle >= 2) {
+        const finalSynthesisPhase = createSynthesisPhaseItem(
+          recentConceptsForSynthesis.slice(-learningItemsInCurrentCycle),
+          sourceId,
+          synthesisPhaseIndex,
+          performance,
+          feedItems.length,
+          feedItems.length + 1
+        );
+        feedItems.push(finalSynthesisPhase);
+      }
+
+      return feedItems;
+    },
+
+    buildTextFeedWithSynthesis(
+      sourceId: string,
+      textChunks: TextChunk[],
+      relatedConcepts?: Concept[],
+      performance: number = DEFAULT_PERFORMANCE
+    ): FeedItem[] {
+      if (textChunks.length === 0) {
+        return [];
+      }
+
+      const totalChunks = textChunks.length;
+      const feedItems: FeedItem[] = [];
+      let patternIndex = 0;
+      let chunkIndex = 0;
+      let feedItemIndex = 0;
+      let learningItemsInCurrentCycle = 0;
+      let recentChunksForSynthesis: TextChunk[] = [];
+      let synthesisPhaseIndex = 0;
+
+      // Build a list of concepts with quiz questions for interleaving
+      const quizConcepts = (relatedConcepts || []).filter(
+        (c) => c.assessment_spec?.sample_questions?.length
+      );
+      let quizConceptIndex = 0;
+
+      // Estimate total items for progress tracking
+      const estimatedTotalItems = Math.ceil(totalChunks * 1.5);
+
+      while (chunkIndex < textChunks.length) {
+        const currentChunk = textChunks[chunkIndex];
+        const patternItem = FEED_PATTERN[patternIndex % FEED_PATTERN.length];
+
+        // Check if we need to insert a synthesis phase
+        if (learningItemsInCurrentCycle >= SYNTHESIS_INTERVAL) {
+          const synthesisPhaseItem = createTextSynthesisPhaseItem(
+            recentChunksForSynthesis.slice(-SYNTHESIS_INTERVAL),
+            sourceId,
+            synthesisPhaseIndex++,
+            performance,
+            feedItems.length,
+            estimatedTotalItems
+          );
+          feedItems.push(synthesisPhaseItem);
+          learningItemsInCurrentCycle = 0;
+          recentChunksForSynthesis = [];
+          continue; // Don't advance pattern, re-evaluate
+        }
+
+        switch (patternItem) {
+          case 'content': {
+            // For text feeds, content items are text chunks
+            const textItem = createTextChunkItem(
+              currentChunk,
+              sourceId,
+              feedItemIndex++,
+              totalChunks
+            );
+            feedItems.push(textItem);
+            recentChunksForSynthesis.push(currentChunk);
+            chunkIndex++;
+            learningItemsInCurrentCycle++;
+            patternIndex++;
+            break;
+          }
+
+          case 'quiz': {
+            // Use available quiz concepts, skip if none available
+            if (quizConcepts.length > 0) {
+              const quizConcept = quizConcepts[quizConceptIndex % quizConcepts.length];
+              const quizItem = createQuizItem(
+                quizConcept,
+                sourceId,
+                feedItemIndex++
+              );
+
+              if (quizItem) {
+                feedItems.push(quizItem);
+                learningItemsInCurrentCycle++;
+                quizConceptIndex++;
+              }
+            }
+            patternIndex++;
+            // Don't advance chunk index - quiz is interstitial
+            break;
+          }
+
+          case 'fact': {
+            // Use the most recent chunk for the fact
+            const factChunk = recentChunksForSynthesis[
+              recentChunksForSynthesis.length - 1
+            ] || currentChunk;
+
+            const factItem = createTextFactItem(
+              factChunk,
+              sourceId,
+              feedItemIndex++
+            );
+            feedItems.push(factItem);
+            learningItemsInCurrentCycle++;
+            patternIndex++;
+            // Don't advance chunk index - fact is interstitial
+            break;
+          }
+        }
+      }
+
+      // Final synthesis phase if we have enough items since last synthesis
+      if (recentChunksForSynthesis.length > 0 && learningItemsInCurrentCycle >= 2) {
+        const finalSynthesisPhase = createTextSynthesisPhaseItem(
+          recentChunksForSynthesis.slice(-learningItemsInCurrentCycle),
+          sourceId,
+          synthesisPhaseIndex,
+          performance,
+          feedItems.length,
+          feedItems.length + 1
+        );
+        feedItems.push(finalSynthesisPhase);
       }
 
       return feedItems;
