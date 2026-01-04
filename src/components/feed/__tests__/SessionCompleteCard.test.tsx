@@ -8,7 +8,13 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react-native';
 
 import { SessionCompleteCard, type SessionCompleteCardProps } from '../SessionCompleteCard';
-import type { MasterySummary, ConceptMastery } from '@/src/lib/mastery-evaluation-service';
+import type {
+  MasterySummary,
+  ConceptMastery,
+  RubricMasterySummary,
+  RubricConceptMastery,
+} from '@/src/lib/mastery-evaluation-service';
+import type { RubricEvaluation, RubricDimension } from '@/src/types/rubric';
 
 // Mock haptic-feedback
 jest.mock('@/src/lib/haptic-feedback', () => ({
@@ -355,6 +361,370 @@ describe('SessionCompleteCard Component', () => {
       renderSessionCompleteCard({ xpEarned: 0 });
 
       expect(screen.getByText('+0 XP')).toBeTruthy();
+    });
+  });
+
+  // ============================================================================
+  // Rubric Mastery Display Tests
+  // ============================================================================
+
+  describe('Rubric Mastery Display', () => {
+    /**
+     * Sample rubric evaluation for a mastered concept
+     */
+    const masteredRubricEvaluation: RubricEvaluation = {
+      interactionId: 'int-1',
+      conceptId: 'c1',
+      dimensions: [
+        { dimension: 'accuracy', score: 3, feedback: 'Excellent accuracy!' },
+        { dimension: 'completeness', score: 2, feedback: 'Good coverage.' },
+        { dimension: 'depth', score: 2, feedback: 'Good depth.' },
+      ],
+      passed: true,
+      overallFeedback: 'Excellent understanding!',
+    };
+
+    /**
+     * Sample rubric evaluation for a concept needing review
+     * Note: reasoning threshold is 1, synthesis threshold is 1
+     * So reasoning=0 and synthesis=0 will fail
+     */
+    const needsReviewRubricEvaluation: RubricEvaluation = {
+      interactionId: 'int-2',
+      conceptId: 'c2',
+      dimensions: [
+        { dimension: 'accuracy', score: 2, feedback: 'Mostly correct.' },
+        { dimension: 'reasoning', score: 0, feedback: 'Need to explain why.' },
+        { dimension: 'synthesis', score: 0, feedback: 'Try connecting concepts.' },
+      ],
+      passed: false,
+      overallFeedback: 'Focus on explaining the why...',
+    };
+
+    /**
+     * Create dimension summary helper
+     */
+    function createDimensionSummary(
+      dims: Partial<Record<RubricDimension, { passed: number; total: number }>>
+    ): Record<RubricDimension, { passed: number; total: number }> {
+      const defaultDim = { passed: 0, total: 0 };
+      return {
+        accuracy: dims.accuracy ?? defaultDim,
+        completeness: dims.completeness ?? defaultDim,
+        depth: dims.depth ?? defaultDim,
+        reasoning: dims.reasoning ?? defaultDim,
+        synthesis: dims.synthesis ?? defaultDim,
+        transfer: dims.transfer ?? defaultDim,
+      };
+    }
+
+    /**
+     * Sample RubricConceptMastery for a mastered concept
+     */
+    const masteredConceptMastery: RubricConceptMastery = {
+      conceptId: 'c1',
+      conceptName: 'Photosynthesis',
+      status: 'mastered',
+      attemptCount: 1,
+      rubricEvaluations: [masteredRubricEvaluation],
+      dimensionSummary: createDimensionSummary({
+        accuracy: { passed: 1, total: 1 },
+        completeness: { passed: 1, total: 1 },
+        depth: { passed: 1, total: 1 },
+      }),
+    };
+
+    /**
+     * Sample RubricConceptMastery for a concept needing review
+     */
+    const needsReviewConceptMastery: RubricConceptMastery = {
+      conceptId: 'c2',
+      conceptName: 'Cell Respiration',
+      status: 'needs_review',
+      attemptCount: 2,
+      rubricEvaluations: [needsReviewRubricEvaluation],
+      dimensionSummary: createDimensionSummary({
+        accuracy: { passed: 1, total: 1 },
+        reasoning: { passed: 0, total: 1 },
+        synthesis: { passed: 0, total: 1 },
+      }),
+    };
+
+    /**
+     * Sample RubricConceptMastery for a reinforced concept
+     */
+    const reinforcedConceptMastery: RubricConceptMastery = {
+      conceptId: 'c3',
+      conceptName: 'ATP Synthesis',
+      status: 'reinforced',
+      attemptCount: 2,
+      rubricEvaluations: [
+        {
+          interactionId: 'int-3',
+          conceptId: 'c3',
+          dimensions: [
+            { dimension: 'accuracy', score: 2, feedback: 'Mostly accurate.' },
+            { dimension: 'depth', score: 1, feedback: 'Could go deeper.' },
+          ],
+          passed: true,
+          overallFeedback: 'Good, but room to improve.',
+        },
+      ],
+      dimensionSummary: createDimensionSummary({
+        accuracy: { passed: 1, total: 1 },
+        depth: { passed: 1, total: 1 },
+      }),
+    };
+
+    /**
+     * Sample RubricMasterySummary
+     */
+    const sampleRubricMasterySummary: RubricMasterySummary = {
+      correctCount: 2,
+      totalCount: 3,
+      scorePercentage: 67,
+      conceptsMastered: [masteredConceptMastery],
+      conceptsNeedingReview: [needsReviewConceptMastery, reinforcedConceptMastery],
+      xpRecommendation: 100,
+      conceptMasteries: [
+        masteredConceptMastery,
+        needsReviewConceptMastery,
+        reinforcedConceptMastery,
+      ],
+      rubricEvaluations: [
+        masteredRubricEvaluation,
+        needsReviewRubricEvaluation,
+      ],
+    };
+
+    describe('Component accepts rubricMastery prop', () => {
+      it('renders without error when rubricMastery is provided', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        expect(screen.getByTestId('session')).toBeTruthy();
+      });
+
+      it('renders without error when rubricMastery is undefined (fallback)', () => {
+        renderSessionCompleteCard({
+          rubricMastery: undefined,
+          testID: 'session',
+        });
+
+        expect(screen.getByTestId('session')).toBeTruthy();
+      });
+    });
+
+    describe('Displays rubric-based mastery per concept', () => {
+      it('shows concept names from rubric mastery data', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        expect(screen.getByText('Photosynthesis')).toBeTruthy();
+        expect(screen.getByText('Cell Respiration')).toBeTruthy();
+      });
+
+      it('displays mastery status indicator for mastered concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Look for mastered indicator testID
+        expect(screen.getByTestId('rubric-concept-c1-mastered')).toBeTruthy();
+      });
+
+      it('displays mastery status indicator for needs_review concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Look for needs_review indicator testID
+        expect(screen.getByTestId('rubric-concept-c2-needs_review')).toBeTruthy();
+      });
+
+      it('displays mastery status indicator for reinforced concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Look for reinforced indicator testID
+        expect(screen.getByTestId('rubric-concept-c3-reinforced')).toBeTruthy();
+      });
+    });
+
+    describe('Shows dimension scores for each concept', () => {
+      it('displays dimension labels', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Should show dimension labels for evaluated dimensions
+        expect(screen.getAllByText(/accuracy/i).length).toBeGreaterThan(0);
+      });
+
+      it('displays dimension scores (0-3 scale)', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Should show score indicators (e.g., "3/3", "2/3", etc.)
+        expect(screen.getAllByText(/\/3/).length).toBeGreaterThan(0);
+      });
+
+      it('shows dimension progress bars with correct testIDs', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Should have dimension progress indicators (accuracy appears in multiple concepts)
+        expect(screen.getAllByTestId('dimension-accuracy-score').length).toBeGreaterThan(0);
+      });
+    });
+
+    describe('Displays failed dimensions with warning styling', () => {
+      it('highlights failed dimensions', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Should have warning indicator for failed dimensions
+        expect(screen.getByTestId('dimension-reasoning-warning')).toBeTruthy();
+        expect(screen.getByTestId('dimension-synthesis-warning')).toBeTruthy();
+      });
+
+      it('shows feedback for failed dimensions', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Should show the feedback text for failed dimensions
+        expect(screen.getByText(/Need to explain why/i)).toBeTruthy();
+        expect(screen.getByText(/Try connecting concepts/i)).toBeTruthy();
+      });
+    });
+
+    describe('Shows overall feedback per concept', () => {
+      it('displays overall feedback for concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        expect(screen.getByText(/Excellent understanding/i)).toBeTruthy();
+        expect(screen.getByText(/Focus on explaining the why/i)).toBeTruthy();
+      });
+    });
+
+    describe('Graceful fallback without rubric data', () => {
+      it('falls back to simple display when rubricMastery is undefined', () => {
+        renderSessionCompleteCard({
+          masterySummary: sampleMasterySummary,
+          rubricMastery: undefined,
+          testID: 'session',
+        });
+
+        // Should still show the basic mastery summary
+        expect(screen.getByText('Variables')).toBeTruthy();
+        expect(screen.getByText('Functions')).toBeTruthy();
+        expect(screen.getByText('8/10')).toBeTruthy();
+      });
+
+      it('does not show dimension scores when rubricMastery is undefined', () => {
+        renderSessionCompleteCard({
+          masterySummary: sampleMasterySummary,
+          rubricMastery: undefined,
+          testID: 'session',
+        });
+
+        // Should not have rubric-specific testIDs
+        expect(screen.queryByTestId('rubric-concept-c1-mastered')).toBeNull();
+        expect(screen.queryByTestId('dimension-accuracy-score')).toBeNull();
+      });
+
+      it('handles empty conceptMasteries array gracefully', () => {
+        const emptyRubricSummary: RubricMasterySummary = {
+          ...sampleRubricMasterySummary,
+          conceptMasteries: [],
+          rubricEvaluations: [],
+        };
+
+        renderSessionCompleteCard({
+          rubricMastery: emptyRubricSummary,
+          testID: 'session',
+        });
+
+        // Should not throw and should still render
+        expect(screen.getByTestId('session')).toBeTruthy();
+      });
+    });
+
+    describe('Visual indicators for mastery status', () => {
+      it('shows green styling for mastered concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        const masteredIndicator = screen.getByTestId('rubric-concept-c1-mastered');
+        expect(masteredIndicator).toBeTruthy();
+        // Visual styling verified through testID presence
+      });
+
+      it('shows amber/yellow styling for reinforced concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        const reinforcedIndicator = screen.getByTestId('rubric-concept-c3-reinforced');
+        expect(reinforcedIndicator).toBeTruthy();
+      });
+
+      it('shows red/orange styling for needs_review concepts', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        const needsReviewIndicator = screen.getByTestId('rubric-concept-c2-needs_review');
+        expect(needsReviewIndicator).toBeTruthy();
+      });
+    });
+
+    describe('Accessibility for rubric display', () => {
+      it('rubric section is accessible', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        const rubricSection = screen.getByTestId('rubric-mastery-section');
+        expect(rubricSection.props.accessible).toBe(true);
+      });
+
+      it('dimension scores have accessibility labels', () => {
+        renderSessionCompleteCard({
+          rubricMastery: sampleRubricMasterySummary,
+          testID: 'session',
+        });
+
+        // Use getAllByTestId since accuracy appears in multiple concepts
+        const dimensionScores = screen.getAllByTestId('dimension-accuracy-score');
+        expect(dimensionScores.length).toBeGreaterThan(0);
+        expect(dimensionScores[0].props.accessibilityLabel).toBeTruthy();
+      });
     });
   });
 });

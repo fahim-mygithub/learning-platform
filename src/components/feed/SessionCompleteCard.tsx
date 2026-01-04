@@ -38,7 +38,15 @@ import { spacing } from '@/src/theme';
 import { type ColorTheme } from '@/src/theme/colors';
 import { useTypography } from '@/src/lib/typography-context';
 import { haptics } from '@/src/lib/haptic-feedback';
-import type { MasterySummary, ConceptMastery } from '@/src/lib/mastery-evaluation-service';
+import type {
+  MasterySummary,
+  ConceptMastery,
+  RubricMasterySummary,
+  RubricConceptMastery,
+  MasteryStatus,
+} from '@/src/lib/mastery-evaluation-service';
+import type { RubricEvaluation, DimensionEvaluation, RubricDimension } from '@/src/types/rubric';
+import { checkDimensionPassed } from '@/src/types/rubric';
 
 /**
  * Props for the SessionCompleteCard component
@@ -56,6 +64,8 @@ export interface SessionCompleteCardProps {
   onContinue: () => void;
   /** Test ID for testing purposes */
   testID?: string;
+  /** Optional rubric-based mastery data for AI evaluation results */
+  rubricMastery?: RubricMasterySummary;
 }
 
 /**
@@ -70,6 +80,7 @@ export function SessionCompleteCard({
   onEndSession,
   onContinue,
   testID = 'session-complete-card',
+  rubricMastery,
 }: SessionCompleteCardProps): React.ReactElement {
   // Get dynamic colors from typography context
   const { getColors, isDarkMode } = useTypography();
@@ -180,62 +191,101 @@ export function SessionCompleteCard({
         )}
       </Animated.View>
 
-      {/* Mastery Summary */}
-      <Animated.View entering={SlideInUp.delay(250)} style={styles.masterySection}>
-        <Text style={styles.sectionTitle}>Mastery Summary</Text>
+      {/* Mastery Summary - Rubric or Simple */}
+      {rubricMastery && rubricMastery.conceptMasteries.length > 0 ? (
+        <Animated.View
+          entering={SlideInUp.delay(250)}
+          style={styles.masterySection}
+          testID="rubric-mastery-section"
+          accessible={true}
+          accessibilityRole="summary"
+          accessibilityLabel="Rubric-based mastery summary"
+        >
+          <Text style={styles.sectionTitle}>Mastery Summary</Text>
 
-        {/* Mastered vs Needs Review Stats */}
-        <View style={styles.masteryStatsRow}>
-          <View style={[styles.masteryStatCard, styles.masteredCard]}>
-            <Text style={[styles.masteryStatValue, styles.masteredValue]}>
-              {conceptsMastered.length}
-            </Text>
-            <Text style={styles.masteryStatLabel}>Mastered</Text>
-          </View>
-          <View style={[styles.masteryStatCard, styles.reviewCard]}>
-            <Text style={[styles.masteryStatValue, styles.reviewValue]}>
-              {conceptsNeedingReview.length}
-            </Text>
-            <Text style={styles.masteryStatLabel}>Needs Review</Text>
-          </View>
-        </View>
-
-        {/* Concepts Mastered List */}
-        {conceptsMastered.length > 0 && (
-          <View style={styles.conceptSection}>
-            <Text style={styles.conceptSectionLabel}>Concepts Mastered</Text>
-            <View style={styles.conceptList}>
-              {conceptsMastered.map((concept) => (
-                <ConceptChip
-                  key={concept.conceptId}
-                  concept={concept}
-                  type="mastered"
-                  colors={colors}
-                  isDarkMode={isDarkMode}
-                />
-              ))}
+          {/* Mastered vs Needs Review Stats */}
+          <View style={styles.masteryStatsRow}>
+            <View style={[styles.masteryStatCard, styles.masteredCard]}>
+              <Text style={[styles.masteryStatValue, styles.masteredValue]}>
+                {rubricMastery.conceptsMastered.length}
+              </Text>
+              <Text style={styles.masteryStatLabel}>Mastered</Text>
+            </View>
+            <View style={[styles.masteryStatCard, styles.reviewCard]}>
+              <Text style={[styles.masteryStatValue, styles.reviewValue]}>
+                {rubricMastery.conceptsNeedingReview.length}
+              </Text>
+              <Text style={styles.masteryStatLabel}>Needs Review</Text>
             </View>
           </View>
-        )}
 
-        {/* Concepts Needing Review List */}
-        {conceptsNeedingReview.length > 0 && (
-          <View style={styles.conceptSection}>
-            <Text style={styles.conceptSectionLabel}>Needs Review</Text>
-            <View style={styles.conceptList}>
-              {conceptsNeedingReview.map((concept) => (
-                <ConceptChip
-                  key={concept.conceptId}
-                  concept={concept}
-                  type="review"
-                  colors={colors}
-                  isDarkMode={isDarkMode}
-                />
-              ))}
+          {/* Rubric Concept Cards */}
+          {rubricMastery.conceptMasteries.map((concept) => (
+            <RubricConceptCard
+              key={concept.conceptId}
+              concept={concept}
+              colors={colors}
+              isDarkMode={isDarkMode}
+            />
+          ))}
+        </Animated.View>
+      ) : (
+        <Animated.View entering={SlideInUp.delay(250)} style={styles.masterySection}>
+          <Text style={styles.sectionTitle}>Mastery Summary</Text>
+
+          {/* Mastered vs Needs Review Stats */}
+          <View style={styles.masteryStatsRow}>
+            <View style={[styles.masteryStatCard, styles.masteredCard]}>
+              <Text style={[styles.masteryStatValue, styles.masteredValue]}>
+                {conceptsMastered.length}
+              </Text>
+              <Text style={styles.masteryStatLabel}>Mastered</Text>
+            </View>
+            <View style={[styles.masteryStatCard, styles.reviewCard]}>
+              <Text style={[styles.masteryStatValue, styles.reviewValue]}>
+                {conceptsNeedingReview.length}
+              </Text>
+              <Text style={styles.masteryStatLabel}>Needs Review</Text>
             </View>
           </View>
-        )}
-      </Animated.View>
+
+          {/* Concepts Mastered List */}
+          {conceptsMastered.length > 0 && (
+            <View style={styles.conceptSection}>
+              <Text style={styles.conceptSectionLabel}>Concepts Mastered</Text>
+              <View style={styles.conceptList}>
+                {conceptsMastered.map((concept) => (
+                  <ConceptChip
+                    key={concept.conceptId}
+                    concept={concept}
+                    type="mastered"
+                    colors={colors}
+                    isDarkMode={isDarkMode}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* Concepts Needing Review List */}
+          {conceptsNeedingReview.length > 0 && (
+            <View style={styles.conceptSection}>
+              <Text style={styles.conceptSectionLabel}>Needs Review</Text>
+              <View style={styles.conceptList}>
+                {conceptsNeedingReview.map((concept) => (
+                  <ConceptChip
+                    key={concept.conceptId}
+                    concept={concept}
+                    type="review"
+                    colors={colors}
+                    isDarkMode={isDarkMode}
+                  />
+                ))}
+              </View>
+            </View>
+          )}
+        </Animated.View>
+      )}
 
       {/* Action Buttons */}
       <Animated.View entering={SlideInUp.delay(300)} style={styles.actionsSection}>
@@ -332,6 +382,324 @@ const ConceptChip = React.memo(function ConceptChip({
       <Text style={textStyle} numberOfLines={1}>
         {concept.conceptName}
       </Text>
+    </View>
+  );
+});
+
+// ============================================================================
+// Rubric Concept Card Component
+// ============================================================================
+
+/**
+ * RubricConceptCard Component Props
+ */
+interface RubricConceptCardProps {
+  concept: RubricConceptMastery;
+  colors: ColorTheme;
+  isDarkMode: boolean;
+}
+
+/**
+ * Get status icon based on mastery status
+ */
+function getStatusIcon(status: MasteryStatus): string {
+  switch (status) {
+    case 'mastered':
+      return '\u2705'; // Green checkmark
+    case 'reinforced':
+      return '\u26A0\uFE0F'; // Warning sign (amber)
+    case 'needs_review':
+      return '\u274C'; // Red X
+    default:
+      return '';
+  }
+}
+
+/**
+ * Get status colors based on mastery status
+ */
+function getStatusColors(
+  status: MasteryStatus,
+  colors: ColorTheme,
+  isDarkMode: boolean
+): { background: string; border: string; text: string } {
+  switch (status) {
+    case 'mastered':
+      return {
+        background: isDarkMode ? colors.success + '20' : colors.success + '10',
+        border: colors.success + '40',
+        text: colors.success,
+      };
+    case 'reinforced':
+      return {
+        background: isDarkMode ? colors.warning + '20' : colors.warning + '10',
+        border: colors.warning + '40',
+        text: colors.warning,
+      };
+    case 'needs_review':
+      return {
+        background: isDarkMode ? colors.error + '20' : colors.error + '10',
+        border: colors.error + '40',
+        text: colors.error,
+      };
+    default:
+      return {
+        background: colors.backgroundSecondary,
+        border: colors.borderLight,
+        text: colors.textSecondary,
+      };
+  }
+}
+
+/**
+ * RubricConceptCard Component
+ *
+ * Displays a concept with rubric-based dimension scores and feedback.
+ */
+const RubricConceptCard = React.memo(function RubricConceptCard({
+  concept,
+  colors,
+  isDarkMode,
+}: RubricConceptCardProps): React.ReactElement {
+  const statusColors = getStatusColors(concept.status, colors, isDarkMode);
+
+  const cardStyle = useMemo<ViewStyle>(
+    () => ({
+      backgroundColor: statusColors.background,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: statusColors.border,
+      padding: spacing[4],
+      marginTop: spacing[3],
+    }),
+    [statusColors]
+  );
+
+  const headerStyle = useMemo<ViewStyle>(
+    () => ({
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: spacing[3],
+    }),
+    []
+  );
+
+  const conceptNameStyle = useMemo<TextStyle>(
+    () => ({
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+      flex: 1,
+    }),
+    [colors]
+  );
+
+  const statusIndicatorStyle = useMemo<TextStyle>(
+    () => ({
+      fontSize: 18,
+      marginLeft: spacing[2],
+    }),
+    []
+  );
+
+  // Get all dimension evaluations from all rubric evaluations
+  const allDimensionEvaluations = useMemo(() => {
+    const evaluations: DimensionEvaluation[] = [];
+    for (const rubricEval of concept.rubricEvaluations) {
+      evaluations.push(...rubricEval.dimensions);
+    }
+    return evaluations;
+  }, [concept.rubricEvaluations]);
+
+  // Get overall feedback from the first rubric evaluation
+  const overallFeedback = concept.rubricEvaluations[0]?.overallFeedback || '';
+
+  return (
+    <View
+      style={cardStyle}
+      testID={`rubric-concept-${concept.conceptId}-${concept.status}`}
+      accessible={true}
+      accessibilityRole="summary"
+      accessibilityLabel={`${concept.conceptName}: ${concept.status}`}
+    >
+      {/* Header with concept name and status icon */}
+      <View style={headerStyle}>
+        <Text style={conceptNameStyle} numberOfLines={1}>
+          {concept.conceptName}
+        </Text>
+        <Text style={statusIndicatorStyle}>{getStatusIcon(concept.status)}</Text>
+      </View>
+
+      {/* Dimension scores */}
+      {allDimensionEvaluations.map((dimEval) => (
+        <DimensionScoreRow
+          key={dimEval.dimension}
+          evaluation={dimEval}
+          colors={colors}
+          isDarkMode={isDarkMode}
+        />
+      ))}
+
+      {/* Overall feedback */}
+      {overallFeedback && (
+        <View
+          style={{
+            marginTop: spacing[3],
+            paddingTop: spacing[3],
+            borderTopWidth: 1,
+            borderTopColor: colors.borderLight,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 13,
+              fontStyle: 'italic',
+              color: colors.textSecondary,
+              lineHeight: 18,
+            }}
+          >
+            "{overallFeedback}"
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+});
+
+// ============================================================================
+// Dimension Score Row Component
+// ============================================================================
+
+/**
+ * DimensionScoreRow Component Props
+ */
+interface DimensionScoreRowProps {
+  evaluation: DimensionEvaluation;
+  colors: ColorTheme;
+  isDarkMode: boolean;
+}
+
+/**
+ * DimensionScoreRow Component
+ *
+ * Displays a single dimension score with progress indicator.
+ */
+const DimensionScoreRow = React.memo(function DimensionScoreRow({
+  evaluation,
+  colors,
+  isDarkMode,
+}: DimensionScoreRowProps): React.ReactElement {
+  const { dimension, score, feedback } = evaluation;
+  const passed = checkDimensionPassed(dimension, score);
+
+  const rowStyle = useMemo<ViewStyle>(
+    () => ({
+      marginBottom: spacing[2],
+    }),
+    []
+  );
+
+  const dimensionHeaderStyle = useMemo<ViewStyle>(
+    () => ({
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    }),
+    []
+  );
+
+  const dimensionLabelStyle = useMemo<TextStyle>(
+    () => ({
+      fontSize: 13,
+      fontWeight: '500',
+      color: passed ? colors.textSecondary : colors.error,
+      flex: 1,
+    }),
+    [passed, colors]
+  );
+
+  const scoreTextStyle = useMemo<TextStyle>(
+    () => ({
+      fontSize: 12,
+      fontWeight: '600',
+      color: passed ? colors.textSecondary : colors.error,
+      marginLeft: spacing[2],
+    }),
+    [passed, colors]
+  );
+
+  const progressBarContainerStyle = useMemo<ViewStyle>(
+    () => ({
+      flexDirection: 'row',
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: isDarkMode ? colors.backgroundSecondary : colors.borderLight,
+      marginTop: spacing[1],
+      overflow: 'hidden',
+    }),
+    [isDarkMode, colors]
+  );
+
+  // Create progress bar segments (max score is 3)
+  const segments = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < 3; i++) {
+      const isFilled = i < score;
+      result.push(
+        <View
+          key={i}
+          style={{
+            flex: 1,
+            backgroundColor: isFilled
+              ? passed
+                ? colors.success
+                : colors.warning
+              : 'transparent',
+            marginRight: i < 2 ? 2 : 0,
+          }}
+        />
+      );
+    }
+    return result;
+  }, [score, passed, colors]);
+
+  // Feedback shown only for failed dimensions
+  const showFeedback = !passed && feedback;
+
+  return (
+    <View style={rowStyle}>
+      <View style={dimensionHeaderStyle}>
+        <Text style={dimensionLabelStyle}>{dimension}</Text>
+        {!passed && (
+          <Text
+            testID={`dimension-${dimension}-warning`}
+            style={{ fontSize: 12, color: colors.error }}
+          >
+            Needs Work
+          </Text>
+        )}
+        <View
+          testID={`dimension-${dimension}-score`}
+          accessible={true}
+          accessibilityLabel={`${dimension} score: ${score} out of 3`}
+        >
+          <Text style={scoreTextStyle}>{score}/3</Text>
+        </View>
+      </View>
+      <View style={progressBarContainerStyle}>{segments}</View>
+      {showFeedback && (
+        <Text
+          style={{
+            fontSize: 11,
+            color: colors.error,
+            marginTop: spacing[1],
+            fontStyle: 'italic',
+          }}
+        >
+          {feedback}
+        </Text>
+      )}
     </View>
   );
 });
