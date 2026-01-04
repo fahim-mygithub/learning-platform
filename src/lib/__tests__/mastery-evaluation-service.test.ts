@@ -12,7 +12,12 @@ import {
   type CompletedInteraction,
   type MasterySummary,
   type ConceptMastery,
+  type RubricCompletedInteraction,
+  type RubricConceptMastery,
+  type RubricMasterySummary,
 } from '../mastery-evaluation-service';
+import type { RubricEvaluationService } from '../rubric-evaluation-service';
+import type { RubricEvaluation, RubricDimension } from '@/src/types/rubric';
 
 // Helper to create mock completed interactions
 const createMockInteraction = (
@@ -24,6 +29,46 @@ const createMockInteraction = (
   isCorrect: true,
   attemptCount: 1,
   ...overrides,
+});
+
+// Helper to create mock rubric completed interactions
+const createMockRubricInteraction = (
+  overrides: Partial<RubricCompletedInteraction> = {}
+): RubricCompletedInteraction => ({
+  id: `interaction-${Math.random().toString(36).substring(7)}`,
+  conceptId: 'concept-1',
+  conceptName: 'Test Concept',
+  isCorrect: true,
+  attemptCount: 1,
+  userAnswer: 'The user provided this answer',
+  interactionType: 'free_recall',
+  prompt: 'Explain the concept',
+  ...overrides,
+});
+
+// Helper to create mock rubric evaluation
+const createMockRubricEvaluation = (
+  overrides: Partial<RubricEvaluation> = {}
+): RubricEvaluation => ({
+  interactionId: `interaction-${Math.random().toString(36).substring(7)}`,
+  conceptId: 'concept-1',
+  dimensions: [
+    { dimension: 'accuracy', score: 2, feedback: 'Good accuracy' },
+    { dimension: 'completeness', score: 2, feedback: 'Good completeness' },
+  ],
+  passed: true,
+  overallFeedback: 'Good overall performance',
+  ...overrides,
+});
+
+// Helper to create mock rubric evaluation service
+const createMockRubricService = (
+  evaluations: RubricEvaluation[] = []
+): RubricEvaluationService => ({
+  evaluateBatch: jest.fn().mockResolvedValue({
+    evaluations,
+    totalTokens: 100,
+  }),
 });
 
 describe('mastery-evaluation-service', () => {
@@ -487,6 +532,385 @@ describe('mastery-evaluation-service', () => {
       expect(Array.isArray(result.conceptsMastered)).toBe(true);
       expect(Array.isArray(result.conceptsNeedingReview)).toBe(true);
       expect(typeof result.xpRecommendation).toBe('number');
+    });
+  });
+
+  // ============================================================================
+  // Rubric-Based Evaluation Tests
+  // ============================================================================
+
+  describe('RubricCompletedInteraction type', () => {
+    it('extends CompletedInteraction with userAnswer field', () => {
+      const rubricInteraction: RubricCompletedInteraction = createMockRubricInteraction();
+
+      // Should have all CompletedInteraction fields
+      expect(rubricInteraction.id).toBeDefined();
+      expect(rubricInteraction.conceptId).toBeDefined();
+      expect(rubricInteraction.conceptName).toBeDefined();
+      expect(rubricInteraction.isCorrect).toBeDefined();
+      expect(rubricInteraction.attemptCount).toBeDefined();
+
+      // Should have new rubric-specific fields
+      expect(rubricInteraction.userAnswer).toBeDefined();
+      expect(typeof rubricInteraction.userAnswer).toBe('string');
+    });
+
+    it('includes interactionType and prompt fields', () => {
+      const rubricInteraction: RubricCompletedInteraction = createMockRubricInteraction({
+        interactionType: 'mcq',
+        prompt: 'What is the answer?',
+      });
+
+      expect(rubricInteraction.interactionType).toBe('mcq');
+      expect(rubricInteraction.prompt).toBe('What is the answer?');
+    });
+
+    it('allows optional expectedAnswerHints field', () => {
+      const rubricInteraction: RubricCompletedInteraction = createMockRubricInteraction({
+        expectedAnswerHints: 'The answer should include X and Y',
+      });
+
+      expect(rubricInteraction.expectedAnswerHints).toBe('The answer should include X and Y');
+    });
+  });
+
+  describe('evaluateWithRubric method', () => {
+    it('exists on the service interface', () => {
+      const mockRubricService = createMockRubricService([]);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      expect(typeof serviceWithRubric.evaluateWithRubric).toBe('function');
+    });
+
+    it('throws error when rubric service is not provided', async () => {
+      const serviceWithoutRubric = createMasteryEvaluationService();
+
+      const interactions: RubricCompletedInteraction[] = [
+        createMockRubricInteraction(),
+      ];
+
+      await expect(
+        serviceWithoutRubric.evaluateWithRubric('source-1', interactions)
+      ).rejects.toThrow('Rubric evaluation service not configured');
+    });
+
+    it('throws error for empty interactions array', async () => {
+      const mockRubricService = createMockRubricService([]);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      await expect(
+        serviceWithRubric.evaluateWithRubric('source-1', [])
+      ).rejects.toThrow(MasteryEvaluationError);
+    });
+
+    it('calls rubric service evaluateBatch with correct request', async () => {
+      const interaction1 = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+        interactionType: 'free_recall',
+        prompt: 'Explain X',
+        userAnswer: 'X is about...',
+        expectedAnswerHints: 'Should mention Y',
+      });
+
+      const mockEvaluation = createMockRubricEvaluation({
+        interactionId: 'int-1',
+        conceptId: 'c1',
+        passed: true,
+      });
+
+      const mockRubricService = createMockRubricService([mockEvaluation]);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      await serviceWithRubric.evaluateWithRubric('source-1', [interaction1]);
+
+      expect(mockRubricService.evaluateBatch).toHaveBeenCalledWith({
+        sourceId: 'source-1',
+        interactions: [
+          {
+            interactionId: 'int-1',
+            conceptId: 'c1',
+            conceptName: 'Concept 1',
+            interactionType: 'free_recall',
+            prompt: 'Explain X',
+            userAnswer: 'X is about...',
+            expectedAnswer: 'Should mention Y',
+          },
+        ],
+      });
+    });
+
+    it('returns RubricMasterySummary with rubric evaluations', async () => {
+      const interaction = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+      });
+
+      const mockEvaluation = createMockRubricEvaluation({
+        interactionId: 'int-1',
+        conceptId: 'c1',
+        passed: true,
+      });
+
+      const mockRubricService = createMockRubricService([mockEvaluation]);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', [interaction]);
+
+      expect(result.rubricEvaluations).toBeDefined();
+      expect(result.rubricEvaluations).toHaveLength(1);
+      expect(result.rubricEvaluations[0].interactionId).toBe('int-1');
+    });
+
+    it('returns RubricConceptMastery with dimension summary', async () => {
+      const interaction = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+        conceptName: 'Test Concept',
+      });
+
+      const mockEvaluation = createMockRubricEvaluation({
+        interactionId: 'int-1',
+        conceptId: 'c1',
+        dimensions: [
+          { dimension: 'accuracy', score: 2, feedback: 'Good' },
+          { dimension: 'completeness', score: 3, feedback: 'Excellent' },
+          { dimension: 'depth', score: 1, feedback: 'Okay' },
+        ],
+        passed: true,
+      });
+
+      const mockRubricService = createMockRubricService([mockEvaluation]);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', [interaction]);
+
+      expect(result.conceptMasteries).toBeDefined();
+      expect(result.conceptMasteries).toHaveLength(1);
+      expect(result.conceptMasteries[0].dimensionSummary).toBeDefined();
+      expect(result.conceptMasteries[0].dimensionSummary.accuracy).toEqual({ passed: 1, total: 1 });
+      expect(result.conceptMasteries[0].dimensionSummary.completeness).toEqual({ passed: 1, total: 1 });
+      expect(result.conceptMasteries[0].dimensionSummary.depth).toEqual({ passed: 1, total: 1 });
+    });
+  });
+
+  describe('component-based mastery calculation', () => {
+    it('marks concept as mastered when ALL evaluations pass', async () => {
+      const interaction1 = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+      const interaction2 = createMockRubricInteraction({
+        id: 'int-2',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+
+      const mockEvaluations = [
+        createMockRubricEvaluation({ interactionId: 'int-1', conceptId: 'c1', passed: true }),
+        createMockRubricEvaluation({ interactionId: 'int-2', conceptId: 'c1', passed: true }),
+      ];
+
+      const mockRubricService = createMockRubricService(mockEvaluations);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', [
+        interaction1,
+        interaction2,
+      ]);
+
+      const conceptMastery = result.conceptMasteries.find((c) => c.conceptId === 'c1');
+      expect(conceptMastery?.status).toBe('mastered');
+    });
+
+    it('marks concept as reinforced when SOME evaluations pass', async () => {
+      const interaction1 = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+      const interaction2 = createMockRubricInteraction({
+        id: 'int-2',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+
+      const mockEvaluations = [
+        createMockRubricEvaluation({ interactionId: 'int-1', conceptId: 'c1', passed: true }),
+        createMockRubricEvaluation({ interactionId: 'int-2', conceptId: 'c1', passed: false }),
+      ];
+
+      const mockRubricService = createMockRubricService(mockEvaluations);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', [
+        interaction1,
+        interaction2,
+      ]);
+
+      const conceptMastery = result.conceptMasteries.find((c) => c.conceptId === 'c1');
+      expect(conceptMastery?.status).toBe('reinforced');
+    });
+
+    it('marks concept as needs_review when NO evaluations pass', async () => {
+      const interaction1 = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+      const interaction2 = createMockRubricInteraction({
+        id: 'int-2',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+
+      const mockEvaluations = [
+        createMockRubricEvaluation({ interactionId: 'int-1', conceptId: 'c1', passed: false }),
+        createMockRubricEvaluation({ interactionId: 'int-2', conceptId: 'c1', passed: false }),
+      ];
+
+      const mockRubricService = createMockRubricService(mockEvaluations);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', [
+        interaction1,
+        interaction2,
+      ]);
+
+      const conceptMastery = result.conceptMasteries.find((c) => c.conceptId === 'c1');
+      expect(conceptMastery?.status).toBe('needs_review');
+    });
+
+    it('handles multiple concepts correctly', async () => {
+      const interactions = [
+        createMockRubricInteraction({ id: 'int-1', conceptId: 'c1', conceptName: 'Concept 1' }),
+        createMockRubricInteraction({ id: 'int-2', conceptId: 'c2', conceptName: 'Concept 2' }),
+        createMockRubricInteraction({ id: 'int-3', conceptId: 'c3', conceptName: 'Concept 3' }),
+      ];
+
+      const mockEvaluations = [
+        createMockRubricEvaluation({ interactionId: 'int-1', conceptId: 'c1', passed: true }), // mastered
+        createMockRubricEvaluation({ interactionId: 'int-2', conceptId: 'c2', passed: false }), // needs_review
+        createMockRubricEvaluation({ interactionId: 'int-3', conceptId: 'c3', passed: true }), // mastered
+      ];
+
+      const mockRubricService = createMockRubricService(mockEvaluations);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', interactions);
+
+      expect(result.conceptsMastered).toHaveLength(2);
+      expect(result.conceptsNeedingReview).toHaveLength(1);
+
+      const masteredIds = result.conceptsMastered.map((c) => c.conceptId);
+      expect(masteredIds).toContain('c1');
+      expect(masteredIds).toContain('c3');
+
+      expect(result.conceptsNeedingReview[0].conceptId).toBe('c2');
+    });
+
+    it('includes rubricEvaluations in each RubricConceptMastery', async () => {
+      const interaction = createMockRubricInteraction({
+        id: 'int-1',
+        conceptId: 'c1',
+        conceptName: 'Concept 1',
+      });
+
+      const mockEvaluation = createMockRubricEvaluation({
+        interactionId: 'int-1',
+        conceptId: 'c1',
+        passed: true,
+        overallFeedback: 'Great job!',
+      });
+
+      const mockRubricService = createMockRubricService([mockEvaluation]);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', [interaction]);
+
+      expect(result.conceptMasteries[0].rubricEvaluations).toHaveLength(1);
+      expect(result.conceptMasteries[0].rubricEvaluations[0].overallFeedback).toBe('Great job!');
+    });
+  });
+
+  describe('rubric evaluation error handling', () => {
+    it('handles AI service errors gracefully', async () => {
+      const mockRubricService: RubricEvaluationService = {
+        evaluateBatch: jest.fn().mockRejectedValue(new Error('AI service unavailable')),
+      };
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const interaction = createMockRubricInteraction();
+
+      await expect(
+        serviceWithRubric.evaluateWithRubric('source-1', [interaction])
+      ).rejects.toThrow('AI service unavailable');
+    });
+
+    it('propagates MasteryEvaluationError correctly', async () => {
+      const mockRubricService: RubricEvaluationService = {
+        evaluateBatch: jest.fn().mockRejectedValue(
+          new MasteryEvaluationError('Custom error', 'EVALUATION_FAILED')
+        ),
+      };
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const interaction = createMockRubricInteraction();
+
+      try {
+        await serviceWithRubric.evaluateWithRubric('source-1', [interaction]);
+        fail('Should have thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(MasteryEvaluationError);
+        expect((error as MasteryEvaluationError).code).toBe('EVALUATION_FAILED');
+      }
+    });
+  });
+
+  describe('score calculation with rubrics', () => {
+    it('calculates correctCount based on passed evaluations', async () => {
+      const interactions = [
+        createMockRubricInteraction({ id: 'int-1', conceptId: 'c1' }),
+        createMockRubricInteraction({ id: 'int-2', conceptId: 'c2' }),
+        createMockRubricInteraction({ id: 'int-3', conceptId: 'c3' }),
+      ];
+
+      const mockEvaluations = [
+        createMockRubricEvaluation({ interactionId: 'int-1', conceptId: 'c1', passed: true }),
+        createMockRubricEvaluation({ interactionId: 'int-2', conceptId: 'c2', passed: false }),
+        createMockRubricEvaluation({ interactionId: 'int-3', conceptId: 'c3', passed: true }),
+      ];
+
+      const mockRubricService = createMockRubricService(mockEvaluations);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', interactions);
+
+      expect(result.correctCount).toBe(2);
+      expect(result.totalCount).toBe(3);
+      expect(result.scorePercentage).toBe(67); // 2/3 = 66.67% rounded
+    });
+
+    it('calculates XP based on score percentage', async () => {
+      const interactions = [
+        createMockRubricInteraction({ id: 'int-1', conceptId: 'c1' }),
+        createMockRubricInteraction({ id: 'int-2', conceptId: 'c2' }),
+      ];
+
+      const mockEvaluations = [
+        createMockRubricEvaluation({ interactionId: 'int-1', conceptId: 'c1', passed: true }),
+        createMockRubricEvaluation({ interactionId: 'int-2', conceptId: 'c2', passed: true }),
+      ];
+
+      const mockRubricService = createMockRubricService(mockEvaluations);
+      const serviceWithRubric = createMasteryEvaluationService(undefined, mockRubricService);
+
+      const result = await serviceWithRubric.evaluateWithRubric('source-1', interactions);
+
+      expect(result.scorePercentage).toBe(100);
+      expect(result.xpRecommendation).toBe(150); // Max XP for 100%
     });
   });
 });
