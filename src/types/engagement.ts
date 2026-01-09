@@ -299,6 +299,8 @@ export interface FeedProgress {
   completedItems: string[];
   synthesisCount: number;
   lastSessionAt: string | null;
+  /** When user completed their first learning session. NULL = first session not completed. */
+  firstSessionCompletedAt: string | null;
 }
 
 // ============================================================================

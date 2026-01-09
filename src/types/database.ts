@@ -804,6 +804,8 @@ export interface FeedProgress {
   completed_items: string[];
   synthesis_count: number;
   last_session_at: string | null;
+  /** When user completed their first learning session. NULL = first session not completed. */
+  first_session_completed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -818,6 +820,7 @@ export interface FeedProgressInsert {
   completed_items?: string[];
   synthesis_count?: number;
   last_session_at?: string | null;
+  first_session_completed_at?: string | null;
 }
 
 /**
@@ -828,6 +831,7 @@ export interface FeedProgressUpdate {
   completed_items?: string[];
   synthesis_count?: number;
   last_session_at?: string | null;
+  first_session_completed_at?: string | null;
 }
 
 // ============================================================================

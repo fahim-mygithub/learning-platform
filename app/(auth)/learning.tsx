@@ -22,7 +22,9 @@ import {
   StyleSheet,
   ScrollView,
   Pressable,
+  TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -46,10 +48,13 @@ import {
   useLearningSession,
 } from '@/src/lib/learning-session-context';
 import { useSession } from '@/src/lib/session-context';
+import { useTypography } from '@/src/lib/typography-context';
+import { useAuth } from '@/src/lib/auth-context';
 import { supabase } from '@/src/lib/supabase';
 import { buildInterleavedSession } from '@/src/lib/session/session-builder-service';
 import { createPrerequisiteAssessmentService } from '@/src/lib/prerequisite-assessment-service';
-import { colors, spacing } from '@/src/theme';
+import { spacing } from '@/src/theme';
+import { type ColorTheme } from '@/src/theme/colors';
 import type { Concept, SampleQuestion } from '@/src/types/database';
 import type { CognitiveCapacity } from '@/src/types/session';
 import type { QuestionType } from '@/src/types/three-pass';
@@ -64,12 +69,13 @@ import type { Prerequisite } from '@/src/types/prerequisite';
  * Controls what view is shown during the prerequisite assessment phase
  */
 type PrerequisiteFlowState =
-  | 'checking'      // Loading prerequisites
-  | 'offer'         // Show PretestOfferModal
-  | 'pretest'       // Show PrerequisitePretest
-  | 'gaps'          // Show GapResultsScreen
-  | 'mini_lesson'   // Show MiniLesson
-  | 'learning';     // Show actual learning session
+  | 'checking_session' // Checking if first session (NEW: added for first-session detection)
+  | 'checking'         // Loading prerequisites
+  | 'offer'            // Show PretestOfferModal
+  | 'pretest'          // Show PrerequisitePretest
+  | 'gaps'             // Show GapResultsScreen
+  | 'mini_lesson'      // Show MiniLesson
+  | 'learning';        // Show actual learning session
 
 /**
  * Concept data with sample questions loaded from database
@@ -92,8 +98,15 @@ interface ConceptWithQuestions extends Concept {
 function LearningScreenContent() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const projectId = params.projectId as string | undefined;
+  // Support both sourceId (from navigation) and projectId (legacy) parameters
+  const projectId = (params.sourceId || params.projectId) as string | undefined;
   const { capacity } = useSession();
+  const { user } = useAuth();
+
+  // Get dynamic colors from typography context
+  const { getColors, isDarkMode } = useTypography();
+  const colors = getColors();
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const {
     phase,
@@ -132,8 +145,8 @@ function LearningScreenContent() {
     hasPrerequisites,
   } = usePrerequisite();
 
-  // Prerequisite flow state
-  const [flowState, setFlowState] = useState<PrerequisiteFlowState>('checking');
+  // Prerequisite flow state - starts with session check to determine first vs subsequent
+  const [flowState, setFlowState] = useState<PrerequisiteFlowState>('checking_session');
 
   // State
   const [loading, setLoading] = useState(true);
@@ -145,6 +158,10 @@ function LearningScreenContent() {
 
   // Track which question index we're on for each concept
   const questionIndexRef = useRef<Map<string, number>>(new Map());
+
+  // Track whether we've initialized the session for this project
+  // This prevents re-initialization when phase becomes 'complete'
+  const sessionInitializedForProjectRef = useRef<string | null>(null);
 
   /**
    * Load concepts for the project
@@ -191,29 +208,62 @@ function LearningScreenContent() {
   }, []);
 
   /**
-   * Check prerequisites on mount
-   * This runs first before initializing the learning session
+   * Check if this is the user's first session on mount
+   * First sessions show prerequisite pretest; subsequent sessions skip to feed
    */
   useEffect(() => {
-    async function checkPrereqs() {
-      if (!projectId) {
-        setError('No project ID provided');
-        setLoading(false);
+    async function checkSessionType() {
+      if (!projectId || !user?.id) {
+        if (!projectId) {
+          setError('No project ID provided');
+          setLoading(false);
+        }
         return;
       }
 
       try {
+        // Check if user has completed their first session for this source
+        const { data, error: queryError } = await supabase
+          .from('feed_progress')
+          .select('first_session_completed_at')
+          .eq('user_id', user.id)
+          .eq('source_id', projectId)
+          .maybeSingle();
+
+        if (queryError) {
+          console.error('Error checking session type:', queryError);
+          // On error, assume first session (safer to show prerequisites)
+          setFlowState('checking');
+          await checkPrerequisites(projectId);
+          return;
+        }
+
+        // Check if first_session_completed_at is set
+        const isFirstSession = !data || data.first_session_completed_at === null;
+
+        if (isFirstSession) {
+          // First session: Check prerequisites and show pretest if needed
+          console.log('[LEARNING] First session - checking prerequisites');
+          setFlowState('checking');
+          await checkPrerequisites(projectId);
+        } else {
+          // Subsequent session: Skip directly to feed (uses brain-priming pretest)
+          console.log('[LEARNING] Subsequent session - skipping to feed');
+          router.push({
+            pathname: '/(auth)/feed',
+            params: { sourceId: projectId }
+          });
+        }
+      } catch (err) {
+        console.error('Failed to check session type:', err);
+        // If check fails, proceed to learning anyway
         setFlowState('checking');
         await checkPrerequisites(projectId);
-      } catch (err) {
-        console.error('Failed to check prerequisites:', err);
-        // If prerequisite check fails, proceed to learning anyway
-        setFlowState('learning');
       }
     }
 
-    checkPrereqs();
-  }, [projectId, checkPrerequisites]);
+    checkSessionType();
+  }, [projectId, user?.id, checkPrerequisites, router]);
 
   /**
    * Handle prerequisite check completion
@@ -229,7 +279,11 @@ function LearningScreenContent() {
     if (hasPrerequisites()) {
       setFlowState('offer');
     } else {
-      setFlowState('learning');
+      // No prerequisites, navigate directly to feed
+      router.push({
+        pathname: '/(auth)/feed',
+        params: { sourceId: projectId }
+      });
     }
   }, [flowState, prereqLoading, hasPrerequisites]);
 
@@ -238,17 +292,33 @@ function LearningScreenContent() {
    * Transitions flow state based on pretest progress
    */
   useEffect(() => {
+    console.log('[LEARNING DEBUG] pretestStatus changed', {
+      pretestStatus,
+      flowState,
+      gapsLength: gaps.length,
+      currentQuestionIndex,
+    });
     if (pretestStatus === 'in_progress') {
+      console.log('[LEARNING DEBUG] Setting flowState to pretest');
       setFlowState('pretest');
     } else if (pretestStatus === 'completed') {
       // Check if there are gaps
       if (gaps.length > 0) {
+        console.log('[LEARNING DEBUG] Setting flowState to gaps');
         setFlowState('gaps');
       } else {
-        setFlowState('learning');
+        console.log('[LEARNING DEBUG] Navigating to feed (no gaps)');
+        router.push({
+          pathname: '/(auth)/feed',
+          params: { sourceId: projectId }
+        });
       }
     } else if (pretestStatus === 'skipped') {
-      setFlowState('learning');
+      console.log('[LEARNING DEBUG] Navigating to feed (skipped)');
+      router.push({
+        pathname: '/(auth)/feed',
+        params: { sourceId: projectId }
+      });
     }
   }, [pretestStatus, gaps.length]);
 
@@ -272,6 +342,10 @@ function LearningScreenContent() {
     async function initSession() {
       // Only initialize when we're in learning state and not already loading
       if (flowState !== 'learning') return;
+
+      // Use ref to track initialization - prevents re-init when phase becomes 'complete'
+      // (isSessionActive changes identity when phase changes, which would trigger this effect)
+      if (sessionInitializedForProjectRef.current === projectId) return;
       if (isSessionActive()) return; // Already initialized
 
       if (!projectId) {
@@ -345,6 +419,7 @@ function LearningScreenContent() {
 
         // Start session
         startSession(projectId, sessionItems);
+        sessionInitializedForProjectRef.current = projectId; // Mark as initialized
         setQuestionStartTime(Date.now());
         setLoading(false);
       } catch (err) {
@@ -452,9 +527,16 @@ function LearningScreenContent() {
    * Handle session end/exit
    */
   const handleExit = useCallback(() => {
+    sessionInitializedForProjectRef.current = null; // Reset so next visit can re-init
     endSession();
-    router.back();
-  }, [endSession, router]);
+    // Use replace to navigate to project detail instead of back()
+    // This is more reliable on web where history may not work as expected
+    if (projectId) {
+      router.replace(`/projects/${projectId}`);
+    } else {
+      router.replace('/projects');
+    }
+  }, [endSession, router, projectId]);
 
   /**
    * Handle session completion
@@ -494,16 +576,23 @@ function LearningScreenContent() {
    */
   const handlePretestAnswer = useCallback(
     (selectedIndex: number, responseTimeMs: number) => {
+      console.log('[LEARNING DEBUG] handlePretestAnswer called', {
+        selectedIndex,
+        responseTimeMs,
+        currentQuestionIndex,
+      });
       submitPretestAnswer(selectedIndex, responseTimeMs);
     },
-    [submitPretestAnswer]
+    [submitPretestAnswer, currentQuestionIndex]
   );
 
   /**
    * Handle pretest completion
    */
   const handlePretestComplete = useCallback(async () => {
+    console.log('[LEARNING DEBUG] handlePretestComplete called');
     await completePretest();
+    console.log('[LEARNING DEBUG] handlePretestComplete finished');
   }, [completePretest]);
 
   /**
@@ -531,8 +620,11 @@ function LearningScreenContent() {
    */
   const handleContinueFromGaps = useCallback(() => {
     proceedToLearning();
-    setFlowState('learning');
-  }, [proceedToLearning]);
+    router.push({
+      pathname: '/(auth)/feed',
+      params: { sourceId: projectId }
+    });
+  }, [proceedToLearning, router, projectId]);
 
   /**
    * Handle going back from mini-lesson to gap results
@@ -560,6 +652,18 @@ function LearningScreenContent() {
   // ============================================================================
   // Render States
   // ============================================================================
+
+  // Session type checking state (first vs subsequent session)
+  if (flowState === 'checking_session') {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Preparing your session...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // Prerequisite checking state
   if (flowState === 'checking') {
@@ -594,6 +698,11 @@ function LearningScreenContent() {
 
   // Pretest screen
   if (flowState === 'pretest') {
+    console.log('[LEARNING DEBUG] Rendering pretest screen', {
+      questionsCount: pretestQuestions.length,
+      currentQuestionIndex,
+      pretestStatus,
+    });
     return (
       <SafeAreaView style={styles.container} edges={['top']}>
         <PrerequisitePretest
@@ -745,14 +854,15 @@ function LearningScreenContent() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header with progress */}
       <View style={styles.header}>
-        <Pressable
+        <TouchableOpacity
           onPress={handleExit}
           style={styles.closeButton}
           accessibilityLabel="Exit learning session"
           accessibilityRole="button"
+          activeOpacity={0.7}
         >
           <Text style={styles.closeText}>X</Text>
-        </Pressable>
+        </TouchableOpacity>
         <View style={styles.progressInfo}>
           <Text style={styles.progressText}>
             {progress.current} / {progress.total}
@@ -923,11 +1033,15 @@ export default function LearningScreen() {
 // Styles
 // ============================================================================
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.backgroundSecondary,
-  },
+/**
+ * Create dynamic styles based on theme colors
+ */
+function createStyles(colors: ColorTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.backgroundSecondary,
+    },
   centerContent: {
     flex: 1,
     justifyContent: 'center',
@@ -942,12 +1056,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[3],
   },
   closeButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.background,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.backgroundTertiary,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   closeText: {
     fontSize: 18,
@@ -1097,4 +1213,5 @@ const styles = StyleSheet.create({
     color: colors.warning,
     fontWeight: '600',
   },
-});
+  });
+}

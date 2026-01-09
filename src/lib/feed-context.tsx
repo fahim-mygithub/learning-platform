@@ -142,6 +142,8 @@ export interface FeedContextValue {
   completePretest: () => void;
   /** Pretest progress percentage (0-100) */
   pretestProgress: number;
+  /** Mark the first session as complete (called when session finishes) */
+  markFirstSessionComplete: () => Promise<void>;
 }
 
 /**
@@ -198,7 +200,20 @@ async function getSourceData(sourceId: string): Promise<SourceData> {
     .from('sources')
     .select('project_id, url, type, metadata')
     .eq('id', sourceId)
-    .single();
+    .maybeSingle();
+
+  if (sourceError) {
+    // Check if it's the "multiple rows" error
+    if (sourceError.message?.includes('coerce')) {
+      return {
+        concepts: null,
+        sourceUrl: null,
+        sourceType: null,
+        textChunks: null,
+        error: new Error('Data error: Multiple sources found with this ID. Please contact support.')
+      };
+    }
+  }
 
   if (sourceError || !source) {
     return {
@@ -256,6 +271,7 @@ async function loadFeedProgress(
     completedItems: data.completed_items || [],
     synthesisCount: data.synthesis_count || 0,
     lastSessionAt: data.last_session_at,
+    firstSessionCompletedAt: data.first_session_completed_at,
   };
 }
 
@@ -900,6 +916,57 @@ export function FeedProvider({
   }, [pretestItems, pretestAnswers]);
 
   /**
+   * Mark the first session as complete
+   * Sets first_session_completed_at timestamp in feed_progress table
+   * Future sessions will skip the prerequisite pretest
+   */
+  const markFirstSessionComplete = useCallback(async () => {
+    if (!user?.id) {
+      console.warn('[FeedContext] Cannot mark first session complete: no user');
+      return;
+    }
+
+    try {
+      const timestamp = new Date().toISOString();
+
+      // Upsert the feed_progress record with first_session_completed_at
+      const { error: upsertError } = await supabase
+        .from('feed_progress')
+        .upsert(
+          {
+            user_id: user.id,
+            source_id: sourceId,
+            first_session_completed_at: timestamp,
+          },
+          {
+            onConflict: 'user_id,source_id',
+          }
+        );
+
+      if (upsertError) {
+        console.error('[FeedContext] Failed to mark first session complete:', upsertError);
+        return;
+      }
+
+      console.log('[FeedContext] First session marked complete for source:', sourceId);
+    } catch (err) {
+      console.error('[FeedContext] Error marking first session complete:', err);
+    }
+  }, [user?.id, sourceId]);
+
+  /**
+   * Auto-mark first session complete when session completes
+   * This ensures subsequent sessions will skip the prerequisite pretest
+   */
+  useEffect(() => {
+    if (sessionComplete) {
+      // Session completed - mark first session as complete
+      // This is idempotent - if already marked, it will just update the timestamp
+      markFirstSessionComplete();
+    }
+  }, [sessionComplete, markFirstSessionComplete]);
+
+  /**
    * Memoized context value
    */
   const contextValue = useMemo<FeedContextValue>(
@@ -932,6 +999,7 @@ export function FeedProvider({
       answerPretest,
       completePretest,
       pretestProgress,
+      markFirstSessionComplete,
     }),
     [
       feedItems,
@@ -962,6 +1030,7 @@ export function FeedProvider({
       answerPretest,
       completePretest,
       pretestProgress,
+      markFirstSessionComplete,
     ]
   );
 
