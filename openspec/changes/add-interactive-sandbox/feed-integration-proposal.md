@@ -757,7 +757,146 @@ const COGNITIVE_LOAD_STRUCTURE = {
 
 ---
 
-## 12. Summary
+## 12. Integration Code Review (Gemini 3 Pro)
+
+### 12.1 Critical Bug: Exit Animation Race Condition
+
+**Issue:** Conditional rendering based on `currentSandboxItem` causes immediate unmount.
+
+```typescript
+// BROKEN: Modal unmounts before animation completes
+{currentSandboxItem && <SandboxModal ... />}
+
+// In completeSandboxInteraction:
+setSandboxModalVisible(false);  // 1. Tells modal to hide
+setCurrentSandboxItem(null);    // 2. Unmounts immediately - NO ANIMATION!
+```
+
+**Fix: Separate close from teardown**
+
+```typescript
+// FeedContext - separate functions
+const closeSandboxModal = useCallback(() => {
+  setSandboxModalVisible(false); // Start animation only
+}, []);
+
+const handleModalHidden = useCallback(() => {
+  setCurrentSandboxItem(null); // Only after animation completes
+}, []);
+
+// SandboxModal - use platform callbacks
+<Modal
+  visible={visible}
+  onDismiss={onHidden}       // Android
+  onModalHide={onHidden}     // iOS (react-native-modal)
+  animationType="slide"
+>
+```
+
+### 12.2 Timer Integrity Fix
+
+**Issue:** `useState(Date.now())` causes unnecessary re-renders and doesn't handle app backgrounding.
+
+```typescript
+// FIX: Use useRef + AppState listener
+const startTimeRef = useRef(Date.now());
+const pausedAtRef = useRef(0);
+
+useEffect(() => {
+  const subscription = AppState.addEventListener('change', nextAppState => {
+    if (nextAppState === 'background') {
+      pausedAtRef.current = Date.now();
+    } else if (nextAppState === 'active' && pausedAtRef.current > 0) {
+      startTimeRef.current += (Date.now() - pausedAtRef.current);
+      pausedAtRef.current = 0;
+    }
+  });
+  return () => subscription.remove();
+}, []);
+```
+
+### 12.3 Error Boundary for Evaluation
+
+```typescript
+const handleSubmit = useCallback((userState: Record<string, string[]>) => {
+  try {
+    const result = evaluateSandbox(interaction, userState);
+    onSubmit({ ...result });
+  } catch (error) {
+    console.error('[SandboxModal] Evaluation error:', error);
+    Alert.alert('Error', 'Could not evaluate interaction.');
+    onSubmit({
+      interactionId: interaction.interactionId,
+      score: 0,
+      passed: false,
+      feedback: 'Evaluation failed - please try again.',
+    });
+  }
+}, [interaction, onSubmit]);
+```
+
+### 12.4 Skeleton -> Hydrate Pattern for AI Generation
+
+```typescript
+interface SandboxItem {
+  // NEW: Status field for async generation
+  status: 'pending' | 'generating' | 'ready' | 'error';
+  interaction: SandboxInteraction | null; // null until hydrated
+}
+
+// FeedBuilder creates placeholder
+private createSandboxPlaceholder(concept: Concept): SandboxItem {
+  return {
+    id: `sandbox_${concept.id}`,
+    type: 'sandbox',
+    status: 'pending',
+    interaction: null, // Will be hydrated by background service
+  };
+}
+
+// Background service hydrates when AI completes
+function hydrateSandboxItem(itemId: string, generated: SandboxInteraction): void {
+  setFeedItems(prev => prev.map(item =>
+    item.id === itemId
+      ? { ...item, status: 'ready', interaction: generated }
+      : item
+  ));
+}
+```
+
+### 12.5 Consolidated Business Logic
+
+**Issue:** XP logic split between FeedContext (`xpServiceRef`) and FeedScreen (`handleQuizCorrect(25)`).
+
+```typescript
+// FIX: All business logic in FeedContext
+const completeSandboxInteraction = useCallback(async (itemId, result) => {
+  // 1. Calculate FSRS rating and XP in service layer
+  const fsrsRating = deriveFSRSRating(result);
+  const xpAmount = calculateSandboxXP(result, fsrsRating);
+
+  // 2. Award XP with sandbox-specific type
+  await xpServiceRef.current.awardXP(user.id, 'sandbox_complete', xpAmount);
+
+  // 3. Trigger close animation (not teardown)
+  closeSandboxModal();
+
+  // 4. Return for UI feedback
+  return { xpAwarded: xpAmount, fsrsRating };
+}, [user, closeSandboxModal]);
+
+// FeedScreen - pure UI, no business logic
+<SandboxModal
+  onSubmit={async (result) => {
+    const { xpAwarded } = await completeSandboxInteraction(itemId, result);
+    if (xpAwarded > 0) showXPPopup(xpAwarded);
+  }}
+/>
+```
+
+---
+
+## 13. Summary
 
 This proposal provides a complete architecture for integrating interactive sandbox activities into the learning feed with:
 
@@ -777,4 +916,11 @@ This proposal provides a complete architecture for integrating interactive sandb
 - **Database optimization** with composite indexes and materialized views
 - **Cognitive load validation** confirming 1 sandbox per 5 items is optimal
 
-**Final Verdict:** Ready for Implementation - rigorously validated by both Gemini Flash (pedagogical) and Gemini 3 Pro (architectural).
+**Integration Code Review (Gemini 3 Pro Round 2):**
+- **Exit animation race condition** fix with separate close/teardown callbacks
+- **Timer integrity** with useRef + AppState backgrounding support
+- **Error boundaries** around evaluation logic
+- **Skeleton -> Hydrate pattern** for async AI generation
+- **Consolidated business logic** - XP/FSRS in context, not view
+
+**Final Verdict:** Ready for Implementation - rigorously validated by Gemini Flash (pedagogical), Gemini 3 Pro (architectural), and code-level integration review.
