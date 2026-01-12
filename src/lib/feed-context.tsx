@@ -155,6 +155,10 @@ export interface FeedContextValue {
   startSandboxInteraction: (itemId: string) => void;
   /** Complete a sandbox interaction (closes modal, records result) */
   completeSandboxInteraction: (itemId: string, result: SandboxEvaluationResult) => Promise<void>;
+  /** Close sandbox modal (starts exit animation, does NOT clear state) */
+  closeSandboxModal: () => void;
+  /** Called after sandbox modal exit animation completes to clear state */
+  handleSandboxModalHidden: () => void;
 }
 
 /**
@@ -947,6 +951,24 @@ export function FeedProvider({
   }, [feedItems]);
 
   /**
+   * Close sandbox modal (starts exit animation)
+   * Does NOT clear currentSandboxItem - wait for onModalHide
+   */
+  const closeSandboxModal = useCallback(() => {
+    console.log('[FeedContext] Closing sandbox modal (animation starting)');
+    setSandboxModalVisible(false);
+  }, []);
+
+  /**
+   * Called by SandboxModal's onModalHide/onDismiss callback
+   * Tears down sandbox state AFTER animation completes
+   */
+  const handleSandboxModalHidden = useCallback(() => {
+    console.log('[FeedContext] Modal animation complete, clearing sandbox item');
+    setCurrentSandboxItem(null);
+  }, []);
+
+  /**
    * Complete a sandbox interaction
    * Closes the modal, records the result, awards XP based on FSRS rating
    */
@@ -958,9 +980,9 @@ export function FeedProvider({
 
     console.log('[FeedContext] Completing sandbox interaction:', itemId, result);
 
-    // Close modal first
-    setSandboxModalVisible(false);
-    setCurrentSandboxItem(null);
+    // Close modal (starts exit animation)
+    // Do NOT null currentSandboxItem - that will happen in handleSandboxModalHidden after animation
+    closeSandboxModal();
 
     // Mark item as completed
     setCompletedItemIds((prev) => new Set(prev).add(itemId));
@@ -994,7 +1016,7 @@ export function FeedProvider({
 
     // Auto-advance to next card
     goToNext();
-  }, [user, goToNext]);
+  }, [user, goToNext, closeSandboxModal]);
 
   /**
    * Mark the first session as complete
@@ -1085,6 +1107,8 @@ export function FeedProvider({
       currentSandboxItem,
       startSandboxInteraction,
       completeSandboxInteraction,
+      closeSandboxModal,
+      handleSandboxModalHidden,
     }),
     [
       feedItems,
@@ -1120,6 +1144,8 @@ export function FeedProvider({
       currentSandboxItem,
       startSandboxInteraction,
       completeSandboxInteraction,
+      closeSandboxModal,
+      handleSandboxModalHidden,
     ]
   );
 
