@@ -48,6 +48,9 @@ export interface SandboxModalProps {
   /** Called when user closes modal (X button or back) */
   onClose: () => void;
 
+  /** Called after exit animation completes (modal fully hidden) */
+  onHidden?: () => void;
+
   /** Called when user submits their answer */
   onSubmit: (result: Omit<SandboxEvaluationResult, 'feedback'>) => void;
 
@@ -75,6 +78,7 @@ export function SandboxModal({
   visible,
   interaction,
   onClose,
+  onHidden,
   onSubmit,
   testID = 'sandbox-modal',
 }: SandboxModalProps): React.ReactElement {
@@ -202,6 +206,7 @@ export function SandboxModal({
       animationType="slide"
       presentationStyle="fullScreen"
       onRequestClose={handleClose}
+      onDismiss={onHidden}  // Called after modal fully closes
     >
       <SafeAreaView style={styles.container}>
         {/* Header */}

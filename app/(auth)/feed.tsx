@@ -149,6 +149,8 @@ function FeedContent(): React.ReactElement {
     currentSandboxItem,
     startSandboxInteraction,
     completeSandboxInteraction,
+    closeSandboxModal,           // NEW: Triggers exit animation
+    handleSandboxModalHidden,    // NEW: Called after exit animation completes
   } = useFeed();
 
   // XP popup state
@@ -625,8 +627,9 @@ function FeedContent(): React.ReactElement {
           visible={sandboxModalVisible}
           interaction={currentSandboxItem.interaction}
           onClose={handleCloseSandbox}
+          onHidden={handleSandboxModalHidden}  // NEW: Called after exit animation completes
           onSubmit={(result) => {
-            console.log('[Feed] Sandbox complete:', result);
+            console.log('[Feed] Sandbox submitted:', result);
             // Create full evaluation result with required fields and feedback
             const fullResult = {
               ...result,
