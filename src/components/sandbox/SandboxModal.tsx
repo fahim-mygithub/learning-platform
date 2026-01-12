@@ -15,7 +15,7 @@
  * @see openspec/changes/add-interactive-sandbox/proposal.md
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Modal,
   View,
@@ -23,6 +23,8 @@ import {
   Pressable,
   StyleSheet,
   SafeAreaView,
+  AppState,
+  type AppStateStatus,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
@@ -87,8 +89,9 @@ export function SandboxModal({
   const colors = getColors();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // Timer state
-  const [startTime, setStartTime] = useState<number>(0);
+  // Timer state - useRef for accurate timing that survives backgrounding
+  const startTimeRef = useRef<number>(Date.now());
+  const pausedAtRef = useRef<number>(0);
   const [elapsedMs, setElapsedMs] = useState<number>(0);
 
   // Hint state
@@ -106,7 +109,6 @@ export function SandboxModal({
   useEffect(() => {
     if (visible && interaction) {
       console.log('[SandboxModal] Opening:', interaction.interactionId);
-      setStartTime(Date.now());
       setElapsedMs(0);
       setHintsUsed(0);
       setCurrentHintIndex(-1);
@@ -116,16 +118,49 @@ export function SandboxModal({
     }
   }, [visible, interaction?.interactionId]);
 
+  /**
+   * Reset timer when a new interaction starts
+   */
+  useEffect(() => {
+    if (interaction) {
+      startTimeRef.current = Date.now();
+      pausedAtRef.current = 0;
+      console.log('[SandboxModal] Timer reset for new interaction:', interaction.interactionId);
+    }
+  }, [interaction?.interactionId]);
+
+  /**
+   * Handle app backgrounding - pause timer to prevent unfair time tracking
+   */
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        // App going to background - record pause time
+        pausedAtRef.current = Date.now();
+        console.log('[SandboxModal] Timer paused (app backgrounded)');
+      } else if (nextAppState === 'active' && pausedAtRef.current > 0) {
+        // App returning - adjust start time to exclude paused duration
+        const pausedDuration = Date.now() - pausedAtRef.current;
+        startTimeRef.current += pausedDuration;
+        pausedAtRef.current = 0;
+        console.log('[SandboxModal] Timer resumed, excluded:', pausedDuration, 'ms');
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, []);
+
   // Timer effect
   useEffect(() => {
     if (!visible) return;
 
     const interval = setInterval(() => {
-      setElapsedMs(Date.now() - startTime);
+      setElapsedMs(Date.now() - startTimeRef.current);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [visible, startTime]);
+  }, [visible]);
 
   /**
    * Handle hint request
@@ -156,7 +191,7 @@ export function SandboxModal({
   const handleSubmit = useCallback(() => {
     if (!interaction) return;
 
-    const timeToCompleteMs = Date.now() - startTime;
+    const timeToCompleteMs = Date.now() - startTimeRef.current;
     console.log('[SandboxModal] Submit:', {
       elapsed: formatTime(timeToCompleteMs),
       hintsUsed,
@@ -177,7 +212,7 @@ export function SandboxModal({
 
     setAttemptCount((prev) => prev + 1);
     onSubmit(result);
-  }, [interaction, startTime, hintsUsed, attemptCount, onSubmit]);
+  }, [interaction, hintsUsed, attemptCount, onSubmit]);
 
   /**
    * Get scaffold level label
