@@ -24,10 +24,12 @@ import {
   StyleSheet,
   SafeAreaView,
   AppState,
+  Alert,
   type AppStateStatus,
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
+import { evaluateSandboxInteraction } from '../../lib/sandbox-evaluation-service';
 import { spacing } from '../../theme';
 import { useTypography } from '../../lib/typography-context';
 import { type ColorTheme } from '../../theme/colors';
@@ -192,27 +194,48 @@ export function SandboxModal({
     if (!interaction) return;
 
     const timeToCompleteMs = Date.now() - startTimeRef.current;
-    console.log('[SandboxModal] Submit:', {
-      elapsed: formatTime(timeToCompleteMs),
-      hintsUsed,
-      attemptCount: attemptCount + 1,
-    });
 
-    // Calculate score based on canvas state vs correct state
-    // This is a placeholder - actual evaluation happens in the evaluation service
-    const result: Omit<SandboxEvaluationResult, 'feedback'> = {
-      interactionId: interaction.interactionId,
-      conceptId: interaction.conceptId,
-      score: 0, // Will be calculated by evaluation service
-      passed: false, // Will be calculated by evaluation service
-      attemptCount: attemptCount + 1,
-      hintsUsed,
-      timeToCompleteMs,
-    };
+    try {
+      console.log('[SandboxModal] Evaluating submission...');
+      const result = evaluateSandboxInteraction(interaction, canvasState, attemptCount + 1, hintsUsed, timeToCompleteMs);
 
-    setAttemptCount((prev) => prev + 1);
-    onSubmit(result);
-  }, [interaction, hintsUsed, attemptCount, onSubmit]);
+      console.log('[SandboxModal] Evaluation result:', {
+        score: result.score,
+        passed: result.passed,
+        timeToCompleteMs,
+      });
+
+      setAttemptCount((prev) => prev + 1);
+      onSubmit({
+        interactionId: interaction.interactionId,
+        conceptId: interaction.conceptId,
+        score: result.score,
+        passed: result.passed,
+        attemptCount: attemptCount + 1,
+        hintsUsed,
+        timeToCompleteMs,
+      });
+    } catch (error) {
+      console.error('[SandboxModal] Evaluation error:', error);
+      Alert.alert(
+        'Evaluation Error',
+        'Could not evaluate your answer. Please try again.',
+        [{ text: 'OK' }]
+      );
+
+      // Submit failure result so user can proceed
+      setAttemptCount((prev) => prev + 1);
+      onSubmit({
+        interactionId: interaction.interactionId,
+        conceptId: interaction.conceptId,
+        score: 0,
+        passed: false,
+        attemptCount: attemptCount + 1,
+        hintsUsed,
+        timeToCompleteMs,
+      });
+    }
+  }, [interaction, canvasState, hintsUsed, attemptCount, onSubmit]);
 
   /**
    * Get scaffold level label
