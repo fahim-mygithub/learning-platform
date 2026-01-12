@@ -197,7 +197,7 @@ export function SandboxModal({
 
     try {
       console.log('[SandboxModal] Evaluating submission...');
-      const result = evaluateSandboxInteraction(interaction, canvasState, attemptCount + 1, hintsUsed, timeToCompleteMs);
+      const result = evaluateSandboxInteraction(interaction, { zoneContents: canvasState }, attemptCount + 1, hintsUsed, timeToCompleteMs);
 
       console.log('[SandboxModal] Evaluation result:', {
         score: result.score,
