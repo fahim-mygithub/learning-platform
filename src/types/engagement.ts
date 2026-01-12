@@ -9,7 +9,7 @@
 
 import type { SampleQuestion } from './three-pass';
 import type { SynthesisInteraction } from '../lib/synthesis-phase-service';
-import type { SandboxInteraction, ScaffoldLevel } from './sandbox';
+import type { SandboxInteraction, ScaffoldLevel, SandboxStatus } from './sandbox';
 
 // Re-export SynthesisInteraction as type alias for backwards compatibility
 export type { SynthesisInteraction };
@@ -192,12 +192,16 @@ export interface SandboxItem {
   conceptId: string;
   /** Human-readable concept name */
   conceptName: string;
-  /** The sandbox interaction definition */
-  interaction: SandboxInteraction;
+  /** Status for async generation (Phase 2) */
+  status: SandboxStatus;
+  /** The sandbox interaction definition (null if pending/generating) */
+  interaction: SandboxInteraction | null;
   /** Scaffold level for fading scaffolding */
   scaffoldLevel: ScaffoldLevel;
   /** Estimated time to complete in seconds */
   estimatedTimeSeconds: number;
+  /** Error message if status is 'error' */
+  errorMessage?: string;
 }
 
 /**

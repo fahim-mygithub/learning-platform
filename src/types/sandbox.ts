@@ -28,6 +28,15 @@ import type { CognitiveType, BloomLevel } from './database';
 export type ScaffoldLevel = 'worked' | 'scaffold' | 'faded';
 
 /**
+ * Status of sandbox item for async AI generation (Phase 2)
+ * - pending: Placeholder created, awaiting generation
+ * - generating: AI generation in progress
+ * - ready: Interaction fully generated and ready
+ * - error: Generation failed
+ */
+export type SandboxStatus = 'pending' | 'generating' | 'ready' | 'error';
+
+/**
  * Evaluation mode for sandbox interactions
  * - deterministic: Zone contents matching, sequence order (0ms, $0)
  * - ai_assisted: Semantic similarity for text inputs only (~$0.002-0.01)

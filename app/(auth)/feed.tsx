@@ -277,8 +277,8 @@ function FeedContent(): React.ReactElement {
    */
   const handleCloseSandbox = useCallback(() => {
     console.log('[Feed] Closing sandbox modal');
-    // If there's a current sandbox item, complete it with a default result
-    if (currentSandboxItem) {
+    // If there's a current sandbox item with ready interaction, complete it with a default result
+    if (currentSandboxItem && currentSandboxItem.status === 'ready' && currentSandboxItem.interaction) {
       completeSandboxInteraction(currentSandboxItem.id, {
         interactionId: currentSandboxItem.interaction.interactionId,
         conceptId: currentSandboxItem.conceptId,
@@ -621,8 +621,8 @@ function FeedContent(): React.ReactElement {
         testID="break-modal"
       />
 
-      {/* Sandbox modal */}
-      {currentSandboxItem && (
+      {/* Sandbox modal - only render if interaction is ready */}
+      {currentSandboxItem && currentSandboxItem.status === 'ready' && currentSandboxItem.interaction && (
         <SandboxModal
           visible={sandboxModalVisible}
           interaction={currentSandboxItem.interaction}

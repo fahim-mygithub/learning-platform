@@ -697,6 +697,7 @@ function createSandboxItem(
     type: 'sandbox',
     conceptId: concept.id,
     conceptName: concept.name,
+    status: 'ready',  // Phase 1: synchronous, always ready
     interaction,
     scaffoldLevel,
     estimatedTimeSeconds: interaction.estimatedTimeSeconds,

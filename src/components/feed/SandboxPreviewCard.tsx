@@ -15,7 +15,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, type ViewStyle, type TextStyle } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, type ViewStyle, type TextStyle } from 'react-native';
 import type { SandboxItem } from '../../types/engagement';
 import type { SandboxInteractionType, ScaffoldLevel } from '../../types/sandbox';
 import { useTypography } from '../../lib/typography-context';
@@ -95,7 +95,7 @@ export function SandboxPreviewCard({
   const { getColors } = useTypography();
   const colors = getColors();
 
-  console.log('[SandboxPreview] Render:', item.interaction.interactionId);
+  console.log('[SandboxPreview] Render:', item.status, item.interaction?.interactionId);
 
   const styles = useMemo(
     () =>
@@ -193,17 +193,53 @@ export function SandboxPreviewCard({
           textAlign: 'center',
           marginTop: spacing[3],
         } as TextStyle,
+        loadingContainer: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[6],
+        } as ViewStyle,
+        loadingText: {
+          fontSize: 14,
+          color: colors.textSecondary,
+          marginTop: spacing[3],
+          textAlign: 'center',
+        } as TextStyle,
+        errorContainer: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: spacing[4],
+        } as ViewStyle,
+        errorText: {
+          fontSize: 14,
+          color: colors.error,
+          textAlign: 'center',
+          marginBottom: spacing[3],
+        } as TextStyle,
+        disabledButton: {
+          backgroundColor: colors.textSecondary,
+          opacity: 0.5,
+        } as ViewStyle,
       }),
     [colors]
   );
 
-  // Get interaction type label and icon
-  const typeLabel = getInteractionTypeLabel(item.interaction.interactionType);
+  // Check status for loading/error states
+  const isLoading = item.status === 'pending' || item.status === 'generating';
+  const isError = item.status === 'error';
+  const isReady = item.status === 'ready' && item.interaction !== null;
+
+  // Get interaction type label and icon (only available when ready)
+  const typeLabel = item.interaction
+    ? getInteractionTypeLabel(item.interaction.interactionType)
+    : 'Interactive';
   const scaffoldLabel = getScaffoldLabel(item.scaffoldLevel);
   const timeLabel = formatTime(item.estimatedTimeSeconds);
 
   // Get icon based on interaction type
   const getIcon = (): string => {
+    if (!item.interaction) {
+      return '🎮';
+    }
     switch (item.interaction.interactionType) {
       case 'matching':
         return '🔗';
@@ -225,52 +261,97 @@ export function SandboxPreviewCard({
       <View style={styles.card}>
         {/* Icon */}
         <View style={styles.iconContainer}>
-          <Text style={styles.iconText}>{getIcon()}</Text>
+          {isLoading ? (
+            <ActivityIndicator size="large" color={colors.primary} />
+          ) : (
+            <Text style={styles.iconText}>{getIcon()}</Text>
+          )}
         </View>
 
         {/* Concept name */}
         <Text style={styles.conceptName}>{item.conceptName}</Text>
 
-        {/* Description */}
-        <Text style={styles.description}>
-          Test your understanding with an interactive {typeLabel.toLowerCase()} activity.
-        </Text>
-
-        {/* Badges */}
-        <View style={styles.badgesRow}>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{typeLabel}</Text>
-          </View>
-          <View style={[styles.badge, styles.scaffoldBadge]}>
-            <Text style={[styles.badgeText, styles.scaffoldBadgeText]}>
-              {scaffoldLabel}
+        {/* Loading state */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>
+              {item.status === 'pending'
+                ? 'Preparing interaction...'
+                : 'Generating interaction...'}
             </Text>
           </View>
-          <View style={[styles.badge, styles.timeBadge]}>
-            <Text style={[styles.badgeText, styles.timeBadgeText]}>
-              {timeLabel}
+        )}
+
+        {/* Error state */}
+        {isError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>
+              {item.errorMessage || 'Failed to generate interaction'}
             </Text>
           </View>
-        </View>
+        )}
 
-        {/* Start button */}
+        {/* Ready state - show full content */}
+        {isReady && (
+          <>
+            {/* Description */}
+            <Text style={styles.description}>
+              Test your understanding with an interactive {typeLabel.toLowerCase()} activity.
+            </Text>
+
+            {/* Badges */}
+            <View style={styles.badgesRow}>
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{typeLabel}</Text>
+              </View>
+              <View style={[styles.badge, styles.scaffoldBadge]}>
+                <Text style={[styles.badgeText, styles.scaffoldBadgeText]}>
+                  {scaffoldLabel}
+                </Text>
+              </View>
+              <View style={[styles.badge, styles.timeBadge]}>
+                <Text style={[styles.badgeText, styles.timeBadgeText]}>
+                  {timeLabel}
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
+
+        {/* Start button - only enabled when ready */}
         <Pressable
-          style={styles.startButton}
+          style={[
+            styles.startButton,
+            !isReady && styles.disabledButton,
+          ]}
           onPress={() => {
-            console.log('[SandboxPreview] Start pressed:', item.interaction.interactionId);
-            onStart();
+            if (isReady && item.interaction) {
+              console.log('[SandboxPreview] Start pressed:', item.interaction.interactionId);
+              onStart();
+            }
           }}
-          accessibilityLabel={`Start ${typeLabel} interaction for ${item.conceptName}`}
+          disabled={!isReady}
+          accessibilityLabel={
+            isReady
+              ? `Start ${typeLabel} interaction for ${item.conceptName}`
+              : isLoading
+                ? 'Loading interaction'
+                : 'Interaction unavailable'
+          }
           accessibilityRole="button"
           testID="sandbox-start-button"
         >
-          <Text style={styles.startButtonText}>Start Interaction</Text>
+          <Text style={styles.startButtonText}>
+            {isLoading ? 'Loading...' : isError ? 'Unavailable' : 'Start Interaction'}
+          </Text>
         </Pressable>
 
-        {/* Instructions hint */}
-        <Text style={styles.instructions}>
-          Tap to begin the interactive activity
-        </Text>
+        {/* Instructions hint - only when ready */}
+        {isReady && (
+          <Text style={styles.instructions}>
+            Tap to begin the interactive activity
+          </Text>
+        )}
       </View>
     </View>
   );
