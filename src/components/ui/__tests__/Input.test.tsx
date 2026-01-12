@@ -118,8 +118,8 @@ describe('Input Component', () => {
         ? Object.assign({}, ...style.filter(Boolean))
         : style;
 
-      // Default border, not error style
-      expect(flatStyle.borderColor).toBe(colors.border);
+      // Default border (borderLight), not error style
+      expect(flatStyle.borderColor).toBe(colors.borderLight);
       expect(flatStyle.borderWidth).toBe(1);
     });
 
@@ -221,7 +221,8 @@ describe('Input Component', () => {
         ? Object.assign({}, ...style.filter(Boolean))
         : style;
 
-      expect(flatStyle.backgroundColor).toBe(colors.backgroundTertiary);
+      // Disabled state uses backgroundSecondary to differentiate from enabled state
+      expect(flatStyle.backgroundColor).toBe(colors.backgroundSecondary);
     });
 
     it('sets accessibility state disabled', () => {

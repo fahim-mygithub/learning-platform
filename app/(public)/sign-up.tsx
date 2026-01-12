@@ -1,16 +1,18 @@
 /**
- * Sign Up Screen
+ * Sign Up Screen - Luminous Focus Design
  *
  * Registration form for new users with:
- * - Email input with validation
- * - Password input with show/hide toggle
+ * - Branded header with app name
+ * - Premium input fields with zinc-400 labels
+ * - Show/hide password toggle
  * - Confirm password input with matching validation
- * - Submit button with loading state
+ * - Loading state and error handling
  * - Navigation to sign-in screen
- * - Error handling and display
+ * - Dark background with clean, centered layout
+ * - Staggered entrance animations
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -20,12 +22,16 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter, Link } from 'expo-router';
 
 import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
 import { useAuth } from '@/src/lib/auth-context';
+import { useTypography } from '@/src/lib/typography-context';
 import { validateEmail, validatePassword } from '@/src/lib/validation';
+import { type ColorTheme } from '@/src/theme/colors';
+import { entrance, stagger } from '@/src/theme/animations';
 
 /**
  * Form field errors interface
@@ -49,6 +55,13 @@ const initialErrors: FormErrors = {
 
 export default function SignUpScreen() {
   const router = useRouter();
+  // Get dynamic colors from typography context
+  const { getColors, getFontFamily } = useTypography();
+  const colors = getColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const fontFamily = getFontFamily('semibold');
+  const fontFamilyBold = getFontFamily('bold');
+
   const { signUp } = useAuth();
 
   // Form state
@@ -171,11 +184,29 @@ export default function SignUpScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Sign up to get started</Text>
-        </View>
+        {/* App Branding - Logo entrance animation */}
+        <Animated.View
+          style={styles.branding}
+          entering={FadeInDown.duration(entrance.primary).delay(0)}
+        >
+          <View style={styles.logoContainer}>
+            <View style={styles.logoIcon}>
+              <Text style={[styles.logoText, { fontFamily: fontFamilyBold }]}>L</Text>
+            </View>
+          </View>
+          <Text style={[styles.appName, { fontFamily: fontFamilyBold }]}>LearnFlow</Text>
+        </Animated.View>
+
+        {/* Welcome Header - Staggered entrance */}
+        <Animated.View
+          style={styles.header}
+          entering={FadeInDown.duration(entrance.secondary).delay(stagger.formElements)}
+        >
+          <Text style={[styles.title, { fontFamily }]}>Create Account</Text>
+          <Text style={styles.subtitle}>Sign up to start your learning journey</Text>
+        </Animated.View>
 
         {/* API Error Display */}
         {errors.api && (
@@ -187,23 +218,28 @@ export default function SignUpScreen() {
         )}
 
         <View style={styles.form}>
-          {/* Email Input */}
-          <Input
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            onBlur={handleEmailBlur}
-            error={errors.email ?? undefined}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            placeholder="Enter your email"
-            accessibilityLabel="Email"
-            testID="email-input"
-          />
+          {/* Email Input - Staggered entrance */}
+          <Animated.View entering={FadeInDown.duration(entrance.secondary).delay(stagger.formElements * 2)}>
+            <Input
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              onBlur={handleEmailBlur}
+              error={errors.email ?? undefined}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              placeholder="Enter your email"
+              accessibilityLabel="Email"
+              testID="email-input"
+            />
+          </Animated.View>
 
-          {/* Password Input with Toggle */}
-          <View style={styles.passwordContainer}>
+          {/* Password Input with Toggle - Staggered entrance */}
+          <Animated.View
+            style={styles.passwordContainer}
+            entering={FadeInDown.duration(entrance.secondary).delay(stagger.formElements * 3)}
+          >
             <Input
               label="Password"
               value={password}
@@ -228,10 +264,13 @@ export default function SignUpScreen() {
                 {showPassword ? 'Hide' : 'Show'}
               </Text>
             </Pressable>
-          </View>
+          </Animated.View>
 
-          {/* Confirm Password Input with Toggle */}
-          <View style={styles.passwordContainer}>
+          {/* Confirm Password Input with Toggle - Staggered entrance */}
+          <Animated.View
+            style={styles.passwordContainer}
+            entering={FadeInDown.duration(entrance.secondary).delay(stagger.formElements * 4)}
+          >
             <Input
               label="Confirm Password"
               value={confirmPassword}
@@ -258,11 +297,16 @@ export default function SignUpScreen() {
                 {showConfirmPassword ? 'Hide' : 'Show'}
               </Text>
             </Pressable>
-          </View>
+          </Animated.View>
 
-          {/* Submit Button */}
-          <View style={styles.buttonContainer}>
+          {/* Submit Button - Glow Variant - Final entrance */}
+          <Animated.View
+            style={styles.buttonContainer}
+            entering={FadeInDown.duration(entrance.secondary).delay(stagger.formElements * 5)}
+          >
             <Button
+              variant="glow"
+              size="large"
               onPress={handleSubmit}
               loading={isLoading}
               disabled={isLoading}
@@ -271,95 +315,148 @@ export default function SignUpScreen() {
             >
               Create Account
             </Button>
-          </View>
+          </Animated.View>
         </View>
 
-        {/* Sign In Link */}
-        <View style={styles.footer}>
+        {/* Sign In Link - Final entrance */}
+        <Animated.View
+          style={styles.footer}
+          entering={FadeInDown.duration(entrance.tertiary).delay(stagger.formElements * 6)}
+        >
           <Text style={styles.footerText}>Already have an account? </Text>
           <Link href="/sign-in" asChild>
             <Pressable accessibilityRole="link" testID="sign-in-link">
               <Text style={styles.linkText}>Sign In</Text>
             </Pressable>
           </Link>
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  apiErrorContainer: {
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  apiErrorText: {
-    color: '#dc2626',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  form: {
-    width: '100%',
-  },
-  passwordContainer: {
-    position: 'relative',
-  },
-  showPasswordButton: {
-    position: 'absolute',
-    right: 12,
-    top: 34,
-    padding: 8,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  showPasswordText: {
-    color: '#3B82F6',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  buttonContainer: {
-    marginTop: 16,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#3B82F6',
-    fontWeight: '600',
-  },
-});
+/**
+ * Create dynamic styles based on theme colors
+ * Luminous Focus Design:
+ * - Background: zinc-950 (#09090b)
+ * - Centered content with max-width 400px
+ * - Labels in zinc-400
+ * - Premium glow effects on primary actions
+ */
+function createStyles(colors: ColorTheme) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      padding: 24,
+      justifyContent: 'center',
+      maxWidth: 400,
+      alignSelf: 'center',
+      width: '100%',
+    },
+    branding: {
+      alignItems: 'center',
+      marginBottom: 32,
+    },
+    logoContainer: {
+      marginBottom: 16,
+    },
+    logoIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: 16,
+      backgroundColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      // Glow effect on logo
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.6,
+      shadowRadius: 20,
+      elevation: 10,
+    },
+    logoText: {
+      fontSize: 32,
+      color: colors.white,
+      fontWeight: '700',
+    },
+    appName: {
+      fontSize: 36,
+      fontWeight: '700',
+      color: colors.text,
+      letterSpacing: -0.5,
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: 32,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: '600',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 15,
+      color: colors.textTertiary,
+      textAlign: 'center',
+    },
+    apiErrorContainer: {
+      backgroundColor: `${colors.error}15`,
+      borderWidth: 1,
+      borderColor: `${colors.error}40`,
+      borderRadius: 12,
+      padding: 14,
+      marginBottom: 20,
+    },
+    apiErrorText: {
+      color: colors.error,
+      fontSize: 14,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    form: {
+      width: '100%',
+    },
+    passwordContainer: {
+      position: 'relative',
+    },
+    showPasswordButton: {
+      position: 'absolute',
+      right: 12,
+      top: 34,
+      padding: 8,
+      minHeight: 44,
+      justifyContent: 'center',
+    },
+    showPasswordText: {
+      color: colors.primary,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    buttonContainer: {
+      marginTop: 24,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 32,
+      paddingTop: 24,
+      borderTopWidth: 1,
+      borderTopColor: colors.borderLight,
+    },
+    footerText: {
+      fontSize: 15,
+      color: colors.textSecondary,
+    },
+    linkText: {
+      fontSize: 15,
+      color: colors.primary,
+      fontWeight: '600',
+    },
+  });
+}

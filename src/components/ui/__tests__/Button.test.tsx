@@ -184,7 +184,16 @@ describe('Button Component', () => {
     it('hides text when loading', () => {
       renderButton({ loading: true, children: 'Submit' });
 
-      expect(screen.queryByText('Submit')).toBeNull();
+      // Text is kept in DOM for animation but visually hidden (opacity 0)
+      const text = screen.queryByText('Submit');
+      expect(text).toBeTruthy();
+      // Check that the text has hidden styling applied (opacity 0 via animated style)
+      const styles = text?.props?.style;
+      // Styles can be an array, flatten and check for opacity
+      const flatStyle = Array.isArray(styles)
+        ? styles.reduce((acc, s) => ({ ...acc, ...s }), {})
+        : styles;
+      expect(flatStyle?.opacity).toBe(0);
     });
 
     it('disables button when loading', () => {

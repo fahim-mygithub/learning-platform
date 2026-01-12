@@ -1,21 +1,28 @@
 /**
  * MasteryRing Component
  *
- * Circular progress indicator showing mastery percentage using react-native-svg.
- * Animates smoothly when progress changes.
+ * Premium circular progress indicator with luminous glow effects.
+ * Designed for the "Luminous Focus" aesthetic - deep blacks with
+ * animated gradient glows that intensify with progress.
+ *
+ * Features:
+ * - SVG-based circular ring with smooth animated fill
+ * - Progress-based color tiers (unseen -> mastered)
+ * - Outer glow effect that pulses subtly
+ * - Theme-aware colors via useTypography
+ * - Achievement badge feel for gamification
  *
  * @example
  * ```tsx
  * <MasteryRing
  *   progress={75}
  *   size={120}
- *   strokeWidth={10}
- *   label="Mastery"
+ *   showLabel={true}
  * />
  * ```
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -23,17 +30,21 @@ import {
   type ViewStyle,
   type TextStyle,
 } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, Stop, G } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
   withTiming,
+  withRepeat,
+  withSequence,
   Easing,
+  interpolate,
+  useAnimatedStyle,
 } from 'react-native-reanimated';
-import { colors, spacing } from '@/src/theme';
+import { useTypography } from '@/src/lib/typography-context';
 
 /**
- * Create animated Circle component
+ * Create animated Circle component for progress arc
  */
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -43,80 +54,142 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 export interface MasteryRingProps {
   /** Progress percentage (0-100) */
   progress: number;
-  /** Size of the ring (diameter) */
+  /** Size of the ring (diameter) - defaults to 64 */
   size?: number;
-  /** Width of the stroke */
+  /** Whether to show the percentage label in center */
+  showLabel?: boolean;
+  /** Width of the stroke - auto-calculated if not provided */
   strokeWidth?: number;
-  /** Label text to show below percentage */
+  /** Custom label to show below percentage */
   label?: string;
-  /** Color of the progress arc */
-  progressColor?: string;
-  /** Color of the background arc */
-  backgroundColor?: string;
   /** Animation duration in milliseconds */
   animationDuration?: number;
-  /** Whether to show the percentage text */
-  showPercentage?: boolean;
-  /** Custom content to render in the center */
-  centerContent?: React.ReactNode;
+  /** Whether to show the pulsing glow effect */
+  showGlow?: boolean;
   /** Test ID for testing purposes */
   testID?: string;
+}
+
+/**
+ * Color tier configuration based on mastery level
+ * Each tier has a main color and glow color
+ */
+interface ColorTier {
+  color: string;
+  glowColor: string;
+  glowOpacity: number;
+}
+
+/**
+ * Get mastery color tier based on progress percentage
+ * - 0-24%: zinc-600 (unseen) - muted, minimal glow
+ * - 25-49%: blue-500 (developing) - cool, emerging
+ * - 50-74%: amber-400 (solid) - warm, confident
+ * - 75-100%: green-500 (mastered) - vibrant, achieved
+ */
+function getMasteryTier(progress: number, isDarkMode: boolean): ColorTier {
+  if (progress >= 75) {
+    return {
+      color: '#22c55e', // green-500
+      glowColor: 'rgba(34, 197, 94, 0.6)',
+      glowOpacity: isDarkMode ? 0.8 : 0.5,
+    };
+  }
+  if (progress >= 50) {
+    return {
+      color: '#fbbf24', // amber-400
+      glowColor: 'rgba(251, 191, 36, 0.5)',
+      glowOpacity: isDarkMode ? 0.7 : 0.4,
+    };
+  }
+  if (progress >= 25) {
+    return {
+      color: '#3b82f6', // blue-500
+      glowColor: 'rgba(59, 130, 246, 0.4)',
+      glowOpacity: isDarkMode ? 0.6 : 0.35,
+    };
+  }
+  return {
+    color: '#52525b', // zinc-600
+    glowColor: 'rgba(82, 82, 91, 0.2)',
+    glowOpacity: isDarkMode ? 0.3 : 0.15,
+  };
 }
 
 /**
  * Default configuration
  */
 const DEFAULT_CONFIG = {
-  size: 100,
-  strokeWidth: 8,
-  animationDuration: 500,
+  size: 64,
+  animationDuration: 800,
+  strokeWidthRatio: 0.1, // stroke width as percentage of size
+  glowSizeRatio: 1.3, // glow container size relative to ring
 };
 
 /**
- * Get mastery color based on percentage
+ * Animation configuration
  */
-function getMasteryColor(progress: number): string {
-  if (progress >= 90) return colors.mastery.mastered;
-  if (progress >= 70) return colors.mastery.solid;
-  if (progress >= 50) return colors.mastery.developing;
-  if (progress >= 30) return colors.mastery.fragile;
-  if (progress > 0) return colors.mastery.exposed;
-  return colors.mastery.unseen;
-}
+const ANIMATION_CONFIG = {
+  /** Glow pulse animation */
+  glowPulse: {
+    minScale: 0.95,
+    maxScale: 1.05,
+    duration: 2000,
+  },
+  /** Progress fill timing */
+  progressTiming: {
+    duration: 800,
+    easing: Easing.out(Easing.cubic),
+  },
+  /** Empty ring pulse - draws attention to unfilled rings */
+  emptyPulse: {
+    minOpacity: 0.3,
+    maxOpacity: 0.6,
+    duration: 2000,
+  },
+};
 
 /**
  * MasteryRing Component
  *
- * Circular progress indicator with smooth animations.
+ * Premium circular progress indicator with luminous glow effect.
+ * Designed to feel like an achievement badge in a gamified learning context.
  */
 export function MasteryRing({
   progress,
   size = DEFAULT_CONFIG.size,
-  strokeWidth = DEFAULT_CONFIG.strokeWidth,
+  showLabel = true,
+  strokeWidth,
   label,
-  progressColor,
-  backgroundColor = colors.borderLight,
   animationDuration = DEFAULT_CONFIG.animationDuration,
-  showPercentage = true,
-  centerContent,
+  showGlow = true,
   testID = 'mastery-ring',
 }: MasteryRingProps): React.ReactElement {
+  const { getColors, isDarkMode, getScaledFontSize } = useTypography();
+  const colors = getColors();
+
   /**
    * Calculate ring dimensions
    */
-  const radius = (size - strokeWidth) / 2;
+  const calculatedStrokeWidth = strokeWidth ?? Math.max(4, size * DEFAULT_CONFIG.strokeWidthRatio);
+  const radius = (size - calculatedStrokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const center = size / 2;
 
   /**
-   * Animated progress value
+   * Get color tier based on progress
    */
-  const animatedProgress = useSharedValue(0);
+  const colorTier = useMemo(
+    () => getMasteryTier(progress, isDarkMode),
+    [progress, isDarkMode]
+  );
 
   /**
-   * Determine progress color
+   * Animated values
    */
-  const finalProgressColor = progressColor || getMasteryColor(progress);
+  const animatedProgress = useSharedValue(0);
+  const glowPulse = useSharedValue(1);
+  const emptyPulse = useSharedValue(ANIMATION_CONFIG.emptyPulse.minOpacity);
 
   /**
    * Animate progress on change
@@ -124,14 +197,64 @@ export function MasteryRing({
   useEffect(() => {
     animatedProgress.value = withTiming(progress, {
       duration: animationDuration,
-      easing: Easing.out(Easing.cubic),
+      easing: ANIMATION_CONFIG.progressTiming.easing,
     });
   }, [progress, animationDuration, animatedProgress]);
 
   /**
+   * Continuous subtle glow pulse for visual interest
+   */
+  useEffect(() => {
+    if (showGlow && progress > 0) {
+      glowPulse.value = withRepeat(
+        withSequence(
+          withTiming(ANIMATION_CONFIG.glowPulse.maxScale, {
+            duration: ANIMATION_CONFIG.glowPulse.duration / 2,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          withTiming(ANIMATION_CONFIG.glowPulse.minScale, {
+            duration: ANIMATION_CONFIG.glowPulse.duration / 2,
+            easing: Easing.inOut(Easing.ease),
+          })
+        ),
+        -1, // Infinite repeat
+        true // Reverse on each iteration
+      );
+    } else {
+      glowPulse.value = withTiming(1);
+    }
+  }, [showGlow, progress, glowPulse]);
+
+  /**
+   * Empty ring pulse animation - draws attention to unfilled rings
+   * Pulses opacity from 0.3 to 0.6 when progress is 0
+   */
+  useEffect(() => {
+    if (progress === 0) {
+      emptyPulse.value = withRepeat(
+        withSequence(
+          withTiming(ANIMATION_CONFIG.emptyPulse.maxOpacity, {
+            duration: ANIMATION_CONFIG.emptyPulse.duration / 2,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          withTiming(ANIMATION_CONFIG.emptyPulse.minOpacity, {
+            duration: ANIMATION_CONFIG.emptyPulse.duration / 2,
+            easing: Easing.inOut(Easing.ease),
+          })
+        ),
+        -1, // Infinite repeat
+        false // Don't reverse, use explicit min/max
+      );
+    } else {
+      // Reset to static opacity when there's progress
+      emptyPulse.value = withTiming(0.6);
+    }
+  }, [progress, emptyPulse]);
+
+  /**
    * Animated props for the progress circle
    */
-  const animatedProps = useAnimatedProps(() => {
+  const animatedProgressProps = useAnimatedProps(() => {
     const strokeDashoffset =
       circumference - (animatedProgress.value / 100) * circumference;
     return {
@@ -140,60 +263,184 @@ export function MasteryRing({
   });
 
   /**
+   * Animated props for the track circle (empty state pulse)
+   */
+  const animatedTrackProps = useAnimatedProps(() => {
+    return {
+      opacity: progress === 0 ? emptyPulse.value : 0.6,
+    };
+  });
+
+  /**
+   * Animated glow container style
+   */
+  const animatedGlowStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      animatedProgress.value,
+      [0, 25, 50, 75, 100],
+      [0.1, 0.3, 0.5, 0.7, 0.9]
+    );
+    return {
+      transform: [{ scale: glowPulse.value }],
+      opacity: opacity * colorTier.glowOpacity,
+    };
+  });
+
+  /**
+   * Animated glow style for empty state (progress === 0)
+   * Subtle pulsing glow to invite interaction
+   */
+  const animatedEmptyGlowStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: 1 }],
+      opacity: emptyPulse.value * 0.5, // More subtle than filled state
+    };
+  });
+
+  /**
    * Calculate display percentage
    */
   const displayProgress = Math.round(progress);
 
+  /**
+   * Font size for percentage - scales with ring size
+   */
+  const percentageFontSize = getScaledFontSize(size * 0.22);
+  const labelFontSize = getScaledFontSize(size * 0.12);
+
+  /**
+   * Background track color
+   */
+  const trackColor = isDarkMode
+    ? 'rgba(63, 63, 70, 0.6)' // zinc-700 with opacity
+    : 'rgba(228, 228, 231, 0.8)'; // zinc-200 with opacity
+
+  /**
+   * Glow size
+   */
+  const glowSize = size * DEFAULT_CONFIG.glowSizeRatio;
+
   return (
-    <View testID={testID} style={[styles.container, { width: size, height: size }]}>
-      <Svg width={size} height={size}>
-        <G rotation="-90" origin={`${center}, ${center}`}>
-          {/* Background circle */}
-          <Circle
-            testID={`${testID}-background`}
-            cx={center}
-            cy={center}
-            r={radius}
-            stroke={backgroundColor}
-            strokeWidth={strokeWidth}
-            fill="none"
-          />
+    <View
+      testID={testID}
+      style={[styles.container, { width: glowSize, height: glowSize }]}
+    >
+      {/* Outer glow effect - shows for progress > 0, or pulses subtly for empty rings */}
+      {showGlow && (
+        <Animated.View
+          testID={`${testID}-glow`}
+          style={[
+            styles.glowContainer,
+            {
+              width: glowSize,
+              height: glowSize,
+              borderRadius: glowSize / 2,
+              backgroundColor: progress === 0
+                ? 'rgba(113, 113, 122, 0.15)' // zinc-500 subtle glow for empty state
+                : colorTier.glowColor,
+            },
+            progress === 0 ? animatedEmptyGlowStyle : animatedGlowStyle,
+          ]}
+        />
+      )}
 
-          {/* Progress circle */}
-          <AnimatedCircle
-            testID={`${testID}-progress`}
-            cx={center}
-            cy={center}
-            r={radius}
-            stroke={finalProgressColor}
-            strokeWidth={strokeWidth}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={`${circumference}, ${circumference}`}
-            animatedProps={animatedProps}
-          />
-        </G>
-      </Svg>
+      {/* SVG Ring */}
+      <View style={[styles.ringContainer, { width: size, height: size }]}>
+        <Svg width={size} height={size}>
+          <Defs>
+            {/* Radial gradient for premium glow on stroke */}
+            <RadialGradient
+              id="progressGlow"
+              cx="50%"
+              cy="50%"
+              r="50%"
+            >
+              <Stop offset="0%" stopColor={colorTier.color} stopOpacity="1" />
+              <Stop offset="100%" stopColor={colorTier.color} stopOpacity="0.7" />
+            </RadialGradient>
+          </Defs>
 
-      {/* Center content */}
-      <View style={styles.centerContent}>
-        {centerContent || (
-          <>
-            {showPercentage && (
+          <G rotation="-90" origin={`${center}, ${center}`}>
+            {/* Background track - pulses when empty to draw attention */}
+            <AnimatedCircle
+              testID={`${testID}-track`}
+              cx={center}
+              cy={center}
+              r={radius}
+              stroke={trackColor}
+              strokeWidth={calculatedStrokeWidth}
+              fill="none"
+              animatedProps={animatedTrackProps}
+            />
+
+            {/* Progress arc */}
+            <AnimatedCircle
+              testID={`${testID}-progress`}
+              cx={center}
+              cy={center}
+              r={radius}
+              stroke={colorTier.color}
+              strokeWidth={calculatedStrokeWidth}
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={`${circumference}, ${circumference}`}
+              animatedProps={animatedProgressProps}
+            />
+
+            {/* Inner glow arc (subtle) */}
+            {progress > 0 && (
+              <AnimatedCircle
+                cx={center}
+                cy={center}
+                r={radius}
+                stroke={colorTier.color}
+                strokeWidth={calculatedStrokeWidth * 0.3}
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={`${circumference}, ${circumference}`}
+                animatedProps={animatedProgressProps}
+                opacity={0.3}
+              />
+            )}
+          </G>
+        </Svg>
+
+        {/* Center content */}
+        <View style={styles.centerContent}>
+          {showLabel && (
+            <>
               <Text
-                style={[styles.percentage, { color: finalProgressColor }]}
+                style={[
+                  styles.percentage,
+                  {
+                    color: colorTier.color,
+                    fontSize: percentageFontSize,
+                    textShadowColor: colorTier.glowColor,
+                    textShadowOffset: { width: 0, height: 0 },
+                    textShadowRadius: isDarkMode ? 8 : 4,
+                  },
+                ]}
                 testID={`${testID}-percentage`}
               >
                 {displayProgress}%
               </Text>
-            )}
-            {label && (
-              <Text style={styles.label} testID={`${testID}-label`}>
-                {label}
-              </Text>
-            )}
-          </>
-        )}
+              {label && (
+                <Text
+                  style={[
+                    styles.label,
+                    {
+                      color: colors.textSecondary,
+                      fontSize: labelFontSize,
+                    },
+                  ]}
+                  testID={`${testID}-label`}
+                >
+                  {label}
+                </Text>
+              )}
+            </>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -219,19 +466,23 @@ export function MultiRing({
   strokeWidth = 6,
   testID = 'multi-ring',
 }: MultiRingProps): React.ReactElement {
-  const ringCount = rings.length;
-  const gap = 4;
-  const totalStrokeSpace = ringCount * strokeWidth + (ringCount - 1) * gap;
+  const { getColors, isDarkMode } = useTypography();
+  const colors = getColors();
+
+  const trackColor = isDarkMode
+    ? 'rgba(63, 63, 70, 0.6)'
+    : 'rgba(228, 228, 231, 0.8)';
 
   return (
     <View testID={testID} style={[styles.container, { width: size, height: size }]}>
       <Svg width={size} height={size}>
         <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
           {rings.map((ring, index) => {
+            const gap = 4;
             const ringRadius = (size - strokeWidth) / 2 - index * (strokeWidth + gap);
             const circumference = 2 * Math.PI * ringRadius;
             const strokeDashoffset = circumference - (ring.progress / 100) * circumference;
-            const ringColor = ring.color || getMasteryColor(ring.progress);
+            const ringColor = ring.color || getMasteryTier(ring.progress, isDarkMode).color;
 
             return (
               <G key={ring.label}>
@@ -240,7 +491,7 @@ export function MultiRing({
                   cx={size / 2}
                   cy={size / 2}
                   r={ringRadius}
-                  stroke={colors.borderLight}
+                  stroke={trackColor}
                   strokeWidth={strokeWidth}
                   fill="none"
                 />
@@ -264,24 +515,29 @@ export function MultiRing({
 
       {/* Legend */}
       <View style={styles.legend}>
-        {rings.map((ring) => (
-          <View key={ring.label} style={styles.legendItem}>
-            <View
-              style={[
-                styles.legendDot,
-                { backgroundColor: ring.color || getMasteryColor(ring.progress) },
-              ]}
-            />
-            <Text style={styles.legendText}>{ring.label}</Text>
-          </View>
-        ))}
+        {rings.map((ring) => {
+          const ringColor = ring.color || getMasteryTier(ring.progress, isDarkMode).color;
+          return (
+            <View key={ring.label} style={styles.legendItem}>
+              <View
+                style={[
+                  styles.legendDot,
+                  { backgroundColor: ringColor },
+                ]}
+              />
+              <Text style={[styles.legendText, { color: colors.textSecondary }]}>
+                {ring.label}
+              </Text>
+            </View>
+          );
+        })}
       </View>
     </View>
   );
 }
 
 /**
- * Mastery arc for showing partial progress
+ * Mastery arc for showing partial progress (gauge style)
  */
 export interface MasteryArcProps {
   progress: number;
@@ -289,7 +545,7 @@ export interface MasteryArcProps {
   endAngle?: number;
   size?: number;
   strokeWidth?: number;
-  showEndCaps?: boolean;
+  showLabel?: boolean;
   testID?: string;
 }
 
@@ -299,9 +555,12 @@ export function MasteryArc({
   endAngle = 135,
   size = 100,
   strokeWidth = 8,
-  showEndCaps = true,
+  showLabel = true,
   testID = 'mastery-arc',
 }: MasteryArcProps): React.ReactElement {
+  const { getColors, isDarkMode, getScaledFontSize } = useTypography();
+  const colors = getColors();
+
   const radius = (size - strokeWidth) / 2;
   const center = size / 2;
 
@@ -309,28 +568,13 @@ export function MasteryArc({
   const totalAngle = endAngle - startAngle;
   const progressAngle = (progress / 100) * totalAngle;
 
-  // Convert to radians
-  const startRad = (startAngle * Math.PI) / 180;
-  const endRad = ((startAngle + progressAngle) * Math.PI) / 180;
-  const fullEndRad = (endAngle * Math.PI) / 180;
+  const colorTier = getMasteryTier(progress, isDarkMode);
 
-  // Calculate arc points
-  const x1 = center + radius * Math.cos(startRad);
-  const y1 = center + radius * Math.sin(startRad);
-  const x2 = center + radius * Math.cos(endRad);
-  const y2 = center + radius * Math.sin(endRad);
-  const x3 = center + radius * Math.cos(fullEndRad);
-  const y3 = center + radius * Math.sin(fullEndRad);
+  const trackColor = isDarkMode
+    ? 'rgba(63, 63, 70, 0.6)'
+    : 'rgba(228, 228, 231, 0.8)';
 
-  // Determine if arc is large
-  const largeArcFlag = progressAngle > 180 ? 1 : 0;
-  const fullLargeArcFlag = totalAngle > 180 ? 1 : 0;
-
-  // Create path
-  const backgroundPath = `M ${x1} ${y1} A ${radius} ${radius} 0 ${fullLargeArcFlag} 1 ${x3} ${y3}`;
-  const progressPath = progress > 0 ? `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}` : '';
-
-  const progressColor = getMasteryColor(progress);
+  const percentageFontSize = getScaledFontSize(size * 0.25);
 
   return (
     <View testID={testID} style={[styles.container, { width: size, height: size }]}>
@@ -340,7 +584,7 @@ export function MasteryArc({
           cx={center}
           cy={center}
           r={radius}
-          stroke={colors.borderLight}
+          stroke={trackColor}
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={`${(totalAngle / 360) * 2 * Math.PI * radius}, ${2 * Math.PI * radius}`}
@@ -354,7 +598,7 @@ export function MasteryArc({
             cx={center}
             cy={center}
             r={radius}
-            stroke={progressColor}
+            stroke={colorTier.color}
             strokeWidth={strokeWidth}
             fill="none"
             strokeDasharray={`${(progressAngle / 360) * 2 * Math.PI * radius}, ${2 * Math.PI * radius}`}
@@ -365,9 +609,90 @@ export function MasteryArc({
       </Svg>
 
       {/* Center content */}
+      {showLabel && (
+        <View style={styles.centerContent}>
+          <Text
+            style={[
+              styles.percentage,
+              {
+                color: colorTier.color,
+                fontSize: percentageFontSize,
+                textShadowColor: colorTier.glowColor,
+                textShadowOffset: { width: 0, height: 0 },
+                textShadowRadius: isDarkMode ? 8 : 4,
+              },
+            ]}
+          >
+            {Math.round(progress)}%
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+/**
+ * Compact mastery indicator for lists and cards
+ */
+export interface CompactMasteryProps {
+  progress: number;
+  size?: number;
+  testID?: string;
+}
+
+export function CompactMastery({
+  progress,
+  size = 32,
+  testID = 'compact-mastery',
+}: CompactMasteryProps): React.ReactElement {
+  const { isDarkMode, getScaledFontSize } = useTypography();
+
+  const colorTier = getMasteryTier(progress, isDarkMode);
+  const strokeWidth = Math.max(2, size * 0.12);
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const center = size / 2;
+
+  const trackColor = isDarkMode
+    ? 'rgba(63, 63, 70, 0.6)'
+    : 'rgba(228, 228, 231, 0.8)';
+
+  const fontSize = getScaledFontSize(size * 0.3);
+
+  return (
+    <View testID={testID} style={[styles.compactContainer, { width: size, height: size }]}>
+      <Svg width={size} height={size}>
+        <G rotation="-90" origin={`${center}, ${center}`}>
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke={trackColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+          />
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            stroke={colorTier.color}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${circumference}, ${circumference}`}
+            strokeDashoffset={strokeDashoffset}
+          />
+        </G>
+      </Svg>
       <View style={styles.centerContent}>
-        <Text style={[styles.percentage, { color: progressColor, fontSize: size * 0.25 }]}>
-          {Math.round(progress)}%
+        <Text
+          style={[
+            styles.compactText,
+            { color: colorTier.color, fontSize },
+          ]}
+        >
+          {Math.round(progress)}
         </Text>
       </View>
     </View>
@@ -379,26 +704,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
+  glowContainer: {
+    position: 'absolute',
+  } as ViewStyle,
+  ringContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
   centerContent: {
     position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
   percentage: {
-    fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.5,
   } as TextStyle,
   label: {
-    fontSize: 12,
-    color: colors.textSecondary,
     marginTop: 2,
+    fontWeight: '500',
   } as TextStyle,
   legend: {
     position: 'absolute',
     bottom: -30,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: spacing[3],
+    gap: 12,
   } as ViewStyle,
   legendItem: {
     flexDirection: 'row',
@@ -408,11 +739,18 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: spacing[1],
+    marginRight: 4,
   } as ViewStyle,
   legendText: {
     fontSize: 10,
-    color: colors.textSecondary,
+    fontWeight: '500',
+  } as TextStyle,
+  compactContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  } as ViewStyle,
+  compactText: {
+    fontWeight: '700',
   } as TextStyle,
 });
 
