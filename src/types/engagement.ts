@@ -9,6 +9,7 @@
 
 import type { SampleQuestion } from './three-pass';
 import type { SynthesisInteraction } from '../lib/synthesis-phase-service';
+import type { SandboxInteraction, ScaffoldLevel } from './sandbox';
 
 // Re-export SynthesisInteraction as type alias for backwards compatibility
 export type { SynthesisInteraction };
@@ -30,7 +31,8 @@ export type FeedItemType =
   | 'synthesis_phase'
   | 'pretest'
   | 'mini_lesson'
-  | 'pretest_results';
+  | 'pretest_results'
+  | 'sandbox';
 
 /**
  * Video chunk item - a segment of video content
@@ -43,6 +45,8 @@ export interface VideoChunkItem {
   endSec: number;
   title: string;
   openLoopTeaser?: string;
+  /** Question for the video segment (enables split-screen VideoQuestionCard) */
+  question?: SampleQuestion;
 }
 
 /**
@@ -178,6 +182,25 @@ export interface PretestResultsItem {
 }
 
 /**
+ * Sandbox item - interactive canvas-based learning activity
+ * Phase 6: Interactive Sandbox for active retrieval practice
+ */
+export interface SandboxItem {
+  id: string;
+  type: 'sandbox';
+  /** ID of the concept being tested */
+  conceptId: string;
+  /** Human-readable concept name */
+  conceptName: string;
+  /** The sandbox interaction definition */
+  interaction: SandboxInteraction;
+  /** Scaffold level for fading scaffolding */
+  scaffoldLevel: ScaffoldLevel;
+  /** Estimated time to complete in seconds */
+  estimatedTimeSeconds: number;
+}
+
+/**
  * Union type for all feed items
  */
 export type FeedItem =
@@ -189,7 +212,8 @@ export type FeedItem =
   | SynthesisPhaseItem
   | PretestItem
   | MiniLessonItem
-  | PretestResultsItem;
+  | PretestResultsItem
+  | SandboxItem;
 
 // ============================================================================
 // Streak Types
@@ -481,4 +505,11 @@ export function isMiniLessonItem(item: FeedItem): item is MiniLessonItem {
  */
 export function isPretestResultsItem(item: FeedItem): item is PretestResultsItem {
   return item.type === 'pretest_results';
+}
+
+/**
+ * Type guard for SandboxItem
+ */
+export function isSandboxItem(item: FeedItem): item is SandboxItem {
+  return item.type === 'sandbox';
 }

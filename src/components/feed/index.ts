@@ -33,6 +33,16 @@ export {
   type CaptionWord,
 } from './VideoChunkCard';
 
+export {
+  VideoQuestionCard,
+  type VideoQuestionCardProps,
+} from './VideoQuestionCard';
+
+export {
+  SwipeUpHint,
+  type SwipeUpHintProps,
+} from './SwipeUpHint';
+
 // Caption Components
 export {
   CaptionOverlay,
@@ -93,3 +103,9 @@ export {
   SessionCompleteCard,
   type SessionCompleteCardProps,
 } from './SessionCompleteCard';
+
+// Sandbox Components (Phase 6)
+export {
+  SandboxPreviewCard,
+  type SandboxPreviewCardProps,
+} from './SandboxPreviewCard';
