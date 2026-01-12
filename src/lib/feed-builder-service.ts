@@ -30,7 +30,14 @@ import {
   PretestItem,
   MiniLessonItem,
   PretestResultsItem,
+  SandboxItem,
 } from '@/src/types/engagement';
+import type {
+  SandboxInteraction,
+  SandboxInteractionType,
+  ScaffoldLevel,
+  SandboxElement,
+} from '@/src/types/sandbox';
 import { TextChunk } from './text-chunking-pipeline';
 import {
   createSynthesisPhaseService,
@@ -222,6 +229,23 @@ export interface FeedBuilderService {
     gaps: MiniLessonInsertData[],
     insertAfterIndex: number
   ): FeedItem[];
+
+  /**
+   * Create a sandbox item for a concept
+   * Generates an interactive sandbox activity based on concept's cognitive type
+   *
+   * @param concept - The concept to create a sandbox for
+   * @param sourceId - Source ID for the feed
+   * @param index - Index for unique ID generation
+   * @param scaffoldLevel - Level of scaffolding (worked, scaffold, faded)
+   * @returns SandboxItem for feed insertion
+   */
+  createSandboxItem(
+    concept: Concept,
+    sourceId: string,
+    index: number,
+    scaffoldLevel?: ScaffoldLevel
+  ): SandboxItem;
 }
 
 /**
@@ -233,15 +257,32 @@ function generateFeedItemId(prefix: string, sourceId: string, index: number): st
 
 /**
  * Get chapter concepts sorted by chapter_sequence
+ * Falls back to sorting by created_at if chapter_sequence is not populated
  */
 function getChapterConcepts(concepts: Concept[]): Concept[] {
-  return concepts
-    .filter((c) => c.chapter_sequence !== null && c.chapter_sequence !== undefined)
-    .sort((a, b) => (a.chapter_sequence ?? 0) - (b.chapter_sequence ?? 0));
+  const withSequence = concepts
+    .filter((c) => c.chapter_sequence !== null && c.chapter_sequence !== undefined);
+
+  // If concepts have chapter_sequence, use it
+  if (withSequence.length > 0) {
+    return withSequence.sort((a, b) => (a.chapter_sequence ?? 0) - (b.chapter_sequence ?? 0));
+  }
+
+  // Fallback: use all concepts sorted by created_at (oldest first for learning order)
+  if (concepts.length > 0) {
+    return [...concepts].sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateA - dateB;
+    });
+  }
+
+  return [];
 }
 
 /**
  * Create a VideoChunkItem from a concept
+ * Includes segment-specific question for VideoQuestionCard display
  */
 function createVideoChunkItem(
   concept: Concept,
@@ -252,6 +293,10 @@ function createVideoChunkItem(
   const startSec = mapping?.primary_segment?.start_sec ?? 0;
   const endSec = mapping?.primary_segment?.end_sec ?? 0;
 
+  // Get segment-specific question, fallback to first sample question
+  const question = mapping?.segment_question
+    ?? concept.assessment_spec?.sample_questions?.[0];
+
   return {
     id: generateFeedItemId('video', sourceId, index),
     type: 'video_chunk',
@@ -260,6 +305,7 @@ function createVideoChunkItem(
     endSec,
     title: concept.name,
     openLoopTeaser: concept.open_loop_teaser ?? undefined,
+    question,
   };
 }
 
@@ -528,6 +574,132 @@ function createMiniLessonItem(
     contentMarkdown: data.contentMarkdown,
     keyPoints: data.keyPoints,
     estimatedMinutes: data.estimatedMinutes,
+  };
+}
+
+/**
+ * Determine sandbox interaction type based on cognitive type
+ */
+function getInteractionTypeForCognitive(cognitiveType: string | null | undefined): SandboxInteractionType {
+  switch (cognitiveType) {
+    case 'declarative':
+      return 'matching';
+    case 'procedural':
+      return 'sequencing';
+    case 'conceptual':
+      return 'fill_in_blank';
+    case 'conditional':
+      return 'branching';
+    case 'metacognitive':
+      return 'fill_in_blank';
+    default:
+      return 'matching';
+  }
+}
+
+/**
+ * Create a basic sandbox interaction for a concept
+ * Generates a simple matching or sequencing interaction based on cognitive type
+ */
+function createBasicSandboxInteraction(
+  concept: Concept,
+  scaffoldLevel: ScaffoldLevel
+): SandboxInteraction {
+  const interactionType = getInteractionTypeForCognitive(concept.cognitive_type);
+  const interactionId = `sandbox-${concept.id}-${Date.now()}`;
+
+  // Create basic elements based on interaction type
+  const elements: SandboxElement[] = [];
+  const zoneContents: Record<string, string[]> = {};
+
+  if (interactionType === 'matching') {
+    // Create a simple matching interaction with term -> definition
+    const termElement: SandboxElement = {
+      id: `term-${concept.id}`,
+      type: 'draggable',
+      position: { x: 50, y: 100 },
+      dimensions: { width: 150, height: 50 },
+      content: concept.name,
+      style: { backgroundColor: '#E3F2FD', borderRadius: 8 },
+      draggable: true,
+      snapTargets: [`zone-${concept.id}`],
+    };
+
+    const zoneElement: SandboxElement = {
+      id: `zone-${concept.id}`,
+      type: 'dropzone',
+      position: { x: 250, y: 100 },
+      dimensions: { width: 200, height: 60 },
+      content: concept.definition?.substring(0, 50) || 'Definition',
+      style: { backgroundColor: '#F5F5F5', borderRadius: 8 },
+      draggable: false,
+      capacity: 1,
+    };
+
+    elements.push(termElement, zoneElement);
+    zoneContents[`zone-${concept.id}`] = [`term-${concept.id}`];
+  } else if (interactionType === 'sequencing') {
+    // Create a simple sequencing interaction
+    const steps = ['Step 1', 'Step 2', 'Step 3'];
+    steps.forEach((step, i) => {
+      elements.push({
+        id: `step-${i}`,
+        type: 'draggable',
+        position: { x: 50 + Math.random() * 200, y: 50 + i * 70 },
+        dimensions: { width: 200, height: 50 },
+        content: step,
+        style: { backgroundColor: '#E8F5E9', borderRadius: 8 },
+        draggable: true,
+      });
+    });
+  }
+
+  return {
+    interactionId,
+    conceptId: concept.id,
+    cognitiveType: (concept.cognitive_type as 'declarative' | 'procedural' | 'conceptual' | 'conditional' | 'metacognitive') || 'declarative',
+    bloomLevel: (concept.bloom_level as 'remember' | 'understand' | 'apply' | 'analyze' | 'evaluate' | 'create') || 'remember',
+    interactionType,
+    canvasConfig: {
+      width: 400,
+      height: 300,
+      backgroundColor: '#FFFFFF',
+    },
+    elements,
+    correctState: {
+      zoneContents,
+      minCorrectPercentage: 0.8,
+    },
+    evaluationMode: 'deterministic',
+    scaffoldLevel,
+    hints: [`Think about what ${concept.name} means.`, 'Try matching related items.'],
+    estimatedTimeSeconds: 60,
+    difficultyModifier: 1.0,
+    instructions: `Match the term with its definition for ${concept.name}.`,
+  };
+}
+
+/**
+ * Create a SandboxItem for the feed
+ */
+function createSandboxItem(
+  concept: Concept,
+  sourceId: string,
+  index: number,
+  scaffoldLevel: ScaffoldLevel = 'scaffold'
+): SandboxItem {
+  console.log('[FeedBuilder] Creating sandbox item for concept:', concept.name);
+
+  const interaction = createBasicSandboxInteraction(concept, scaffoldLevel);
+
+  return {
+    id: generateFeedItemId('sandbox', sourceId, index),
+    type: 'sandbox',
+    conceptId: concept.id,
+    conceptName: concept.name,
+    interaction,
+    scaffoldLevel,
+    estimatedTimeSeconds: interaction.estimatedTimeSeconds,
   };
 }
 
@@ -1211,6 +1383,15 @@ export function createFeedBuilderService(): FeedBuilderService {
       const afterInsert = feed.slice(insertAfterIndex + 1);
 
       return [...beforeInsert, ...miniLessonItems, ...afterInsert];
+    },
+
+    createSandboxItem(
+      concept: Concept,
+      sourceId: string,
+      index: number,
+      scaffoldLevel: ScaffoldLevel = 'scaffold'
+    ): SandboxItem {
+      return createSandboxItem(concept, sourceId, index, scaffoldLevel);
     },
   };
 }

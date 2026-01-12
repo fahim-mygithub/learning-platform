@@ -45,11 +45,14 @@ import type {
   XPAwardResult,
   PretestItem,
   PretestResultsItem,
+  SandboxItem,
 } from '../types/engagement';
 import {
   isPretestItem,
   isPretestResultsItem,
+  isSandboxItem,
 } from '../types/engagement';
+import type { SandboxEvaluationResult } from '../types/sandbox';
 import type { SessionStats } from '../components/feed/SessionBreakModal';
 
 /**
@@ -144,6 +147,14 @@ export interface FeedContextValue {
   pretestProgress: number;
   /** Mark the first session as complete (called when session finishes) */
   markFirstSessionComplete: () => Promise<void>;
+  /** Whether sandbox modal is visible */
+  sandboxModalVisible: boolean;
+  /** Current sandbox item being interacted with */
+  currentSandboxItem: SandboxItem | null;
+  /** Start a sandbox interaction (opens modal) */
+  startSandboxInteraction: (itemId: string) => void;
+  /** Complete a sandbox interaction (closes modal, records result) */
+  completeSandboxInteraction: (itemId: string, result: SandboxEvaluationResult) => Promise<void>;
 }
 
 /**
@@ -338,6 +349,10 @@ export function FeedProvider({
   // User engagement state
   const [streak, setStreak] = useState<UserStreak | null>(null);
   const [userXP, setUserXP] = useState<UserXP | null>(null);
+
+  // Sandbox modal state
+  const [sandboxModalVisible, setSandboxModalVisible] = useState(false);
+  const [currentSandboxItem, setCurrentSandboxItem] = useState<SandboxItem | null>(null);
 
   // Source state
   const [sourceUrl, setSourceUrl] = useState<string | null>(null);
@@ -916,6 +931,72 @@ export function FeedProvider({
   }, [pretestItems, pretestAnswers]);
 
   /**
+   * Start a sandbox interaction
+   * Opens the sandbox modal with the specified item
+   */
+  const startSandboxInteraction = useCallback((itemId: string) => {
+    const item = feedItems.find((i) => i.id === itemId);
+    if (!item || !isSandboxItem(item)) {
+      console.warn('[FeedContext] startSandboxInteraction: item not found or not a sandbox item:', itemId);
+      return;
+    }
+
+    console.log('[FeedContext] Starting sandbox interaction:', itemId);
+    setCurrentSandboxItem(item);
+    setSandboxModalVisible(true);
+  }, [feedItems]);
+
+  /**
+   * Complete a sandbox interaction
+   * Closes the modal, records the result, awards XP based on FSRS rating
+   */
+  const completeSandboxInteraction = useCallback(async (
+    itemId: string,
+    result: SandboxEvaluationResult
+  ) => {
+    if (!user) return;
+
+    console.log('[FeedContext] Completing sandbox interaction:', itemId, result);
+
+    // Close modal first
+    setSandboxModalVisible(false);
+    setCurrentSandboxItem(null);
+
+    // Mark item as completed
+    setCompletedItemIds((prev) => new Set(prev).add(itemId));
+
+    // Update session stats
+    setSessionStats((prev) => ({
+      ...prev,
+      cardsCompleted: prev.cardsCompleted + 1,
+      totalAnswers: prev.totalAnswers + 1,
+      correctAnswers: result.passed ? prev.correctAnswers + 1 : prev.correctAnswers,
+    }));
+
+    // Award XP based on result
+    // Use quiz_correct for passed sandbox, no XP for failed
+    if (result.passed) {
+      try {
+        const xpResult = await xpServiceRef.current.awardXP(user.id, 'quiz_correct');
+        setSessionStats((prev) => ({
+          ...prev,
+          xpEarned: prev.xpEarned + xpResult.amountAwarded,
+        }));
+        setUserXP((prev) => prev ? {
+          ...prev,
+          totalXp: xpResult.newTotalXp,
+          level: xpResult.newLevel,
+        } : null);
+      } catch (err) {
+        console.error('[FeedContext] Failed to award sandbox XP:', err);
+      }
+    }
+
+    // Auto-advance to next card
+    goToNext();
+  }, [user, goToNext]);
+
+  /**
    * Mark the first session as complete
    * Sets first_session_completed_at timestamp in feed_progress table
    * Future sessions will skip the prerequisite pretest
@@ -1000,6 +1081,10 @@ export function FeedProvider({
       completePretest,
       pretestProgress,
       markFirstSessionComplete,
+      sandboxModalVisible,
+      currentSandboxItem,
+      startSandboxInteraction,
+      completeSandboxInteraction,
     }),
     [
       feedItems,
@@ -1031,6 +1116,10 @@ export function FeedProvider({
       completePretest,
       pretestProgress,
       markFirstSessionComplete,
+      sandboxModalVisible,
+      currentSandboxItem,
+      startSandboxInteraction,
+      completeSandboxInteraction,
     ]
   );
 

@@ -1,16 +1,17 @@
 /**
- * Feed Screen
+ * Feed Screen - Luminous Focus Design
  *
- * TikTok-style learning feed with full-screen swipeable cards.
- * Implements Phase 6 of Engagement Engineering:
- * - FlatList with snap scrolling
- * - Feed context for state management
- * - Streak and XP displays in header
- * - Session timer with break modal
- * - All card types (video, quiz, fact, synthesis)
+ * Full-screen immersive learning experience with TikTok-style swipeable cards.
+ * Implements the "Luminous Focus" design direction:
+ * - Full-screen immersive experience (no tab bar)
+ * - Premium quiz cards with glowing correct/incorrect feedback
+ * - Progress bar at top
+ * - XP display that animates on reward
+ * - Open-loop teasers in indigo
+ * - Deep blacks with luminous highlights
  */
 
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -26,22 +27,39 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn, FadeOut, SlideInRight } from 'react-native-reanimated';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  SlideInRight,
+  SlideInUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { FeedProvider, useFeed } from '@/src/lib/feed-context';
+import { useTypography } from '@/src/lib/typography-context';
 import {
   FeedCard,
   VideoChunkCard,
+  VideoQuestionCard,
+  TextChunkCard,
   QuizCard,
   FactCard,
   SynthesisCard,
   FeedProgressBar,
   SessionBreakModal,
+  SessionCompleteCard,
+  SandboxPreviewCard,
 } from '@/src/components/feed';
-import { CompactStreak, StreakDisplay } from '@/src/components/engagement/StreakDisplay';
-import { XPPopup, XPToast } from '@/src/components/engagement/XPPopup';
+import { SandboxModal } from '@/src/components/sandbox';
+import { XPDisplay } from '@/src/components/engagement/XPDisplay';
+import { XPPopup } from '@/src/components/engagement/XPPopup';
 import { ConfettiAnimation } from '@/src/components/engagement/ConfettiAnimation';
-import { colors, spacing } from '@/src/theme';
+import { spacing } from '@/src/theme';
+import { type ColorTheme } from '@/src/theme/colors';
 import type { FeedItem } from '@/src/types/engagement';
 
 /**
@@ -56,6 +74,11 @@ const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
  */
 export default function FeedScreen(): React.ReactElement {
   const { sourceId } = useLocalSearchParams<{ sourceId: string }>();
+
+  // Get dynamic colors from typography context
+  const { getColors, isDarkMode } = useTypography();
+  const colors = getColors();
+  const styles = useMemo(() => createStyles(colors, isDarkMode), [colors, isDarkMode]);
 
   if (!sourceId) {
     return (
@@ -81,13 +104,23 @@ export default function FeedScreen(): React.ReactElement {
 }
 
 /**
- * FeedContent Component
+ * FeedContent Component - Luminous Focus Design
  *
- * Main feed content that uses feed context
+ * Main feed content with premium immersive UI:
+ * - Full-screen cards with no distractions
+ * - XP display with animated counter
+ * - Progress bar showing session progress
+ * - Close button to exit
+ * - Glowing feedback on quiz answers
  */
 function FeedContent(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<FeedItem>>(null);
+
+  // Get dynamic colors from typography context
+  const { getColors, isDarkMode } = useTypography();
+  const colors = getColors();
+  const styles = useMemo(() => createStyles(colors, isDarkMode), [colors, isDarkMode]);
 
   const {
     feedItems,
@@ -101,6 +134,8 @@ function FeedContent(): React.ReactElement {
     addToReviewQueue,
     submitQuizAnswer,
     completeSynthesis,
+    sessionComplete,
+    masterySummary,
     sessionStats,
     showBreakModal,
     dismissBreakModal,
@@ -109,6 +144,11 @@ function FeedContent(): React.ReactElement {
     userXP,
     completionPercentage,
     sourceUrl,
+    // Sandbox state
+    sandboxModalVisible,
+    currentSandboxItem,
+    startSandboxInteraction,
+    completeSandboxInteraction,
   } = useFeed();
 
   // XP popup state
@@ -122,6 +162,14 @@ function FeedContent(): React.ReactElement {
 
   // Confetti state
   const [showConfetti, setShowConfetti] = useState(false);
+
+  // XP animation value
+  const xpScale = useSharedValue(1);
+
+  // Animated XP style
+  const animatedXPStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: xpScale.value }],
+  }));
 
   /**
    * Handle viewable items change for tracking current card
@@ -165,13 +213,19 @@ function FeedContent(): React.ReactElement {
   );
 
   /**
-   * Handle quiz correct answer
+   * Handle quiz correct answer with XP animation
    */
   const handleQuizCorrect = useCallback((xp: number) => {
     setXpAmount(xp);
     setXpReason('Correct answer!');
     setShowXPPopup(true);
-  }, []);
+
+    // Trigger XP bounce animation
+    xpScale.value = withSequence(
+      withSpring(1.3, { damping: 10, stiffness: 400 }),
+      withSpring(1, { damping: 15, stiffness: 200 })
+    );
+  }, [xpScale]);
 
   /**
    * Handle quiz submission
@@ -206,6 +260,37 @@ function FeedContent(): React.ReactElement {
   );
 
   /**
+   * Handle starting a sandbox interaction
+   */
+  const handleStartSandbox = useCallback(
+    (itemId: string) => {
+      console.log('[Feed] Starting sandbox interaction:', itemId);
+      startSandboxInteraction(itemId);
+    },
+    [startSandboxInteraction]
+  );
+
+  /**
+   * Handle sandbox modal close
+   */
+  const handleCloseSandbox = useCallback(() => {
+    console.log('[Feed] Closing sandbox modal');
+    // If there's a current sandbox item, complete it with a default result
+    if (currentSandboxItem) {
+      completeSandboxInteraction(currentSandboxItem.id, {
+        interactionId: currentSandboxItem.interaction.interactionId,
+        conceptId: currentSandboxItem.conceptId,
+        passed: false,
+        score: 0,
+        timeToCompleteMs: 0,
+        hintsUsed: 0,
+        attemptCount: 0,
+        feedback: 'Interaction was cancelled.',
+      });
+    }
+  }, [currentSandboxItem, completeSandboxInteraction]);
+
+  /**
    * Handle XP popup complete
    */
   const handleXPPopupComplete = useCallback(() => {
@@ -236,7 +321,24 @@ function FeedContent(): React.ReactElement {
             gesturesEnabled={isActive}
             testID={`feed-card-${index}`}
           >
-            {item.type === 'video_chunk' && (
+            {item.type === 'video_chunk' && item.question ? (
+              <VideoQuestionCard
+                videoUrl={sourceUrl || ''}
+                startSec={item.startSec}
+                endSec={item.endSec}
+                title={item.title}
+                question={item.question}
+                conceptId={item.conceptId}
+                isActive={isActive}
+                onComplete={(correct) => {
+                  if (correct) {
+                    handleQuizCorrect(10);
+                  }
+                }}
+                onSwipeUp={() => goToNext()}
+                testID={`video-question-card-${index}`}
+              />
+            ) : item.type === 'video_chunk' ? (
               <VideoChunkCard
                 videoUrl={sourceUrl || ''}
                 startSec={item.startSec}
@@ -246,6 +348,17 @@ function FeedContent(): React.ReactElement {
                 isActive={isActive}
                 onChapterComplete={() => markAsKnown(item.id)}
                 testID={`video-card-${index}`}
+              />
+            ) : null}
+
+            {item.type === 'text_chunk' && (
+              <TextChunkCard
+                text={item.text}
+                propositions={item.propositions}
+                chunkIndex={item.chunkIndex}
+                totalChunks={item.totalChunks}
+                onComplete={() => markAsKnown(item.id)}
+                testID={`text-card-${index}`}
               />
             )}
 
@@ -280,6 +393,14 @@ function FeedContent(): React.ReactElement {
                 testID={`synthesis-card-${index}`}
               />
             )}
+
+            {item.type === 'sandbox' && (
+              <SandboxPreviewCard
+                item={item}
+                onStart={() => handleStartSandbox(item.id)}
+                testID={`sandbox-preview-${index}`}
+              />
+            )}
           </FeedCard>
         </View>
       );
@@ -291,8 +412,10 @@ function FeedContent(): React.ReactElement {
       handleSwipeRight,
       handleQuizCorrect,
       handleSynthesisComplete,
+      handleStartSandbox,
       goToNext,
       markAsKnown,
+      sourceUrl,
     ]
   );
 
@@ -345,51 +468,93 @@ function FeedContent(): React.ReactElement {
     );
   }
 
+  // Get current concept name for header
+  const currentItem = feedItems[currentIndex];
+  const currentConceptName = currentItem && 'title' in currentItem
+    ? currentItem.title
+    : currentItem && 'conceptId' in currentItem
+      ? 'Concept'
+      : '';
+
+  // Show session complete card when session is done
+  if (sessionComplete && masterySummary) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <ConfettiAnimation
+          visible={true}
+          duration={4000}
+          onComplete={() => {}}
+        />
+        <SessionCompleteCard
+          masterySummary={masterySummary}
+          xpEarned={sessionStats.xpEarned}
+          streak={streak?.currentStreak}
+          onEndSession={handleBack}
+          onContinue={() => {
+            // Reset for continuing - implementation depends on requirements
+            goToNext();
+          }}
+          testID="session-complete"
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Header */}
+      {/* Luminous Focus Header */}
       <View style={[styles.header, { paddingTop: insets.top + spacing[2] }]}>
-        {/* Back button */}
+        {/* Close button (X) */}
         <Pressable
-          style={styles.headerBackButton}
+          style={styles.closeButton}
           onPress={handleBack}
           accessibilityRole="button"
-          accessibilityLabel="Close feed"
+          accessibilityLabel="Close feed and return to project"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={styles.headerBackIcon}>&#10005;</Text>
+          <Text style={styles.closeIcon}>&#10005;</Text>
         </Pressable>
 
-        {/* Progress bar */}
-        <View style={styles.progressContainer}>
-          <FeedProgressBar
-            currentIndex={currentIndex}
-            totalItems={feedItems.length}
-            showLabel={false}
-            testID="feed-progress"
-          />
+        {/* Center: Progress and current concept */}
+        <View style={styles.headerCenter}>
+          {/* Current concept title */}
+          {currentConceptName && (
+            <Text style={styles.conceptTitle} numberOfLines={1}>
+              {currentConceptName}
+            </Text>
+          )}
+          {/* Progress bar */}
+          <View style={styles.progressContainer}>
+            <FeedProgressBar
+              currentIndex={currentIndex}
+              totalItems={feedItems.length}
+              showLabel={false}
+              height={4}
+              fillColor={colors.primary}
+              backgroundColor="rgba(255, 255, 255, 0.2)"
+              testID="feed-progress"
+            />
+            {/* Progress label */}
+            <Text style={styles.progressLabel}>
+              {currentIndex + 1} / {feedItems.length}
+            </Text>
+          </View>
         </View>
 
-        {/* Streak display */}
-        <View style={styles.streakContainer}>
-          <CompactStreak
-            currentStreak={streak?.currentStreak || 0}
-            isActive={true}
-            testID="header-streak"
+        {/* XP Display with animation */}
+        <Animated.View style={[styles.xpContainer, animatedXPStyle]}>
+          <XPDisplay
+            xp={userXP?.totalXp || 0}
+            size="small"
+            showIcon={true}
+            animated={true}
+            testID="header-xp"
           />
-        </View>
+        </Animated.View>
       </View>
-
-      {/* XP display in corner */}
-      <Animated.View
-        entering={FadeIn}
-        style={[styles.xpDisplay, { top: insets.top + spacing[12] }]}
-      >
-        <Text style={styles.xpIcon}>&#11088;</Text>
-        <Text style={styles.xpValue}>{userXP?.totalXp || 0}</Text>
-        <Text style={styles.xpLabel}>XP</Text>
-      </Animated.View>
 
       {/* Feed list */}
       <FlatList
@@ -453,168 +618,241 @@ function FeedContent(): React.ReactElement {
         onTakeBreak={takeBreak}
         testID="break-modal"
       />
+
+      {/* Sandbox modal */}
+      {currentSandboxItem && (
+        <SandboxModal
+          visible={sandboxModalVisible}
+          interaction={currentSandboxItem.interaction}
+          onClose={handleCloseSandbox}
+          onSubmit={(result) => {
+            console.log('[Feed] Sandbox complete:', result);
+            // Create full evaluation result with required fields and feedback
+            const fullResult = {
+              ...result,
+              feedback: result.passed ? 'Great job!' : 'Keep practicing!',
+            };
+            completeSandboxInteraction(currentSandboxItem.id, fullResult);
+            if (result.passed) {
+              handleQuizCorrect(25);
+            }
+          }}
+          testID="sandbox-modal"
+        />
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  } as ViewStyle,
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: spacing[6],
-  } as ViewStyle,
-  loadingText: {
-    marginTop: spacing[4],
-    fontSize: 16,
-    color: colors.textSecondary,
-  } as TextStyle,
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: spacing[6],
-  } as ViewStyle,
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing[2],
-  } as TextStyle,
-  errorText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing[6],
-  } as TextStyle,
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    padding: spacing[6],
-  } as ViewStyle,
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing[2],
-  } as TextStyle,
-  emptyText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing[6],
-  } as TextStyle,
-  backButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[6],
-    borderRadius: 12,
-  } as ViewStyle,
-  backButtonText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: '600',
-  } as TextStyle,
+/**
+ * Create dynamic styles based on theme colors
+ * Implements "Luminous Focus" design direction:
+ * - Deep black backgrounds
+ * - Premium luminous highlights
+ * - Full-screen immersive experience
+ */
+function createStyles(colors: ColorTheme, isDarkMode: boolean) {
+  // Get luminous accent colors
+  const glowPrimary = (colors as any).glowPrimary || 'rgba(99, 102, 241, 0.5)';
+  const xpGlow = (colors as any).glowXp || 'rgba(251, 191, 36, 0.4)';
 
-  // Header styles
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 100,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing[4],
-    paddingBottom: spacing[2],
-  } as ViewStyle,
-  headerBackButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  } as ViewStyle,
-  headerBackIcon: {
-    fontSize: 18,
-    color: colors.white,
-    fontWeight: '600',
-  } as TextStyle,
-  progressContainer: {
-    flex: 1,
-    marginHorizontal: spacing[3],
-  } as ViewStyle,
-  streakContainer: {
-    marginLeft: spacing[2],
-  } as ViewStyle,
+  return StyleSheet.create({
+    // Main container - deep black for immersive experience
+    container: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#09090b' : colors.background, // zinc-950 for deep black
+    } as ViewStyle,
 
-  // XP display
-  xpDisplay: {
-    position: 'absolute',
-    right: spacing[4],
-    zIndex: 99,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: 16,
-  } as ViewStyle,
-  xpIcon: {
-    fontSize: 14,
-    marginRight: spacing[1],
-  } as TextStyle,
-  xpValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: colors.xpGold,
-  } as TextStyle,
-  xpLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-    color: colors.white,
-    marginLeft: 2,
-    opacity: 0.8,
-  } as TextStyle,
+    // Loading state
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkMode ? '#09090b' : colors.background,
+      padding: spacing[6],
+    } as ViewStyle,
+    loadingText: {
+      marginTop: spacing[4],
+      fontSize: 16,
+      color: colors.textSecondary,
+    } as TextStyle,
 
-  // Card container
-  cardContainer: {
-    width: SCREEN_WIDTH,
-    overflow: 'hidden',
-  } as ViewStyle,
+    // Error state
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkMode ? '#09090b' : colors.background,
+      padding: spacing[6],
+    } as ViewStyle,
+    errorTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: spacing[2],
+    } as TextStyle,
+    errorText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: spacing[6],
+    } as TextStyle,
 
-  // Level up
-  levelUpContainer: {
-    position: 'absolute',
-    top: '40%',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 1000,
-  } as ViewStyle,
-  levelUpText: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.xpGold,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  } as TextStyle,
-  levelUpLevel: {
-    fontSize: 48,
-    fontWeight: '900',
-    color: colors.white,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  } as TextStyle,
-});
+    // Empty state
+    emptyContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkMode ? '#09090b' : colors.background,
+      padding: spacing[6],
+    } as ViewStyle,
+    emptyTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: colors.text,
+      marginBottom: spacing[2],
+    } as TextStyle,
+    emptyText: {
+      fontSize: 16,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      marginBottom: spacing[6],
+    } as TextStyle,
+
+    // Back/action button
+    backButton: {
+      backgroundColor: colors.primary,
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[6],
+      borderRadius: 12,
+      // Glow effect
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.5,
+      shadowRadius: 12,
+      elevation: 6,
+    } as ViewStyle,
+    backButtonText: {
+      color: colors.white,
+      fontSize: 16,
+      fontWeight: '600',
+    } as TextStyle,
+
+    // Header - Luminous Focus Design
+    header: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      zIndex: 100,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: spacing[4],
+      paddingBottom: spacing[3],
+      // Gradient fade from top
+      backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    } as ViewStyle,
+
+    // Close button (X)
+    closeButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: 'rgba(255, 255, 255, 0.1)',
+    } as ViewStyle,
+    closeIcon: {
+      fontSize: 16,
+      color: colors.white,
+      fontWeight: '400',
+    } as TextStyle,
+
+    // Header center section
+    headerCenter: {
+      flex: 1,
+      marginHorizontal: spacing[3],
+    } as ViewStyle,
+    conceptTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.white,
+      opacity: 0.9,
+      marginBottom: spacing[1],
+      textAlign: 'center',
+    } as TextStyle,
+    progressContainer: {
+      alignItems: 'center',
+    } as ViewStyle,
+    progressLabel: {
+      fontSize: 11,
+      fontWeight: '500',
+      color: 'rgba(255, 255, 255, 0.6)',
+      marginTop: spacing[1],
+    } as TextStyle,
+
+    // XP container
+    xpContainer: {
+      marginLeft: spacing[2],
+    } as ViewStyle,
+
+    // Card container
+    cardContainer: {
+      width: SCREEN_WIDTH,
+      overflow: 'hidden',
+    } as ViewStyle,
+
+    // Level up celebration
+    levelUpContainer: {
+      position: 'absolute',
+      top: '35%',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 1000,
+    } as ViewStyle,
+    levelUpText: {
+      fontSize: 28,
+      fontWeight: '800',
+      color: colors.xpGold,
+      textShadowColor: xpGlow,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 20,
+      marginBottom: spacing[2],
+    } as TextStyle,
+    levelUpLevel: {
+      fontSize: 56,
+      fontWeight: '900',
+      color: colors.white,
+      textShadowColor: glowPrimary,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 30,
+    } as TextStyle,
+
+    // XP reward animation
+    xpRewardContainer: {
+      position: 'absolute',
+      bottom: '25%',
+      left: 0,
+      right: 0,
+      alignItems: 'center',
+      zIndex: 999,
+    } as ViewStyle,
+    xpRewardText: {
+      fontSize: 48,
+      fontWeight: '900',
+      color: colors.xpGold,
+      textShadowColor: xpGlow,
+      textShadowOffset: { width: 0, height: 0 },
+      textShadowRadius: 24,
+    } as TextStyle,
+    xpRewardLabel: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: 'rgba(255, 255, 255, 0.8)',
+      marginTop: spacing[1],
+    } as TextStyle,
+  });
+}
