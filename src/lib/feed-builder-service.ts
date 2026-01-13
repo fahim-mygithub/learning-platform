@@ -137,6 +137,90 @@ const SYNTHESIS_INTERVAL = 5;
 const DEFAULT_PERFORMANCE = 85;
 
 /**
+ * Maximum sandboxes per session to prevent fatigue
+ */
+const MAX_SANDBOXES_PER_SESSION = 3;
+
+/**
+ * Minimum items between sandboxes
+ */
+const MIN_ITEMS_BETWEEN_SANDBOXES = 8;
+
+/**
+ * Session state for consolidation tracking
+ */
+interface ConsolidationSessionState {
+  lastSandboxIndex: number;
+  sandboxCount: number;
+  currentIndex: number;
+}
+
+/**
+ * Cognitive types that can be represented as sandbox interactions
+ */
+const SANDBOXABLE_COGNITIVE_TYPES = ['declarative', 'procedural', 'conditional'];
+
+/**
+ * Select whether to use sandbox or synthesis at a consolidation checkpoint
+ *
+ * Rules:
+ * 1. Max 3 sandboxes per session
+ * 2. 8+ items between sandboxes
+ * 3. Concepts must have sandboxable cognitive type
+ */
+function selectConsolidationType(
+  recentConcepts: Concept[],
+  sessionState: ConsolidationSessionState
+): 'sandbox' | 'synthesis' {
+  // Rule 1: Max sandboxes per session
+  if (sessionState.sandboxCount >= MAX_SANDBOXES_PER_SESSION) {
+    console.log('[FeedBuilder] Max sandboxes reached, using synthesis');
+    return 'synthesis';
+  }
+
+  // Rule 2: Spacing between sandboxes
+  const itemsSinceLastSandbox = sessionState.currentIndex - sessionState.lastSandboxIndex;
+  if (sessionState.lastSandboxIndex >= 0 && itemsSinceLastSandbox < MIN_ITEMS_BETWEEN_SANDBOXES) {
+    console.log('[FeedBuilder] Too soon since last sandbox, using synthesis');
+    return 'synthesis';
+  }
+
+  // Rule 3: Check if any concepts are sandboxable
+  const sandboxableConcepts = recentConcepts.filter(c =>
+    SANDBOXABLE_COGNITIVE_TYPES.includes(c.cognitive_type ?? '')
+  );
+
+  if (sandboxableConcepts.length === 0) {
+    console.log('[FeedBuilder] No sandboxable concepts, using synthesis');
+    return 'synthesis';
+  }
+
+  console.log('[FeedBuilder] Using sandbox for consolidation');
+  return 'sandbox';
+}
+
+/**
+ * Select the best concept for sandbox from recent concepts
+ * Prioritizes procedural > conditional > declarative
+ */
+function selectBestConceptForSandbox(concepts: Concept[]): Concept {
+  // Priority order for sandbox fitness
+  const priorityOrder = ['procedural', 'conditional', 'declarative'];
+
+  for (const cogType of priorityOrder) {
+    const match = concepts.find(c => c.cognitive_type === cogType);
+    if (match) return match;
+  }
+
+  // Fallback to first sandboxable concept
+  const sandboxable = concepts.find(c =>
+    SANDBOXABLE_COGNITIVE_TYPES.includes(c.cognitive_type ?? '')
+  );
+
+  return sandboxable || concepts[0];
+}
+
+/**
  * Feed builder service interface
  */
 export interface FeedBuilderService {
@@ -639,8 +723,16 @@ function createBasicSandboxInteraction(
     elements.push(termElement, zoneElement);
     zoneContents[`zone-${concept.id}`] = [`term-${concept.id}`];
   } else if (interactionType === 'sequencing') {
-    // Create a simple sequencing interaction
-    const steps = ['Step 1', 'Step 2', 'Step 3'];
+    // Create a sequencing interaction using concept key_points
+    // Use actual key_points if available, otherwise provide meaningful fallback
+    const steps = concept.key_points && concept.key_points.length > 0
+      ? concept.key_points.slice(0, 4) // Limit to 4 steps max
+      : [
+          `First step of ${concept.name}`,
+          `Second step of ${concept.name}`,
+          `Final step of ${concept.name}`,
+        ];
+
     steps.forEach((step, i) => {
       elements.push({
         id: `step-${i}`,
@@ -864,20 +956,41 @@ export function createFeedBuilderService(): FeedBuilderService {
       let chaptersInCurrentCycle = 0;
       let recentConceptsForSynthesis: Concept[] = [];
 
+      // Track sandbox session state for consolidation decisions
+      const consolidationState: ConsolidationSessionState = {
+        lastSandboxIndex: -1,
+        sandboxCount: 0,
+        currentIndex: 0,
+      };
+
       while (chapterIndex < chapterConcepts.length) {
         const currentConcept = chapterConcepts[chapterIndex];
         const patternItem = FEED_PATTERN[patternIndex % FEED_PATTERN.length];
 
-        // Check if we need to insert a synthesis
+        // Check if we need to insert a consolidation activity (sandbox or synthesis)
         if (chaptersInCurrentCycle >= SYNTHESIS_INTERVAL) {
-          const synthesisItem = createSynthesisItem(
-            recentConceptsForSynthesis.slice(-SYNTHESIS_INTERVAL),
-            sourceId,
-            feedItemIndex++,
-            chapterIndex,
-            chapterConcepts.length
-          );
-          feedItems.push(synthesisItem);
+          consolidationState.currentIndex = feedItems.length;
+          const recentConcepts = recentConceptsForSynthesis.slice(-SYNTHESIS_INTERVAL);
+          const consolidationType = selectConsolidationType(recentConcepts, consolidationState);
+
+          if (consolidationType === 'sandbox') {
+            const bestConcept = selectBestConceptForSandbox(recentConcepts);
+            const sandboxItem = createSandboxItem(bestConcept, sourceId, feedItemIndex++, 'scaffold');
+            feedItems.push(sandboxItem);
+            consolidationState.lastSandboxIndex = feedItems.length - 1;
+            consolidationState.sandboxCount++;
+            console.log('[FeedBuilder] Added sandbox item for concept:', bestConcept.name);
+          } else {
+            const synthesisItem = createSynthesisItem(
+              recentConcepts,
+              sourceId,
+              feedItemIndex++,
+              chapterIndex,
+              chapterConcepts.length
+            );
+            feedItems.push(synthesisItem);
+          }
+
           chaptersInCurrentCycle = 0;
           recentConceptsForSynthesis = [];
           continue; // Don't advance pattern, re-evaluate
@@ -944,16 +1057,27 @@ export function createFeedBuilderService(): FeedBuilderService {
         }
       }
 
-      // Final synthesis if we have enough chapters since last synthesis
+      // Final consolidation if we have enough chapters since last checkpoint
       if (recentConceptsForSynthesis.length > 0 && chaptersInCurrentCycle >= 2) {
-        const finalSynthesis = createSynthesisItem(
-          recentConceptsForSynthesis.slice(-chaptersInCurrentCycle),
-          sourceId,
-          feedItemIndex,
-          chapterConcepts.length,
-          chapterConcepts.length
-        );
-        feedItems.push(finalSynthesis);
+        consolidationState.currentIndex = feedItems.length;
+        const finalConcepts = recentConceptsForSynthesis.slice(-chaptersInCurrentCycle);
+        const finalConsolidationType = selectConsolidationType(finalConcepts, consolidationState);
+
+        if (finalConsolidationType === 'sandbox') {
+          const bestConcept = selectBestConceptForSandbox(finalConcepts);
+          const sandboxItem = createSandboxItem(bestConcept, sourceId, feedItemIndex, 'scaffold');
+          feedItems.push(sandboxItem);
+          console.log('[FeedBuilder] Added final sandbox item for concept:', bestConcept.name);
+        } else {
+          const finalSynthesis = createSynthesisItem(
+            finalConcepts,
+            sourceId,
+            feedItemIndex,
+            chapterConcepts.length,
+            chapterConcepts.length
+          );
+          feedItems.push(finalSynthesis);
+        }
       }
 
       return feedItems;
@@ -1095,6 +1219,13 @@ export function createFeedBuilderService(): FeedBuilderService {
       let recentConceptsForSynthesis: Concept[] = [];
       let synthesisPhaseIndex = 0;
 
+      // Track sandbox session state for consolidation decisions
+      const consolidationState: ConsolidationSessionState = {
+        lastSandboxIndex: -1,
+        sandboxCount: 0,
+        currentIndex: 0,
+      };
+
       // Count total learning items for progress tracking
       // Learning items are: video chunks (1 per chapter) + quizzes + facts
       // Estimate based on pattern: each chapter produces ~1.5 items on average
@@ -1104,17 +1235,38 @@ export function createFeedBuilderService(): FeedBuilderService {
         const currentConcept = chapterConcepts[chapterIndex];
         const patternItem = FEED_PATTERN[patternIndex % FEED_PATTERN.length];
 
-        // Check if we need to insert a synthesis phase
+        // Check if we need to insert a consolidation activity (sandbox or synthesis)
         if (learningItemsInCurrentCycle >= SYNTHESIS_INTERVAL) {
-          const synthesisPhaseItem = createSynthesisPhaseItem(
-            recentConceptsForSynthesis.slice(-SYNTHESIS_INTERVAL),
-            sourceId,
-            synthesisPhaseIndex++,
-            performance,
-            feedItems.length,
-            estimatedTotalItems
-          );
-          feedItems.push(synthesisPhaseItem);
+          consolidationState.currentIndex = feedItems.length;
+          const recentConcepts = recentConceptsForSynthesis.slice(-SYNTHESIS_INTERVAL);
+          const consolidationType = selectConsolidationType(recentConcepts, consolidationState);
+
+          if (consolidationType === 'sandbox') {
+            // Create sandbox item
+            const bestConcept = selectBestConceptForSandbox(recentConcepts);
+            const sandboxItem = createSandboxItem(
+              bestConcept,
+              sourceId,
+              feedItemIndex++,
+              'scaffold'
+            );
+            feedItems.push(sandboxItem);
+            consolidationState.lastSandboxIndex = feedItems.length - 1;
+            consolidationState.sandboxCount++;
+            console.log('[FeedBuilder] Added sandbox item for concept:', bestConcept.name);
+          } else {
+            // Create synthesis phase item
+            const synthesisPhaseItem = createSynthesisPhaseItem(
+              recentConcepts,
+              sourceId,
+              synthesisPhaseIndex++,
+              performance,
+              feedItems.length,
+              estimatedTotalItems
+            );
+            feedItems.push(synthesisPhaseItem);
+          }
+
           learningItemsInCurrentCycle = 0;
           recentConceptsForSynthesis = [];
           continue; // Don't advance pattern, re-evaluate
@@ -1180,17 +1332,28 @@ export function createFeedBuilderService(): FeedBuilderService {
         }
       }
 
-      // Final synthesis phase if we have enough items since last synthesis
+      // Final consolidation if we have enough items since last checkpoint
       if (recentConceptsForSynthesis.length > 0 && learningItemsInCurrentCycle >= 2) {
-        const finalSynthesisPhase = createSynthesisPhaseItem(
-          recentConceptsForSynthesis.slice(-learningItemsInCurrentCycle),
-          sourceId,
-          synthesisPhaseIndex,
-          performance,
-          feedItems.length,
-          feedItems.length + 1
-        );
-        feedItems.push(finalSynthesisPhase);
+        consolidationState.currentIndex = feedItems.length;
+        const finalConcepts = recentConceptsForSynthesis.slice(-learningItemsInCurrentCycle);
+        const finalConsolidationType = selectConsolidationType(finalConcepts, consolidationState);
+
+        if (finalConsolidationType === 'sandbox') {
+          const bestConcept = selectBestConceptForSandbox(finalConcepts);
+          const sandboxItem = createSandboxItem(bestConcept, sourceId, feedItemIndex, 'scaffold');
+          feedItems.push(sandboxItem);
+          console.log('[FeedBuilder] Added final sandbox item for concept:', bestConcept.name);
+        } else {
+          const finalSynthesisPhase = createSynthesisPhaseItem(
+            finalConcepts,
+            sourceId,
+            synthesisPhaseIndex,
+            performance,
+            feedItems.length,
+            feedItems.length + 1
+          );
+          feedItems.push(finalSynthesisPhase);
+        }
       }
 
       return feedItems;

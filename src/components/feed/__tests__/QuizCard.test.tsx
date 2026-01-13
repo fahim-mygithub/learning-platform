@@ -317,6 +317,53 @@ describe('QuizCard Component', () => {
       expect(screen.getByText('True/False')).toBeTruthy();
     });
 
+    it('renders both True and False options for true_false questions even without distractors', () => {
+      // BUG: AI sometimes generates T/F questions without distractors array
+      // This test ensures both options always appear regardless
+      const tfQuestionNoDistractors: SampleQuestion = {
+        question_type: 'true_false',
+        question_text: 'React Native uses JavaScript.',
+        correct_answer: 'True',
+        // distractors intentionally omitted - simulating AI behavior
+      };
+
+      renderQuizCard({ question: tfQuestionNoDistractors, testID: 'tf-quiz' });
+
+      // Should render both True and False options
+      const buttons = screen.getAllByRole('button');
+      const optionLabels = buttons.map((btn) => btn.props.accessibilityLabel || '');
+
+      const hasTrueOption = optionLabels.some((label) => label.includes('True'));
+      const hasFalseOption = optionLabels.some((label) => label.includes('False'));
+
+      expect(hasTrueOption).toBe(true);
+      expect(hasFalseOption).toBe(true);
+
+      // Should have exactly 2 options for T/F
+      expect(screen.getByTestId('tf-quiz-option-0')).toBeTruthy();
+      expect(screen.getByTestId('tf-quiz-option-1')).toBeTruthy();
+    });
+
+    it('renders both True and False options when correct_answer is False without distractors', () => {
+      const tfQuestionFalseAnswer: SampleQuestion = {
+        question_type: 'true_false',
+        question_text: 'The sky is green.',
+        correct_answer: 'False',
+        // distractors intentionally omitted
+      };
+
+      renderQuizCard({ question: tfQuestionFalseAnswer, testID: 'tf-false-quiz' });
+
+      const buttons = screen.getAllByRole('button');
+      const optionLabels = buttons.map((btn) => btn.props.accessibilityLabel || '');
+
+      const hasTrueOption = optionLabels.some((label) => label.includes('True'));
+      const hasFalseOption = optionLabels.some((label) => label.includes('False'));
+
+      expect(hasTrueOption).toBe(true);
+      expect(hasFalseOption).toBe(true);
+    });
+
     it('handles definition recall questions', () => {
       const defQuestion: SampleQuestion = {
         question_type: 'definition_recall',

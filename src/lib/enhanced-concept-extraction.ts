@@ -195,8 +195,9 @@ ENHANCED PEDAGOGICAL FIELDS (NEW):
    - appropriate_question_types: Array from [definition_recall, true_false, multiple_choice, comparison, sequence, cause_effect, application]
    - inappropriate_question_types: Question types NOT suitable for this concept
    - sample_questions: 1-2 sample questions with:
-     - question_type, question_text, correct_answer
-     - distractors: Array of 2-3 wrong answers (for multiple choice)
+     - question_type, question_text (MAX 120 characters), correct_answer (MAX 40 characters)
+     - distractors: Array of 2-3 wrong answers for multiple_choice ONLY (MAX 40 chars each)
+     - IMPORTANT: For true_false questions, do NOT include distractors array - the UI auto-generates True/False options
    - mastery_indicators: Array of 2-3 behaviors that indicate understanding
    - mastery_threshold: 0.0-1.0 (typically 0.8)
 
@@ -217,6 +218,8 @@ EXTRACTION RULES:
 - Tier 3 concepts should relate to the thesis
 - mentioned_only concepts get lower time_allocation_percent
 - Bloom's level reflects how deeply the content covers the concept, not how deep it COULD go
+
+IMPORTANT: Extract at most 3 concepts from this content chunk to keep response length manageable.
 
 Return a JSON array of concepts.`;
 }
@@ -404,8 +407,9 @@ function normalizeExtractedConcept(
 
 /**
  * Maximum content length before chunking
+ * Reduced from 50000 to prevent token limit issues with verbose response schema
  */
-const MAX_CONTENT_LENGTH = 50000;
+const MAX_CONTENT_LENGTH = 4000; // Very small chunks to limit concepts per extraction
 
 /**
  * Chunk content at sentence boundaries
@@ -483,6 +487,7 @@ export function createEnhancedConceptExtractionService(
             options: {
               model: 'claude-sonnet', // Complex extraction needs Sonnet
               temperature: 0.3,
+              maxTokens: 8192, // Standard Claude 3.5 Sonnet output limit
             },
           }
         );

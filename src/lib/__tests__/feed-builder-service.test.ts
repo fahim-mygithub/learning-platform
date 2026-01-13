@@ -21,6 +21,7 @@ import {
   PretestItem,
   MiniLessonItem,
   PretestResultsItem,
+  SandboxItem,
   isVideoChunkItem,
   isTextChunkItem,
   isQuizItem,
@@ -30,6 +31,7 @@ import {
   isPretestItem,
   isMiniLessonItem,
   isPretestResultsItem,
+  isSandboxItem,
 } from '@/src/types/engagement';
 
 import {
@@ -1509,6 +1511,123 @@ describe('Feed Builder Service', () => {
 
         // Video chunks should follow
         expect(isVideoChunkItem(feedWithGaps[resultsIndex + 3])).toBe(true);
+      });
+    });
+  });
+
+  describe('Sandbox Content Generation', () => {
+    let service: FeedBuilderService;
+
+    // Helper to create a procedural concept (triggers sequencing sandbox interaction)
+    const createProceduralConcept = (
+      overrides: Partial<Concept> = {}
+    ): Concept => ({
+      id: `concept-${Math.random().toString(36).substr(2, 9)}`,
+      project_id: 'project-123',
+      source_id: 'source-123',
+      name: 'Test Procedural Concept',
+      definition: 'A step-by-step procedural concept.',
+      key_points: [
+        'First step: Initialize the process',
+        'Second step: Execute the main action',
+        'Third step: Verify the result',
+      ],
+      cognitive_type: 'procedural', // This triggers sequencing interaction
+      difficulty: 5,
+      source_timestamps: [],
+      metadata: {},
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      tier: 2 as ConceptTier,
+      mentioned_only: false,
+      bloom_level: 'apply' as BloomLevel,
+      definition_provided: true,
+      chapter_sequence: 1,
+      source_mapping: {
+        primary_segment: { start_sec: 0, end_sec: 300 },
+        key_moments: [],
+        review_clip: { start_sec: 0, end_sec: 60 },
+      } as SourceMapping,
+      one_sentence_summary: 'A procedural concept summary.',
+      why_it_matters: 'This is why procedural knowledge matters.',
+      assessment_spec: {
+        appropriate_question_types: ['sequence'],
+        inappropriate_question_types: [],
+        sample_questions: [],
+        mastery_indicators: ['Can perform the steps'],
+        mastery_threshold: 0.8,
+      } as AssessmentSpec,
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      service = createFeedBuilderService();
+    });
+
+    describe('Sequencing interactions use concept key_points', () => {
+      it('uses concept key_points instead of hardcoded placeholder steps', () => {
+        // BUG: Sandbox currently shows "Step 1, Step 2, Step 3" instead of real content
+        // This test ensures we use actual concept.key_points for sequencing interactions
+        const concept = createProceduralConcept({
+          id: 'concept-procedural-1',
+          name: 'Combat Chain Resolution',
+          key_points: [
+            'Declare attacker and target',
+            'Opponent may play defensive reactions',
+            'Calculate damage and apply effects',
+          ],
+          chapter_sequence: 1,
+        });
+
+        // Use createSandboxItem directly to test sandbox content generation
+        const sandboxItem = service.createSandboxItem(concept, 'source-123', 0, 'scaffold');
+
+        // Get the sandbox interaction elements
+        const elements = sandboxItem.interaction?.elements || [];
+
+        // Extract content from draggable elements (sequencing steps)
+        const stepContents = elements
+          .filter((el) => el.type === 'draggable')
+          .map((el) => el.content);
+
+        // Should NOT contain hardcoded placeholders
+        expect(stepContents).not.toContain('Step 1');
+        expect(stepContents).not.toContain('Step 2');
+        expect(stepContents).not.toContain('Step 3');
+
+        // Should contain actual concept key_points
+        expect(stepContents).toContain('Declare attacker and target');
+        expect(stepContents).toContain('Opponent may play defensive reactions');
+        expect(stepContents).toContain('Calculate damage and apply effects');
+      });
+
+      it('provides graceful fallback when key_points is empty', () => {
+        const concept = createProceduralConcept({
+          id: 'concept-no-keypoints',
+          name: 'No Key Points Concept',
+          key_points: [], // Empty key_points
+          chapter_sequence: 1,
+        });
+
+        const sandboxItem = service.createSandboxItem(concept, 'source-123', 0, 'scaffold');
+        const elements = sandboxItem.interaction?.elements || [];
+        const stepContents = elements
+          .filter((el) => el.type === 'draggable')
+          .map((el) => el.content);
+
+        // Should not be empty - should have meaningful fallback
+        expect(stepContents.length).toBeGreaterThan(0);
+
+        // Should NOT be generic "Step 1, Step 2, Step 3"
+        expect(stepContents).not.toContain('Step 1');
+        expect(stepContents).not.toContain('Step 2');
+        expect(stepContents).not.toContain('Step 3');
+
+        // Should contain concept name in fallback
+        const hasConceptReference = stepContents.some(
+          (content) => typeof content === 'string' && (content.includes('No Key Points Concept') || content.includes('step'))
+        );
+        expect(hasConceptReference).toBe(true);
       });
     });
   });

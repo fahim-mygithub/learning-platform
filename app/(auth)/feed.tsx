@@ -21,6 +21,7 @@ import {
   Text,
   Pressable,
   StatusBar,
+  Platform,
   type ViewStyle,
   type TextStyle,
   type ViewToken,
@@ -63,9 +64,43 @@ import { type ColorTheme } from '@/src/theme/colors';
 import type { FeedItem } from '@/src/types/engagement';
 
 /**
- * Screen dimensions for snap scrolling
+ * Maximum width for mobile-style content on desktop
+ * Prevents content from stretching on wide monitors
  */
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
+const MAX_MOBILE_WIDTH = 500;
+
+/**
+ * Get responsive dimensions for the feed
+ * On desktop, limits to mobile-like width for better UX
+ */
+function useResponsiveDimensions() {
+  const [dimensions, setDimensions] = React.useState(() => {
+    const { height, width } = Dimensions.get('window');
+    const isDesktop = Platform.OS === 'web' && width > MAX_MOBILE_WIDTH;
+    return {
+      screenHeight: height,
+      screenWidth: width,
+      contentWidth: isDesktop ? MAX_MOBILE_WIDTH : width,
+      isDesktop,
+    };
+  });
+
+  React.useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      const isDesktop = Platform.OS === 'web' && window.width > MAX_MOBILE_WIDTH;
+      setDimensions({
+        screenHeight: window.height,
+        screenWidth: window.width,
+        contentWidth: isDesktop ? MAX_MOBILE_WIDTH : window.width,
+        isDesktop,
+      });
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  return dimensions;
+}
 
 /**
  * Feed Screen Component
@@ -116,6 +151,9 @@ export default function FeedScreen(): React.ReactElement {
 function FeedContent(): React.ReactElement {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<FeedItem>>(null);
+
+  // Get responsive dimensions for desktop support
+  const { screenHeight, contentWidth, isDesktop } = useResponsiveDimensions();
 
   // Get dynamic colors from typography context
   const { getColors, isDarkMode } = useTypography();
@@ -311,12 +349,15 @@ function FeedContent(): React.ReactElement {
   /**
    * Render individual feed card
    */
+  // Calculate card height for snap scrolling
+  const cardHeight = screenHeight - insets.top - insets.bottom;
+
   const renderFeedCard = useCallback(
     ({ item, index }: { item: FeedItem; index: number }) => {
       const isActive = index === currentIndex;
 
       return (
-        <View style={[styles.cardContainer, { height: SCREEN_HEIGHT - insets.top - insets.bottom }]}>
+        <View style={[styles.cardContainer, { height: cardHeight, width: contentWidth }]}>
           <FeedCard
             onSwipeLeft={() => handleSwipeLeft(item)}
             onSwipeRight={() => handleSwipeRight(item)}
@@ -409,7 +450,8 @@ function FeedContent(): React.ReactElement {
     },
     [
       currentIndex,
-      insets,
+      cardHeight,
+      contentWidth,
       handleSwipeLeft,
       handleSwipeRight,
       handleQuizCorrect,
@@ -558,27 +600,33 @@ function FeedContent(): React.ReactElement {
         </Animated.View>
       </View>
 
-      {/* Feed list */}
-      <FlatList
-        ref={flatListRef}
-        data={feedItems}
-        renderItem={renderFeedCard}
-        keyExtractor={(item) => item.id}
-        pagingEnabled
-        snapToInterval={SCREEN_HEIGHT - insets.top - insets.bottom}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        initialScrollIndex={currentIndex}
-        getItemLayout={(_, index) => ({
-          length: SCREEN_HEIGHT - insets.top - insets.bottom,
-          offset: (SCREEN_HEIGHT - insets.top - insets.bottom) * index,
-          index,
-        })}
-        testID="feed-list"
-      />
+      {/* Feed list - centered on desktop with max-width */}
+      <View style={[
+        styles.feedContainer,
+        isDesktop && styles.feedContainerDesktop,
+      ]}>
+        <FlatList
+          ref={flatListRef}
+          data={feedItems}
+          renderItem={renderFeedCard}
+          keyExtractor={(item) => item.id}
+          pagingEnabled
+          snapToInterval={cardHeight}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          showsVerticalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          initialScrollIndex={currentIndex}
+          getItemLayout={(_, index) => ({
+            length: cardHeight,
+            offset: cardHeight * index,
+            index,
+          })}
+          style={isDesktop ? { width: contentWidth } : undefined}
+          testID="feed-list"
+        />
+      </View>
 
       {/* XP Popup */}
       <XPPopup
@@ -801,10 +849,19 @@ function createStyles(colors: ColorTheme, isDarkMode: boolean) {
       marginLeft: spacing[2],
     } as ViewStyle,
 
+    // Feed container - wraps FlatList for desktop centering
+    feedContainer: {
+      flex: 1,
+    } as ViewStyle,
+    feedContainerDesktop: {
+      alignItems: 'center',
+      backgroundColor: '#000', // Black background on sides
+    } as ViewStyle,
+
     // Card container
     cardContainer: {
-      width: SCREEN_WIDTH,
       overflow: 'hidden',
+      // Width is set dynamically via style prop for responsive support
     } as ViewStyle,
 
     // Level up celebration
